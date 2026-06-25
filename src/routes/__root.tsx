@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { DemoModalProvider, DemoButton } from "../lib/demo-modal";
+import { ThemeProvider, ThemeToggle } from "../lib/theme";
 
 function NotFoundComponent() {
   return (
@@ -117,7 +118,7 @@ function NavBar() {
             className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground"
             activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}
           >
-            Universal Voice Translator
+            Translator
           </Link>
           <Link
             to="/resume"
@@ -126,8 +127,18 @@ function NavBar() {
           >
             Resume
           </Link>
+          <Link
+            to="/contact"
+            className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground"
+            activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}
+          >
+            Contact
+          </Link>
         </nav>
-        <DemoButton className="hidden sm:inline-flex">Request Demo</DemoButton>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <DemoButton className="hidden sm:inline-flex">Request Demo</DemoButton>
+        </div>
       </div>
     </header>
   );
@@ -152,15 +163,17 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <DemoModalProvider>
-        <div className="flex min-h-screen flex-col">
-          <NavBar />
-          <main className="flex-1">
-            <Outlet />
-          </main>
-          <Footer />
-        </div>
-      </DemoModalProvider>
+      <ThemeProvider>
+        <DemoModalProvider>
+          <div className="flex min-h-screen flex-col">
+            <NavBar />
+            <main className="flex-1">
+              <Outlet />
+            </main>
+            <Footer />
+          </div>
+        </DemoModalProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

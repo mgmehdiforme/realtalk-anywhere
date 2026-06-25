@@ -23,9 +23,10 @@ function Landing() {
         <div className="absolute inset-0 grid-bg opacity-40" />
         <div className="relative mx-auto grid max-w-7xl gap-12 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-12 lg:gap-10">
           <div className="lg:col-span-6 lg:pt-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/50 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
               <span className="h-1.5 w-1.5 rounded-full bg-neon animate-pulse" />
-              Live · Real-time · System-wide
+              <span className="text-neon-gradient font-semibold">AI-Powered</span>
+              <span className="opacity-50">·</span> Real-time <span className="opacity-50">·</span> System-wide
             </div>
             <h1 className="mt-5 font-display text-4xl font-semibold leading-[1.05] sm:text-5xl lg:text-6xl">
               You don't need to learn a new language.{" "}
