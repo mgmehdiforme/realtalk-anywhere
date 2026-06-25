@@ -35,9 +35,42 @@
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
+/* LIGHT (default) */
 :root {
   --radius: 0.75rem;
-  /* Dark theme by default */
+  --background: oklch(0.99 0.005 250);
+  --foreground: oklch(0.18 0.03 265);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.03 265);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.03 265);
+  --primary: oklch(0.55 0.21 265);
+  --primary-foreground: oklch(0.99 0.005 250);
+  --secondary: oklch(0.96 0.01 250);
+  --secondary-foreground: oklch(0.20 0.03 265);
+  --muted: oklch(0.96 0.01 250);
+  --muted-foreground: oklch(0.48 0.02 260);
+  --accent: oklch(0.60 0.22 295);
+  --accent-foreground: oklch(0.99 0.005 250);
+  --destructive: oklch(0.60 0.22 25);
+  --destructive-foreground: oklch(0.99 0.005 250);
+  --border: oklch(0.20 0.03 265 / 10%);
+  --input: oklch(0.20 0.03 265 / 14%);
+  --ring: oklch(0.55 0.21 265);
+  --neon: oklch(0.58 0.22 260);
+  --neon-2: oklch(0.60 0.24 300);
+
+  --gradient-hero: radial-gradient(60% 80% at 20% 10%, color-mix(in oklab, var(--neon) 18%, transparent), transparent 60%),
+                   radial-gradient(50% 70% at 90% 30%, color-mix(in oklab, var(--neon-2) 16%, transparent), transparent 60%),
+                   linear-gradient(180deg, oklch(0.99 0.005 250), oklch(0.97 0.01 250));
+  --gradient-neon: linear-gradient(135deg, var(--neon), var(--neon-2));
+  --shadow-neon: 0 0 0 1px color-mix(in oklab, var(--neon) 30%, transparent),
+                 0 10px 30px -10px color-mix(in oklab, var(--neon) 45%, transparent);
+  --shadow-card: 0 1px 0 0 oklch(1 0 0 / 60%) inset, 0 12px 40px -18px oklch(0.20 0.03 265 / 18%);
+}
+
+/* DARK */
+.dark {
   --background: oklch(0.16 0.025 265);
   --foreground: oklch(0.97 0.005 250);
   --card: oklch(0.21 0.03 265);
@@ -63,7 +96,6 @@
   --gradient-hero: radial-gradient(60% 80% at 20% 10%, color-mix(in oklab, var(--neon) 30%, transparent), transparent 60%),
                    radial-gradient(50% 70% at 90% 30%, color-mix(in oklab, var(--neon-2) 25%, transparent), transparent 60%),
                    linear-gradient(180deg, oklch(0.18 0.03 265), oklch(0.13 0.02 265));
-  --gradient-neon: linear-gradient(135deg, var(--neon), var(--neon-2));
   --shadow-neon: 0 0 0 1px color-mix(in oklab, var(--neon) 40%, transparent),
                  0 10px 40px -10px color-mix(in oklab, var(--neon) 55%, transparent);
   --shadow-card: 0 1px 0 0 oklch(1 0 0 / 6%) inset, 0 20px 60px -20px oklch(0 0 0 / 60%);
@@ -105,7 +137,7 @@
 }
 @utility grid-bg {
   background-image:
-    linear-gradient(to right, oklch(1 0 0 / 4%) 1px, transparent 1px),
-    linear-gradient(to bottom, oklch(1 0 0 / 4%) 1px, transparent 1px);
+    linear-gradient(to right, color-mix(in oklab, var(--foreground) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 6%, transparent) 1px, transparent 1px);
   background-size: 48px 48px;
 }
