@@ -573,6 +573,99 @@ function Landing() {
         </ol>
       </section>
 
+      {/* PRICING */}
+      <section id="pricing" className="mx-auto max-w-7xl px-5 py-20 sm:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <div className="text-xs font-medium uppercase tracking-widest text-neon-gradient">
+            Investment
+          </div>
+          <h2 className="mt-3 font-display text-3xl font-semibold sm:text-4xl">
+            Simple, transparent <span className="text-neon-gradient">pricing</span>.
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            Pricing is always a conversation — every project is a little different. As a soft
+            starting point, engagements typically begin from <span className="text-foreground font-semibold">€2,000 / month</span>,
+            and we shape the rest together based on scope and pace.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-6 lg:grid-cols-3">
+          {/* Main price card */}
+          <div className="lg:col-span-2 rounded-3xl border border-border bg-card p-8 shadow-card relative overflow-hidden">
+            <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-neon opacity-10 blur-3xl" aria-hidden />
+            <div className="relative">
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="text-xs font-semibold uppercase tracking-widest text-neon">Starting from</div>
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="font-display text-5xl font-semibold">€2,000</span>
+                <span className="text-muted-foreground">/ month</span>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Negotiable based on scope, timeline and the kind of partnership you need.
+              </p>
+
+              <div className="mt-7 grid gap-4 sm:grid-cols-3">
+                <PayStep n="1" title="Advance" body="One third up-front to kick things off and lock the slot." highlight />
+                <PayStep n="2" title="Progress" body="Work happens with full visibility — demos, docs, repo access." />
+                <PayStep n="3" title="Final" body="Remaining two thirds settled at the end, once you're happy." />
+              </div>
+
+              <div className="mt-7 rounded-2xl border border-border bg-background/60 p-5">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-neon" />
+                  <div className="text-sm text-foreground/85">
+                    <span className="font-semibold text-foreground">Full transparency, every step.</span>{" "}
+                    You receive documented updates and visible results on a regular cadence — so you
+                    always know exactly where your money is going and what's been built.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Infra card */}
+          <div className="rounded-3xl border border-border bg-card p-8 shadow-card flex flex-col">
+            <div className="grid h-11 w-11 place-items-center rounded-xl bg-neon shadow-neon">
+              <Cpu className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <h3 className="mt-4 font-display text-xl font-semibold">Development infrastructure on me.</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              During the build, you don't pay for any of the moving parts behind the scenes.
+            </p>
+            <ul className="mt-5 space-y-2.5 text-sm">
+              {[
+                "Cloud hosting to run the app while we build",
+                "Git repositories with live access for you",
+                "Staging environments to review results online",
+                "Tooling, CI/CD and monitoring during development",
+              ].map((t) => (
+                <li key={t} className="flex items-start gap-2 text-foreground/90">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-neon" /> {t}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-5 rounded-xl border border-border bg-background/60 p-4 text-sm">
+              <span className="font-semibold text-foreground">Free for you during development.</span>{" "}
+              <span className="text-muted-foreground">
+                At the end, everything migrates cleanly to your own accounts — code, cloud, data, all yours.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+          <DemoButton>Discuss Your Project</DemoButton>
+          <Link
+            to="/services"
+            className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-5 py-3 text-sm font-semibold transition hover:bg-muted"
+          >
+            See Engagements <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
+        </div>
+      </section>
+
+
       {/* AVAILABILITY — soft response-time band */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-hero opacity-70" aria-hidden />
@@ -681,6 +774,16 @@ function Landing() {
           </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function PayStep({ n, title, body, highlight }: { n: string; title: string; body: string; highlight?: boolean }) {
+  return (
+    <div className={`rounded-2xl border p-4 ${highlight ? "border-neon/50 bg-neon/5" : "border-border bg-background/60"}`}>
+      <div className="font-mono text-xs text-neon-gradient">Step {n}</div>
+      <div className="mt-1 font-semibold">{title}</div>
+      <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{body}</p>
     </div>
   );
 }
