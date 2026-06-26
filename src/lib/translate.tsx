@@ -96,16 +96,20 @@ export function LanguageSelect() {
   }, []);
 
   const pick = (code: string) => {
+    if (code === current) {
+      setOpen(false);
+      return;
+    }
     setCurrent(code);
     setOpen(false);
+    setLoading(true);
     if (code === "en") {
-      // clear cookie & reload to original
       setCookie("googtrans", "");
       document.cookie = "googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     } else {
       setCookie("googtrans", `/en/${code}`);
     }
-    window.location.reload();
+    setTimeout(() => window.location.reload(), 150);
   };
 
   const active = LANGS.find((l) => l.code === current) ?? LANGS[0];
