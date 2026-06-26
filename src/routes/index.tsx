@@ -17,6 +17,8 @@ import {
   Building2,
   Sparkles,
   X,
+  Mail,
+  Clock,
 } from "lucide-react";
 import { DemoButton } from "@/lib/demo-modal";
 
@@ -412,6 +414,91 @@ function Landing() {
             </li>
           ))}
         </ol>
+      </section>
+
+      {/* AVAILABILITY — soft response-time band */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-hero opacity-70" aria-hidden />
+        <div className="absolute left-1/2 top-1/2 h-72 w-[60%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-neon opacity-10 blur-3xl" aria-hidden />
+        <div className="relative mx-auto max-w-6xl px-5 py-20 sm:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+              </span>
+              Available now · replying personally
+            </div>
+            <h2 className="mt-5 font-display text-3xl font-semibold leading-tight sm:text-4xl">
+              You message me. <span className="text-neon-gradient">I message back.</span>
+              <br className="hidden sm:block" />
+              No bots. No queues. No "we'll get back to you."
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              Real answers from the same engineer who'll build your product — usually within minutes.
+            </p>
+          </div>
+
+          <div className="mx-auto mt-12 grid max-w-4xl gap-5 sm:grid-cols-2">
+            <div className="group relative overflow-hidden rounded-2xl border border-border bg-card/70 p-7 shadow-card backdrop-blur transition hover:border-[color:var(--neon)]/40">
+              <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-neon opacity-10 blur-2xl transition group-hover:opacity-20" aria-hidden />
+              <div className="relative flex items-start gap-4">
+                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/30">
+                  <MessageCircle className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-baseline gap-2">
+                    <div className="font-display text-2xl font-semibold">Under 10 minutes</div>
+                  </div>
+                  <div className="mt-1 text-sm text-muted-foreground">WhatsApp · typical reply time</div>
+                  <p className="mt-3 text-sm text-foreground/85">
+                    Send a voice note, a screenshot, a half-formed idea — I'll read it and reply
+                    myself.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="group relative overflow-hidden rounded-2xl border border-border bg-card/70 p-7 shadow-card backdrop-blur transition hover:border-[color:var(--neon)]/40">
+              <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-neon opacity-10 blur-2xl transition group-hover:opacity-20" aria-hidden />
+              <div className="relative flex items-start gap-4">
+                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[color:var(--neon)]/10 text-neon ring-1 ring-[color:var(--neon)]/30">
+                  <Mail className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-baseline gap-2">
+                    <div className="font-display text-2xl font-semibold">Under 1 hour</div>
+                  </div>
+                  <div className="mt-1 text-sm text-muted-foreground">Email · typical reply time</div>
+                  <p className="mt-3 text-sm text-foreground/85">
+                    Long brief, scope, proposal — a thoughtful response from me, not a templated
+                    auto-reply.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mx-auto mt-10 flex max-w-3xl flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-neon" /> Ready to start this week
+            </div>
+            <span className="hidden h-1 w-1 rounded-full bg-border sm:inline-block" />
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-neon" /> Kickoff call within 24 hours
+            </div>
+            <span className="hidden h-1 w-1 rounded-full bg-border sm:inline-block" />
+            <div className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-neon" /> Same person, every message
+            </div>
+          </div>
+
+          <div className="mt-10 flex justify-center">
+            <DemoButton className="px-6 py-3.5 text-base">
+              Message me now <ArrowRight className="ml-2 h-4 w-4" />
+            </DemoButton>
+          </div>
+        </div>
       </section>
 
       {/* CTA */}
