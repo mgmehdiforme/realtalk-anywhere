@@ -11,6 +11,8 @@ import {
   Clock,
   Users,
   Target,
+  ShieldCheck,
+  Cpu,
 } from "lucide-react";
 import { DemoButton } from "@/lib/demo-modal";
 
