@@ -17,6 +17,8 @@ import {
   Building2,
   Sparkles,
   X,
+  Mail,
+  Clock,
 } from "lucide-react";
 import { DemoButton } from "@/lib/demo-modal";
 
