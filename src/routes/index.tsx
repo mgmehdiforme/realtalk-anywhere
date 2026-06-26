@@ -413,17 +413,30 @@ function Landing() {
                 Why founders pick me
               </div>
               <h2 className="mt-3 font-display text-3xl font-semibold sm:text-4xl">
-                Software development isn't the product. <span className="text-neon-gradient">Execution is.</span>
+                Software development isn't my main offer. <span className="text-neon-gradient">Execution is.</span>
               </h2>
               <p className="mt-5 text-muted-foreground">
-                You're not buying programming hours — you're buying faster time-to-market, better
-                technical decisions, lower risk and scalable architecture from someone who's done it
-                before.
+                I move fast because I pair 10+ years of senior engineering with modern AI tools —
+                seniority chooses the right path, AI shortens the road. Together they let me ship
+                accurately, in a fraction of the usual time.
               </p>
+              <div className="mt-5 space-y-2.5 text-sm">
+                {[
+                  { icon: Calendar, text: "Most engagements run monthly — some founders only need a focused week." },
+                  { icon: Rocket, text: "Production-ready MVPs in weeks, not months." },
+                  { icon: Sparkles, text: "AI-augmented delivery, senior-engineered decisions." },
+                ].map(({ icon: Icon, text }) => (
+                  <div key={text} className="flex items-start gap-2.5 text-foreground/85">
+                    <Icon className="mt-0.5 h-4 w-4 shrink-0 text-neon" />
+                    <span>{text}</span>
+                  </div>
+                ))}
+              </div>
               <div className="mt-7">
                 <DemoButton>Book a Discovery Call</DemoButton>
               </div>
             </div>
+
 
             <div className="grid gap-4 sm:grid-cols-2 lg:col-span-7">
               {[
