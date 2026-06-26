@@ -74,7 +74,7 @@ function ContactPage() {
 
         {/* Pre-filled message preview */}
         <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-border bg-card p-6 shadow-card">
-          <div className="text-xs font-medium uppercase tracking-widest text-neon-gradient">Pre-filled demo message</div>
+          <div className="text-xs font-medium uppercase tracking-widest text-neon-gradient">Pre-filled message</div>
           <div className="mt-3 rounded-xl border border-border bg-background/60 p-4 font-mono text-sm leading-relaxed text-foreground/90">
             "{MESSAGE}"
           </div>
