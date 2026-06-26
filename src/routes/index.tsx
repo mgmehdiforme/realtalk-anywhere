@@ -19,6 +19,10 @@ import {
   X,
   Mail,
   Clock,
+  Calendar,
+  Gauge,
+  Cpu,
+  Wifi,
 } from "lucide-react";
 import { DemoButton } from "@/lib/demo-modal";
 
