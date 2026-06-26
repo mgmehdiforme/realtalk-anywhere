@@ -17,6 +17,7 @@ import {
   Building2,
   Sparkles,
   X,
+  Heart,
   Mail,
   Clock,
   Calendar,
@@ -756,8 +757,36 @@ function Landing() {
         </div>
       </section>
 
+      {/* PROMISE */}
+      <section className="mx-auto max-w-5xl px-5 pb-10 sm:px-8">
+        <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-10 shadow-card sm:p-12">
+          <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-neon opacity-10 blur-3xl" aria-hidden />
+          <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-neon opacity-10 blur-3xl" aria-hidden />
+          <div className="relative grid items-center gap-8 sm:grid-cols-[auto,1fr]">
+            <div className="grid h-16 w-16 place-items-center rounded-2xl bg-neon shadow-neon">
+              <Heart className="h-7 w-7 text-primary-foreground" />
+            </div>
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-widest text-neon-gradient">
+                My promise
+              </div>
+              <h2 className="mt-2 font-display text-2xl font-semibold leading-tight sm:text-3xl">
+                You'll have the best time working together — that's a promise.
+              </h2>
+              <p className="mt-3 text-muted-foreground leading-relaxed">
+                I genuinely love what I do, and I love helping ideas grow — in{" "}
+                <span className="text-foreground font-medium">any industry</span>, at any stage.
+                Expect calm communication, real ownership, and someone who treats your product
+                like it's their own.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="mx-auto max-w-5xl px-5 pb-24 sm:px-8">
+
         <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-10 text-center shadow-card sm:p-14">
           <div className="absolute -top-20 left-1/2 h-60 w-[80%] -translate-x-1/2 rounded-full bg-neon opacity-20 blur-3xl" aria-hidden />
           <h2 className="relative font-display text-3xl font-semibold sm:text-4xl">
