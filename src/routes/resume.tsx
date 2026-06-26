@@ -27,6 +27,20 @@ const competencies: Record<string, string[]> = {
 
 const roles = [
   {
+    company: "SE Marketing & PR",
+    location: "Dubai, UAE · Remote",
+    title: "CTO — Leading end-to-end Technical Strategy",
+    period: "Jun 2026 – Present",
+    summary:
+      "Spearheading the technical strategy for an AI-powered business setup and investment risk intelligence platform tailored for the UAE market. Owning end-to-end product and engineering direction from architecture to launch.",
+    points: [
+      "Oversee the end-to-end development lifecycle, aligning the platform with UAE market needs and modern AI capabilities.",
+      "Define the AI strategy and system architecture for business-setup automation and investment-risk scoring.",
+      "Provide executive technical leadership across product, engineering, infrastructure and AI workflows.",
+    ],
+    stack: ["AI Strategy", "System Architecture", "Executive Tech Leadership", "LLMs / RAG", ".NET Core", "Python", "Azure", "PostgreSQL"],
+  },
+  {
     company: "Vendoroo.Ai",
     location: "Remote, US",
     title: "Software Engineer — C# / .NET Core",
