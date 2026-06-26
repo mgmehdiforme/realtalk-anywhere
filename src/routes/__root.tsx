@@ -109,7 +109,7 @@ function NavBar() {
   const [open, setOpen] = useState(false);
   const links = [
     { to: "/" as const, label: "Home", exact: true },
-    { to: "/services" as const, label: "Engagements" },
+    { to: "/services" as const, label: "Offers" },
     { to: "/about" as const, label: "About" },
     { to: "/resume" as const, label: "Resume" },
     { to: "/contact" as const, label: "Contact" },

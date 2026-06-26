@@ -11,23 +11,25 @@ import {
   Clock,
   Users,
   Target,
+  ShieldCheck,
+  Cpu,
 } from "lucide-react";
 import { DemoButton } from "@/lib/demo-modal";
 
 export const Route = createFileRoute("/services")({
   head: () => ({
     meta: [
-      { title: "Engagements — Ways to Work Together | MehdiGolzari.dev" },
+      { title: "Offers — Ways to Work Together | MehdiGolzari.dev" },
       {
         name: "description",
         content:
-          "Six ways founders work with me directly: SaaS MVP, AI MVP, technical partnership, SaaS rescue, product scaling, and fractional CTO — no agency layers in between.",
+          "Six ways founders work with me directly: SaaS MVP, AI MVP, technical partnership, SaaS rescue, product scaling, and fractional CTO — with transparent monthly pricing.",
       },
-      { property: "og:title", content: "Engagements — MehdiGolzari.dev" },
+      { property: "og:title", content: "Offers — MehdiGolzari.dev" },
       {
         property: "og:description",
         content:
-          "Direct engineering engagements for founders: MVPs, AI products, scaling, rescue and fractional CTO.",
+          "Direct engineering offers for founders: MVPs, AI products, scaling, rescue and fractional CTO — transparent pricing.",
       },
     ],
   }),
@@ -175,15 +177,15 @@ function ServicesPage() {
       <section className="bg-hero">
         <div className="mx-auto max-w-5xl px-5 py-16 sm:px-8 sm:py-24 text-center">
           <div className="text-xs font-medium uppercase tracking-widest text-neon-gradient">
-            Engagements
+            Offers
           </div>
           <h1 className="mt-3 font-display text-4xl font-semibold sm:text-5xl">
             Ways to <span className="text-neon-gradient">work together</span>.
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Six focused engagement models — from launching an MVP to acting as your fractional
-            CTO. Every one of them means you work directly with me. No sales team. No project
-            manager in between.
+            Six focused offers — from launching an MVP to acting as your fractional CTO. Every
+            one of them means you work directly with me. No sales team. No project manager in
+            between.
           </p>
           <div className="mt-7 flex justify-center">
             <DemoButton className="px-6 py-3.5 text-base">
@@ -239,6 +241,85 @@ function ServicesPage() {
           )}
         </div>
 
+        {/* PRICING */}
+        <div id="pricing" className="mt-20">
+          <div className="mx-auto max-w-2xl text-center">
+            <div className="text-xs font-medium uppercase tracking-widest text-neon-gradient">
+              Investment
+            </div>
+            <h2 className="mt-3 font-display text-3xl font-semibold sm:text-4xl">
+              Simple, transparent <span className="text-neon-gradient">pricing</span>.
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              Pricing is always a conversation — every offer is shaped to your scope and pace.
+              As a soft starting point, work typically begins from{" "}
+              <span className="text-foreground font-semibold">€2,000 / month</span>.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2 rounded-3xl border border-border bg-card p-8 shadow-card relative overflow-hidden">
+              <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-neon opacity-10 blur-3xl" aria-hidden />
+              <div className="relative">
+                <div className="text-xs font-semibold uppercase tracking-widest text-neon">Starting from</div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="font-display text-5xl font-semibold">€2,000</span>
+                  <span className="text-muted-foreground">/ month</span>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Negotiable based on scope, timeline and the kind of partnership you need.
+                </p>
+
+                <div className="mt-7 grid gap-4 sm:grid-cols-3">
+                  <PayStep n="1" title="Advance" body="One third up-front to kick things off and lock the slot." highlight />
+                  <PayStep n="2" title="Progress" body="Work happens with full visibility — demos, docs, repo access." />
+                  <PayStep n="3" title="Final" body="Remaining two thirds settled at the end, once you're happy." />
+                </div>
+
+                <div className="mt-7 rounded-2xl border border-border bg-background/60 p-5">
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-neon" />
+                    <div className="text-sm text-foreground/85">
+                      <span className="font-semibold text-foreground">Full transparency, every step.</span>{" "}
+                      You receive documented updates and visible results on a regular cadence — so
+                      you always know exactly where your money is going and what's been built.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-border bg-card p-8 shadow-card flex flex-col">
+              <div className="grid h-11 w-11 place-items-center rounded-xl bg-neon shadow-neon">
+                <Cpu className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <h3 className="mt-4 font-display text-xl font-semibold">Development infrastructure on me.</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                During the build, you don't pay for any of the moving parts behind the scenes.
+              </p>
+              <ul className="mt-5 space-y-2.5 text-sm">
+                {[
+                  "Cloud hosting to run the app while we build",
+                  "Git repositories with live access for you",
+                  "Staging environments to review results online",
+                  "Tooling, CI/CD and monitoring during development",
+                ].map((t) => (
+                  <li key={t} className="flex items-start gap-2 text-foreground/90">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-neon" /> {t}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-5 rounded-xl border border-border bg-background/60 p-4 text-sm">
+                <span className="font-semibold text-foreground">Free for you during development.</span>{" "}
+                <span className="text-muted-foreground">
+                  At the end, everything migrates cleanly to your own accounts — code, cloud, data, all yours.
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
         <div className="mt-14 rounded-3xl border border-border bg-card p-10 text-center shadow-card">
           <h2 className="font-display text-2xl font-semibold sm:text-3xl">
             Not sure which fits? Let's talk first.
@@ -280,6 +361,16 @@ function Meta({
         </div>
         <div className="text-xs leading-relaxed text-foreground/85">{value}</div>
       </div>
+    </div>
+  );
+}
+
+function PayStep({ n, title, body, highlight }: { n: string; title: string; body: string; highlight?: boolean }) {
+  return (
+    <div className={`rounded-2xl border p-4 ${highlight ? "border-neon/50 bg-neon/5" : "border-border bg-background/60"}`}>
+      <div className="font-mono text-xs text-neon-gradient">Step {n}</div>
+      <div className="mt-1 font-semibold">{title}</div>
+      <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{body}</p>
     </div>
   );
 }
