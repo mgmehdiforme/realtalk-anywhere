@@ -177,15 +177,15 @@ function ServicesPage() {
       <section className="bg-hero">
         <div className="mx-auto max-w-5xl px-5 py-16 sm:px-8 sm:py-24 text-center">
           <div className="text-xs font-medium uppercase tracking-widest text-neon-gradient">
-            Engagements
+            Offers
           </div>
           <h1 className="mt-3 font-display text-4xl font-semibold sm:text-5xl">
             Ways to <span className="text-neon-gradient">work together</span>.
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Six focused engagement models — from launching an MVP to acting as your fractional
-            CTO. Every one of them means you work directly with me. No sales team. No project
-            manager in between.
+            Six focused offers — from launching an MVP to acting as your fractional CTO. Every
+            one of them means you work directly with me. No sales team. No project manager in
+            between.
           </p>
           <div className="mt-7 flex justify-center">
             <DemoButton className="px-6 py-3.5 text-base">
