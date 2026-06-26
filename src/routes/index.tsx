@@ -14,7 +14,6 @@ import {
   ShieldCheck,
   Globe,
   Award,
-  Users,
   Building2,
   Sparkles,
   X,
