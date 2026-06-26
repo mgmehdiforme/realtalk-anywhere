@@ -111,35 +111,18 @@ function NavBar() {
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-neon shadow-neon">
             <span className="h-3 w-3 rounded-sm bg-background" />
           </span>
-          <span className="font-display text-base font-semibold tracking-tight">UVT</span>
+          <span className="font-display text-base font-semibold tracking-tight">MehdiGolzari<span className="text-neon-gradient">.dev</span></span>
         </Link>
-        <nav className="flex items-center gap-1 text-sm">
-          <Link
-            to="/"
-            activeOptions={{ exact: true }}
-            className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground"
-            activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}
-          >
-            Translator
-          </Link>
-          <Link
-            to="/resume"
-            className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground"
-            activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}
-          >
-            Resume
-          </Link>
-          <Link
-            to="/contact"
-            className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground"
-            activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}
-          >
-            Contact
-          </Link>
+        <nav className="hidden items-center gap-1 text-sm md:flex">
+          <Link to="/" activeOptions={{ exact: true }} className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground" activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}>Home</Link>
+          <Link to="/services" className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground" activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}>Services</Link>
+          <Link to="/about" className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground" activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}>About</Link>
+          <Link to="/resume" className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground" activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}>Resume</Link>
+          <Link to="/contact" className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground" activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}>Contact</Link>
         </nav>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <DemoButton className="hidden sm:inline-flex">Request Demo</DemoButton>
+          <DemoButton className="hidden sm:inline-flex">Book a Call</DemoButton>
         </div>
       </div>
     </header>
