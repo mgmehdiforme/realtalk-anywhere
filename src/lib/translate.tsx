@@ -62,6 +62,28 @@ export function LanguageSelect() {
     s.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
     s.async = true;
     document.body.appendChild(s);
+
+    // Aggressively hide the Google Translate banner whenever it gets injected
+    const killBanner = () => {
+      document
+        .querySelectorAll<HTMLElement>(
+          ".goog-te-banner-frame, iframe.goog-te-banner-frame, iframe.skiptranslate",
+        )
+        .forEach((el) => {
+          el.style.display = "none";
+          el.style.visibility = "hidden";
+          el.style.height = "0";
+        });
+      if (document.body.style.top) document.body.style.top = "";
+      if (document.documentElement.style.top) document.documentElement.style.top = "";
+    };
+    const observer = new MutationObserver(killBanner);
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+    const id = window.setInterval(killBanner, 400);
+    return () => {
+      observer.disconnect();
+      window.clearInterval(id);
+    };
   }, []);
 
   useEffect(() => {
