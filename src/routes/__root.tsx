@@ -137,6 +137,7 @@ function NavBar() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
+          <LanguageSelect />
           <ThemeToggle />
           <DemoButton className="hidden sm:inline-flex">Book a Call</DemoButton>
           <button
