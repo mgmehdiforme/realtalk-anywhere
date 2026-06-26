@@ -33,6 +33,7 @@ function setCookie(name: string, value: string) {
 export function LanguageSelect() {
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState("en");
+  const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const loaded = useRef(false);
 
