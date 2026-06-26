@@ -96,7 +96,7 @@ function ContactPage() {
         </div>
 
         <div className="mt-12 text-center text-sm text-muted-foreground">
-          Curious about the engineering behind the app?{" "}
+          Want the full background?{" "}
           <Link to="/resume" className="font-medium text-foreground underline-offset-4 hover:underline">
             Read my résumé →
           </Link>
