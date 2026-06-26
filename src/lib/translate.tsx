@@ -9,7 +9,7 @@ declare global {
 }
 
 const LANGS = [
-  { code: "en", label: "English", flag: "🇬🇧" },
+  { code: "en", label: "English", flag: "EN" },
   { code: "nl", label: "Nederlands", flag: "🇳🇱" },
   { code: "de", label: "Deutsch", flag: "🇩🇪" },
   { code: "sv", label: "Svenska", flag: "🇸🇪" },
