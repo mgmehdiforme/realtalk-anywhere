@@ -19,6 +19,10 @@ import {
   X,
   Mail,
   Clock,
+  Calendar,
+  Gauge,
+  Cpu,
+  Wifi,
 } from "lucide-react";
 import { DemoButton } from "@/lib/demo-modal";
 
@@ -75,14 +79,6 @@ const SERVICES = [
   },
 ];
 
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="rounded-lg border border-border bg-background/60 px-2 py-2.5">
-      <div className="font-display text-lg font-semibold text-neon-gradient">{value}</div>
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-    </div>
-  );
-}
 
 function Landing() {
   return (
@@ -126,39 +122,98 @@ function Landing() {
           </div>
 
           <div className="lg:col-span-5">
-            <div className="relative rounded-2xl border border-border bg-card/70 p-6 shadow-card backdrop-blur">
-              <div className="absolute -inset-px rounded-2xl bg-neon opacity-20 blur-2xl" aria-hidden />
-              <div className="relative">
-                <div className="flex items-center justify-between">
-                  <div className="font-mono text-xs uppercase tracking-widest text-neon-gradient">
-                    /engagement.json
+            <div className="relative">
+              {/* Glow */}
+              <div className="absolute -inset-4 rounded-3xl bg-neon opacity-20 blur-3xl" aria-hidden />
+
+              {/* Identity card */}
+              <div className="relative overflow-hidden rounded-2xl border border-border bg-card/80 shadow-card backdrop-blur">
+                {/* Top status bar */}
+                <div className="flex items-center justify-between border-b border-border bg-background/40 px-5 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                    </span>
+                    <span className="text-xs font-medium text-foreground/80">Online · accepting projects</span>
                   </div>
-                  <div className="flex gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-red-400/70" />
-                    <span className="h-2 w-2 rounded-full bg-amber-400/70" />
-                    <span className="h-2 w-2 rounded-full bg-emerald-400/70" />
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">v10.0</span>
+                </div>
+
+                {/* Profile */}
+                <div className="px-6 pt-7">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="grid h-14 w-14 place-items-center rounded-2xl bg-neon font-display text-xl font-bold text-primary-foreground shadow-neon">
+                        MG
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full border-2 border-card bg-emerald-500 text-white">
+                        <Check className="h-3 w-3" strokeWidth={3} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="font-display text-lg font-semibold">Mehdi Golzari</div>
+                      <div className="text-xs text-muted-foreground">Senior Engineer · .NET · AI · SaaS</div>
+                    </div>
+                  </div>
+
+                  {/* Stack chips */}
+                  <div className="mt-5 flex flex-wrap gap-1.5">
+                    {[".NET", "Node", "React", "Python", "OpenAI", "Postgres"].map((t) => (
+                      <span
+                        key={t}
+                        className="rounded-md border border-border bg-background/60 px-2 py-1 font-mono text-[11px] text-foreground/80"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Live metrics */}
+                  <div className="mt-6 space-y-3">
+                    {[
+                      { icon: Wifi, label: "Avg. reply (WhatsApp)", value: "< 10 min", tone: "emerald" },
+                      { icon: Gauge, label: "MVP delivery", value: "weeks, not months", tone: "neon" },
+                      { icon: Cpu, label: "Engagement model", value: "direct → you", tone: "neon" },
+                    ].map(({ icon: Icon, label, value, tone }) => (
+                      <div
+                        key={label}
+                        className="flex items-center justify-between rounded-lg border border-border bg-background/50 px-3.5 py-2.5"
+                      >
+                        <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
+                          <Icon
+                            className={`h-3.5 w-3.5 ${tone === "emerald" ? "text-emerald-500" : "text-neon"}`}
+                          />
+                          {label}
+                        </div>
+                        <div className="font-mono text-xs font-semibold text-foreground">{value}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <pre className="mt-4 overflow-x-auto rounded-lg border border-border bg-background/60 p-4 font-mono text-[12.5px] leading-relaxed text-foreground/90">
-{`{
-  "engineer":   "Mehdi Golzari",
-  "role":       "Senior · .NET · AI",
-  "experience": "10+ years",
-  "stack":      [".NET", "Node", "React",
-                 "Python", "OpenAI"],
-  "model":      "direct → you",
-  "agency":     false,
-  "available":  true
-}`}
-                </pre>
-                <div className="mt-5 grid grid-cols-3 gap-3 text-center">
-                  <Stat value="10+" label="Years" />
-                  <Stat value="70k" label="Users served" />
-                  <Stat value="0" label="Middlemen" />
+
+                {/* Stats footer */}
+                <div className="mt-6 grid grid-cols-3 border-t border-border bg-background/30 text-center">
+                  {[
+                    { v: "10+", l: "Years" },
+                    { v: "70k", l: "Users served" },
+                    { v: "0", l: "Middlemen" },
+                  ].map(({ v, l }, i) => (
+                    <div
+                      key={l}
+                      className={`px-3 py-4 ${i < 2 ? "border-r border-border" : ""}`}
+                    >
+                      <div className="font-display text-xl font-semibold text-neon-gradient">{v}</div>
+                      <div className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {l}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
+
         </div>
       </section>
 
@@ -193,13 +248,14 @@ function Landing() {
               Direct execution model
             </div>
             <h2 className="mt-3 font-display text-3xl font-semibold sm:text-4xl">
-              Five layers between you and your product — <span className="text-neon-gradient">or one.</span>
+              Two ways to build your product. <span className="text-neon-gradient">Which one is better?</span>
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Every layer adds cost, lag and lost context. I work the way founders actually need: one
-              senior engineer, end-to-end.
+              Side by side — the agency path most founders default to, and the direct path I offer.
+              Same goal, very different cost, speed and clarity.
             </p>
           </div>
+
 
           <div className="mx-auto mt-12 grid max-w-5xl gap-6 md:grid-cols-2">
             {/* Most agencies */}
@@ -357,17 +413,30 @@ function Landing() {
                 Why founders pick me
               </div>
               <h2 className="mt-3 font-display text-3xl font-semibold sm:text-4xl">
-                Software development isn't the product. <span className="text-neon-gradient">Execution is.</span>
+                Software development isn't my main offer. <span className="text-neon-gradient">Execution is.</span>
               </h2>
               <p className="mt-5 text-muted-foreground">
-                You're not buying programming hours — you're buying faster time-to-market, better
-                technical decisions, lower risk and scalable architecture from someone who's done it
-                before.
+                I move fast because I pair 10+ years of senior engineering with modern AI tools —
+                seniority chooses the right path, AI shortens the road. Together they let me ship
+                accurately, in a fraction of the usual time.
               </p>
+              <div className="mt-5 space-y-2.5 text-sm">
+                {[
+                  { icon: Calendar, text: "Most engagements run monthly — some founders only need a focused week." },
+                  { icon: Rocket, text: "Production-ready MVPs in weeks, not months." },
+                  { icon: Sparkles, text: "AI-augmented delivery, senior-engineered decisions." },
+                ].map(({ icon: Icon, text }) => (
+                  <div key={text} className="flex items-start gap-2.5 text-foreground/85">
+                    <Icon className="mt-0.5 h-4 w-4 shrink-0 text-neon" />
+                    <span>{text}</span>
+                  </div>
+                ))}
+              </div>
               <div className="mt-7">
                 <DemoButton>Book a Discovery Call</DemoButton>
               </div>
             </div>
+
 
             <div className="grid gap-4 sm:grid-cols-2 lg:col-span-7">
               {[
