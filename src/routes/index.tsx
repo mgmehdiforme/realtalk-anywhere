@@ -25,6 +25,7 @@ import {
   Wifi,
 } from "lucide-react";
 import { DemoButton } from "@/lib/demo-modal";
+import avatarAsset from "@/assets/avatar.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -144,9 +145,11 @@ function Landing() {
                 <div className="px-6 pt-7">
                   <div className="flex items-center gap-4">
                     <div className="relative">
-                      <div className="grid h-14 w-14 place-items-center rounded-2xl bg-neon font-display text-xl font-bold text-primary-foreground shadow-neon">
-                        MG
-                      </div>
+                      <img
+                        src={avatarAsset.url}
+                        alt="Mehdi Golzari"
+                        className="h-14 w-14 rounded-2xl object-cover shadow-neon ring-2 ring-[color:var(--neon)]/40"
+                      />
                       <div className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full border-2 border-card bg-emerald-500 text-white">
                         <Check className="h-3 w-3" strokeWidth={3} />
                       </div>
@@ -420,11 +423,19 @@ function Landing() {
                 seniority chooses the right path, AI shortens the road. Together they let me ship
                 accurately, in a fraction of the usual time.
               </p>
+              <p className="mt-4 text-muted-foreground">
+                I'm a technical person — and quietly, a business one too. Years of hands-on
+                marketing experience, plus Google <span className="text-foreground/90 font-medium">My Business</span> and
+                <span className="text-foreground/90 font-medium"> Digital Garage</span> certifications, let
+                me think about your product the way your customers will. I help you go from
+                <span className="text-neon-gradient font-semibold"> zero to hero</span> — not just build software.
+              </p>
               <div className="mt-5 space-y-2.5 text-sm">
                 {[
                   { icon: Calendar, text: "Most engagements run monthly — some founders only need a focused week." },
                   { icon: Rocket, text: "Production-ready MVPs in weeks, not months." },
                   { icon: Sparkles, text: "AI-augmented delivery, senior-engineered decisions." },
+                  { icon: TrendingUp, text: "Engineer + marketer mindset — built to ship and built to sell." },
                 ].map(({ icon: Icon, text }) => (
                   <div key={text} className="flex items-start gap-2.5 text-foreground/85">
                     <Icon className="mt-0.5 h-4 w-4 shrink-0 text-neon" />
