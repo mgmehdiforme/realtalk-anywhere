@@ -13,6 +13,11 @@ import {
   Zap,
   ShieldCheck,
   Globe,
+  Award,
+  Users,
+  Building2,
+  Sparkles,
+  X,
 } from "lucide-react";
 import { DemoButton } from "@/lib/demo-modal";
 
