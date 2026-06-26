@@ -4,15 +4,16 @@ import { MessageCircle, Mail, MapPin, Linkedin, ArrowRight, Sparkles } from "luc
 const PHONE_DISPLAY = "+90 501 939 0465";
 const PHONE = "905019390465";
 const EMAIL = "MehdiGolzari.official@gmail.com";
-const MESSAGE = "Hello Mehdi! I am interested in scheduling a live demo of the Universal Voice Translator for Windows.";
+const MESSAGE =
+  "Hi Mehdi! I'd like to book a free discovery call to discuss building/scaling my SaaS or AI product.";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact Mehdi Golzari — Universal Voice Translator" },
-      { name: "description", content: "Get in touch with Mehdi Golzari. Book a live demo of the AI-Powered Universal Voice Translator, or reach out about engineering work." },
-      { property: "og:title", content: "Contact — Mehdi Golzari" },
-      { property: "og:description", content: "WhatsApp, email, or LinkedIn — pick your channel." },
+      { title: "Contact Mehdi Golzari — Book a Discovery Call" },
+      { name: "description", content: "Talk directly to Mehdi about your SaaS or AI product. WhatsApp, email or LinkedIn — pick your channel." },
+      { property: "og:title", content: "Contact — MehdiGolzari.dev" },
+      { property: "og:description", content: "WhatsApp, email, or LinkedIn — talk directly to the engineer." },
     ],
   }),
   component: ContactPage,
