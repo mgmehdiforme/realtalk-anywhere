@@ -66,17 +66,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Universal Voice Translator — Real-time translation for any Windows app" },
-      { name: "description", content: "Break the language barrier in any Windows app. Real-time voice translation over Discord, Google Meet, WhatsApp and more. Mehdi Golzari" },
+      { title: "MehdiGolzari.dev — Independent Technical Partner for SaaS Founders" },
+      { name: "description", content: "Work directly with the senior engineer building your product. SaaS MVP, AI MVP, scaling and fractional CTO — no agencies, no middlemen." },
       { name: "author", content: "Mehdi Golzari" },
-      { property: "og:title", content: "Universal Voice Translator — Real-time translation for any Windows app" },
-      { property: "og:description", content: "Break the language barrier in any Windows app. Real-time voice translation over Discord, Google Meet, WhatsApp and more. Mehdi Golzari" },
+      { property: "og:title", content: "MehdiGolzari.dev — Independent Technical Partner" },
+      { property: "og:description", content: "Founders should work directly with the engineer building their product. SaaS & AI MVPs, scaling, rescue, fractional CTO." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Universal Voice Translator — Real-time translation for any Windows app" },
-      { name: "twitter:description", content: "Break the language barrier in any Windows app. Real-time voice translation over Discord, Google Meet, WhatsApp and more. Mehdi Golzari" },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/H6t3Ehg7pjYkmuZq5mwjKZ7MXPj2/social-images/social-1782374840976-Screenshot_2026-06-25_110440.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/H6t3Ehg7pjYkmuZq5mwjKZ7MXPj2/social-images/social-1782374840976-Screenshot_2026-06-25_110440.webp" },
+      { name: "twitter:title", content: "MehdiGolzari.dev — Independent Technical Partner" },
+      { name: "twitter:description", content: "Work directly with the engineer building your SaaS or AI product." },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -113,35 +111,18 @@ function NavBar() {
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-neon shadow-neon">
             <span className="h-3 w-3 rounded-sm bg-background" />
           </span>
-          <span className="font-display text-base font-semibold tracking-tight">UVT</span>
+          <span className="font-display text-base font-semibold tracking-tight">MehdiGolzari<span className="text-neon-gradient">.dev</span></span>
         </Link>
-        <nav className="flex items-center gap-1 text-sm">
-          <Link
-            to="/"
-            activeOptions={{ exact: true }}
-            className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground"
-            activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}
-          >
-            Translator
-          </Link>
-          <Link
-            to="/resume"
-            className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground"
-            activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}
-          >
-            Resume
-          </Link>
-          <Link
-            to="/contact"
-            className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground"
-            activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}
-          >
-            Contact
-          </Link>
+        <nav className="hidden items-center gap-1 text-sm md:flex">
+          <Link to="/" activeOptions={{ exact: true }} className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground" activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}>Home</Link>
+          <Link to="/services" className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground" activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}>Services</Link>
+          <Link to="/about" className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground" activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}>About</Link>
+          <Link to="/resume" className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground" activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}>Resume</Link>
+          <Link to="/contact" className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground" activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}>Contact</Link>
         </nav>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <DemoButton className="hidden sm:inline-flex">Request Demo</DemoButton>
+          <DemoButton className="hidden sm:inline-flex">Book a Call</DemoButton>
         </div>
       </div>
     </header>
@@ -152,7 +133,7 @@ function Footer() {
   return (
     <footer className="border-t border-border py-10">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-5 text-sm text-muted-foreground sm:flex-row sm:px-8">
-        <div>© {new Date().getFullYear()} Mehdi Golzari · Universal Voice Translator</div>
+        <div>© {new Date().getFullYear()} Mehdi Golzari · Independent Technical Partner</div>
         <div className="flex gap-4">
           <a className="hover:text-foreground" href="mailto:MehdiGolzari.official@gmail.com">Email</a>
           <a className="hover:text-foreground" href="https://wa.me/905019390465" target="_blank" rel="noreferrer">WhatsApp</a>

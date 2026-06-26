@@ -4,15 +4,16 @@ import { MessageCircle, Mail, MapPin, Linkedin, ArrowRight, Sparkles } from "luc
 const PHONE_DISPLAY = "+90 501 939 0465";
 const PHONE = "905019390465";
 const EMAIL = "MehdiGolzari.official@gmail.com";
-const MESSAGE = "Hello Mehdi! I am interested in scheduling a live demo of the Universal Voice Translator for Windows.";
+const MESSAGE =
+  "Hi Mehdi! I'd like to book a free discovery call to discuss building/scaling my SaaS or AI product.";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact Mehdi Golzari — Universal Voice Translator" },
-      { name: "description", content: "Get in touch with Mehdi Golzari. Book a live demo of the AI-Powered Universal Voice Translator, or reach out about engineering work." },
-      { property: "og:title", content: "Contact — Mehdi Golzari" },
-      { property: "og:description", content: "WhatsApp, email, or LinkedIn — pick your channel." },
+      { title: "Contact Mehdi Golzari — Book a Discovery Call" },
+      { name: "description", content: "Talk directly to Mehdi about your SaaS or AI product. WhatsApp, email or LinkedIn — pick your channel." },
+      { property: "og:title", content: "Contact — MehdiGolzari.dev" },
+      { property: "og:description", content: "WhatsApp, email, or LinkedIn — talk directly to the engineer." },
     ],
   }),
   component: ContactPage,
@@ -33,14 +34,13 @@ function ContactPage() {
       <div className="mx-auto max-w-5xl px-5 py-16 sm:px-8 sm:py-24">
         <div className="mx-auto max-w-2xl text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5 text-neon" /> AI-Powered · Live demo in 15 minutes
+            <Sparkles className="h-3.5 w-3.5 text-neon" /> Free 30-min discovery call
           </div>
           <h1 className="mt-5 font-display text-4xl font-semibold leading-tight sm:text-5xl">
             Let's <span className="text-neon-gradient">talk</span>.
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            Pick whichever channel is easiest. For demo requests, your message is already written —
-            just hit send.
+            Pick whichever channel is easiest. Your message is already written — just hit send.
           </p>
         </div>
 
@@ -74,7 +74,7 @@ function ContactPage() {
 
         {/* Pre-filled message preview */}
         <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-border bg-card p-6 shadow-card">
-          <div className="text-xs font-medium uppercase tracking-widest text-neon-gradient">Pre-filled demo message</div>
+          <div className="text-xs font-medium uppercase tracking-widest text-neon-gradient">Pre-filled message</div>
           <div className="mt-3 rounded-xl border border-border bg-background/60 p-4 font-mono text-sm leading-relaxed text-foreground/90">
             "{MESSAGE}"
           </div>
@@ -96,7 +96,7 @@ function ContactPage() {
         </div>
 
         <div className="mt-12 text-center text-sm text-muted-foreground">
-          Curious about the engineering behind the app?{" "}
+          Want the full background?{" "}
           <Link to="/resume" className="font-medium text-foreground underline-offset-4 hover:underline">
             Read my résumé →
           </Link>
