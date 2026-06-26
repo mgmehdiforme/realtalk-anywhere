@@ -79,14 +79,6 @@ const SERVICES = [
   },
 ];
 
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="rounded-lg border border-border bg-background/60 px-2 py-2.5">
-      <div className="font-display text-lg font-semibold text-neon-gradient">{value}</div>
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-    </div>
-  );
-}
 
 function Landing() {
   return (
