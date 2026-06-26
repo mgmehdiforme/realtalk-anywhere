@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { DemoModalProvider, DemoButton } from "../lib/demo-modal";
 import { ThemeProvider, ThemeToggle } from "../lib/theme";
+import { LanguageSelect } from "../lib/translate";
 
 function NotFoundComponent() {
   return (
@@ -136,6 +137,7 @@ function NavBar() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
+          <LanguageSelect />
           <ThemeToggle />
           <DemoButton className="hidden sm:inline-flex">Book a Call</DemoButton>
           <button
