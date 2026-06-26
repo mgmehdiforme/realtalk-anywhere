@@ -248,13 +248,14 @@ function Landing() {
               Direct execution model
             </div>
             <h2 className="mt-3 font-display text-3xl font-semibold sm:text-4xl">
-              Five layers between you and your product — <span className="text-neon-gradient">or one.</span>
+              Two ways to build your product. <span className="text-neon-gradient">Which one is better?</span>
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Every layer adds cost, lag and lost context. I work the way founders actually need: one
-              senior engineer, end-to-end.
+              Side by side — the agency path most founders default to, and the direct path I offer.
+              Same goal, very different cost, speed and clarity.
             </p>
           </div>
+
 
           <div className="mx-auto mt-12 grid max-w-5xl gap-6 md:grid-cols-2">
             {/* Most agencies */}
