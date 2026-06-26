@@ -105,30 +105,74 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function NavBar() {
+  const [open, setOpen] = useState(false);
+  const links = [
+    { to: "/" as const, label: "Home", exact: true },
+    { to: "/services" as const, label: "Services" },
+    { to: "/about" as const, label: "About" },
+    { to: "/resume" as const, label: "Resume" },
+    { to: "/contact" as const, label: "Contact" },
+  ];
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/70 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
-        <Link to="/" className="flex items-center gap-2.5">
+        <Link to="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-neon shadow-neon">
             <span className="h-3 w-3 rounded-sm bg-background" />
           </span>
           <span className="font-display text-base font-semibold tracking-tight">MehdiGolzari<span className="text-neon-gradient">.dev</span></span>
         </Link>
         <nav className="hidden items-center gap-1 text-sm md:flex">
-          <Link to="/" activeOptions={{ exact: true }} className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground" activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}>Home</Link>
-          <Link to="/services" className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground" activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}>Services</Link>
-          <Link to="/about" className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground" activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}>About</Link>
-          <Link to="/resume" className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground" activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}>Resume</Link>
-          <Link to="/contact" className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground" activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}>Contact</Link>
+          {links.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              activeOptions={l.exact ? { exact: true } : undefined}
+              className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground"
+              activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}
+            >
+              {l.label}
+            </Link>
+          ))}
         </nav>
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <DemoButton className="hidden sm:inline-flex">Book a Call</DemoButton>
+          <button
+            onClick={() => setOpen((o) => !o)}
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition hover:text-foreground md:hidden"
+          >
+            {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          </button>
         </div>
       </div>
+      {open && (
+        <div className="border-t border-border bg-background/95 backdrop-blur-xl md:hidden">
+          <nav className="mx-auto flex max-w-7xl flex-col px-5 py-3 text-sm sm:px-8">
+            {links.map((l) => (
+              <Link
+                key={l.to}
+                to={l.to}
+                activeOptions={l.exact ? { exact: true } : undefined}
+                onClick={() => setOpen(false)}
+                className="rounded-md px-3 py-3 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                activeProps={{ className: "rounded-md px-3 py-3 text-foreground bg-muted" }}
+              >
+                {l.label}
+              </Link>
+            ))}
+            <div className="mt-2 px-1 pb-1">
+              <DemoButton className="w-full justify-center">Book a Call</DemoButton>
+            </div>
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
+
 
 function Footer() {
   return (
