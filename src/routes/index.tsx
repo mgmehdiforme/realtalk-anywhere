@@ -507,6 +507,11 @@ function Landing() {
                 me think about your product the way your customers will. I help you go from
                 <span className="text-neon-gradient font-semibold"> zero to hero</span> — not just build software.
               </p>
+              <p className="mt-4 text-muted-foreground">
+                You'll also be working with an engineer who's been a{" "}
+                <span className="text-foreground/90 font-medium">core team member inside American startups</span> —
+                the pace, the product instincts, the bar for quality. That experience comes with me into your product.
+              </p>
               <div className="mt-5 space-y-2.5 text-sm">
                 {[
                   { icon: Calendar, text: "Most engagements run monthly — some founders only need a focused week." },
