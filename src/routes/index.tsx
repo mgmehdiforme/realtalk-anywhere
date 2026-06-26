@@ -242,6 +242,83 @@ function Landing() {
         </div>
       </section>
 
+      {/* NATIVE LANGUAGE CONVERSATIONS */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 grid-bg opacity-25" aria-hidden />
+        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 py-20 sm:px-8 lg:grid-cols-2">
+          <div>
+            <div className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-neon-gradient">
+              <Globe className="h-3.5 w-3.5" /> No borders. No language wall.
+            </div>
+            <h2 className="mt-3 font-display text-3xl font-semibold sm:text-4xl">
+              I meet you in <span className="text-neon-gradient">your native language</span> — wherever you are.
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              Calls, Google Meet, WhatsApp voice — I run them in your country's language, in real time.
+              Powered by a translation product I designed and use myself, so the conversation feels natural,
+              not robotic.
+            </p>
+            <ul className="mt-6 space-y-2.5 text-sm">
+              {[
+                "Real-time voice translation on any call platform",
+                "Built with my own AI tool — used daily, not theoretical",
+                "Discovery calls in English, Spanish, French, German, Arabic, Portuguese, Japanese, Chinese…",
+                "You speak normally. I understand you. We move forward.",
+              ].map((t) => (
+                <li key={t} className="flex items-start gap-2.5 text-foreground/90">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-neon" />
+                  <span>{t}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Floating language orb */}
+          <div className="relative mx-auto aspect-square w-full max-w-md">
+            <div className="absolute inset-0 rounded-full bg-neon opacity-20 blur-3xl" aria-hidden />
+            {/* Concentric rings */}
+            <div className="absolute inset-6 rounded-full border border-[color:var(--neon)]/30" />
+            <div className="absolute inset-16 rounded-full border border-[color:var(--neon)]/20" />
+            <div className="absolute inset-28 rounded-full border border-[color:var(--neon)]/10" />
+
+            {/* Center globe */}
+            <div className="absolute left-1/2 top-1/2 grid h-24 w-24 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-neon text-primary-foreground shadow-neon">
+              <Globe className="h-10 w-10" />
+              <span className="absolute -bottom-1 right-1 grid h-6 w-6 place-items-center rounded-full border-2 border-card bg-emerald-500">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+              </span>
+            </div>
+
+            {/* Floating language chips */}
+            {[
+              { t: "Hola", flag: "🇪🇸", x: "8%", y: "12%" },
+              { t: "Bonjour", flag: "🇫🇷", x: "70%", y: "6%" },
+              { t: "こんにちは", flag: "🇯🇵", x: "82%", y: "44%" },
+              { t: "你好", flag: "🇨🇳", x: "72%", y: "78%" },
+              { t: "مرحبا", flag: "🇸🇦", x: "10%", y: "76%" },
+              { t: "Olá", flag: "🇧🇷", x: "0%", y: "44%" },
+              { t: "Guten Tag", flag: "🇩🇪", x: "40%", y: "0%" },
+              { t: "Привет", flag: "🇷🇺", x: "44%", y: "90%" },
+            ].map(({ t, flag, x, y }, i) => (
+              <div
+                key={t}
+                className="absolute flex items-center gap-1.5 rounded-full border border-border bg-card/90 px-3 py-1.5 text-xs font-medium shadow-card backdrop-blur"
+                style={{
+                  left: x,
+                  top: y,
+                  animation: `float 6s ease-in-out ${i * 0.4}s infinite alternate`,
+                }}
+              >
+                <span className="text-sm leading-none">{flag}</span>
+                <span className="text-foreground/90">{t}</span>
+              </div>
+            ))}
+
+            <style>{`@keyframes float { from { transform: translateY(0) } to { transform: translateY(-8px) } }`}</style>
+          </div>
+        </div>
+      </section>
+
       {/* DIRECT EXECUTION — redesigned comparison */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 grid-bg opacity-30" aria-hidden />
