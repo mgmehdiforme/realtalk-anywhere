@@ -142,11 +142,20 @@
   background-size: 48px 48px;
 }
 
-/* Google Translate widget overrides */
+/* Google Translate widget overrides — hide all UI chrome */
+.goog-te-banner-frame,
 .goog-te-banner-frame.skiptranslate,
+iframe.goog-te-banner-frame,
+iframe.skiptranslate,
+.VIpgJd-ZVi9od-ORHb-OEVmcd,
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
+.VIpgJd-ZVi9od-l4eHX-hSRGPd,
+#goog-gt-tt,
+.goog-te-balloon-frame,
 .goog-te-gadget-icon,
-.goog-logo-link { display: none !important; }
-body { top: 0 !important; }
+.goog-logo-link { display: none !important; visibility: hidden !important; }
+html, body { top: 0 !important; position: static !important; }
 .goog-te-gadget { font-size: 0 !important; height: 0; overflow: hidden; }
 .goog-tooltip, .goog-tooltip:hover { display: none !important; }
 .goog-text-highlight { background: transparent !important; box-shadow: none !important; }
+
