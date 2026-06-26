@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Globe, Check } from "lucide-react";
+import { Globe, Check, Loader2 } from "lucide-react";
 
 declare global {
   interface Window {
