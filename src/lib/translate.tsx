@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Globe, Check } from "lucide-react";
+import { Globe, Check, Loader2 } from "lucide-react";
 
 declare global {
   interface Window {
@@ -33,6 +33,7 @@ function setCookie(name: string, value: string) {
 export function LanguageSelect() {
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState("en");
+  const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const loaded = useRef(false);
 
@@ -95,16 +96,20 @@ export function LanguageSelect() {
   }, []);
 
   const pick = (code: string) => {
+    if (code === current) {
+      setOpen(false);
+      return;
+    }
     setCurrent(code);
     setOpen(false);
+    setLoading(true);
     if (code === "en") {
-      // clear cookie & reload to original
       setCookie("googtrans", "");
       document.cookie = "googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     } else {
       setCookie("googtrans", `/en/${code}`);
     }
-    window.location.reload();
+    setTimeout(() => window.location.reload(), 150);
   };
 
   const active = LANGS.find((l) => l.code === current) ?? LANGS[0];
@@ -116,13 +121,24 @@ export function LanguageSelect() {
 
       <button
         onClick={() => setOpen((o) => !o)}
+        disabled={loading}
         aria-label="Choose language"
-        className="notranslate inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+        className="notranslate inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 text-xs font-medium text-muted-foreground transition hover:text-foreground disabled:opacity-70"
       >
-        <Globe className="h-3.5 w-3.5" />
+        {loading ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-neon" />
+        ) : (
+          <Globe className="h-3.5 w-3.5" />
+        )}
         <span>{active.flag}</span>
-        <span className="hidden sm:inline">{active.label}</span>
+        <span className="hidden sm:inline">{loading ? "Translating…" : active.label}</span>
       </button>
+
+      {loading && (
+        <div className="fixed inset-x-0 top-0 z-[100] h-0.5 overflow-hidden bg-transparent">
+          <div className="h-full w-1/3 animate-[slide-in-right_1.2s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-neon to-transparent" />
+        </div>
+      )}
 
       {open && (
         <div className="notranslate absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-border bg-card shadow-card">
