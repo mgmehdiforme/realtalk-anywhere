@@ -15,12 +15,14 @@ export const Route = createFileRoute("/resume")({
 });
 
 const competencies: Record<string, string[]> = {
-  "Languages & Frameworks": ["C#", "ASP.NET Core", ".NET Framework", "Razor Pages", "T-SQL", "PL-SQL", "JavaScript", "jQuery", "React"],
-  "Architecture & Patterns": ["Microservices", "DDD", "EDD", "CQRS", "Clean Architecture", "Event-Driven", "Cloud-Native"],
-  "Cloud & DevOps": ["Docker", "Kubernetes", "GitHub Actions", "CI/CD", "Redis", "RabbitMQ"],
-  "Databases": ["SQL Server", "PostgreSQL", "Oracle", "Redis", "EF Core", "Dapper"],
-  "AI & Integrations": ["OpenAI API (GPT-4)", "SignalR", "REST APIs", "SOAP / WCF"],
-  "Tools & Methods": ["Git", "GitHub", "Jira", "Agile / Scrum", "OWASP Top 10", "ISO 27001", "xUnit"],
+  "Languages & Frameworks": ["C#", "ASP.NET Core", ".NET Framework", "Razor Pages", "Python", "FastAPI", "Node.js", "TypeScript", "T-SQL", "PL-SQL", "JavaScript", "React", "Next.js"],
+  "Architecture & Patterns": ["Microservices", "DDD", "EDD", "CQRS", "Clean Architecture", "Event-Driven", "Cloud-Native", "SaaS Multi-tenant", "Serverless"],
+  "Cloud & DevOps": ["Docker", "Kubernetes", "GitHub Actions", "CI/CD", "Redis", "RabbitMQ", "AWS", "Azure", "Cloudflare Workers", "Nginx", "Linux"],
+  "Databases & Data": ["SQL Server", "PostgreSQL", "Oracle", "MongoDB", "Redis", "EF Core", "Dapper", "Vector DBs (pgvector, Pinecone, Qdrant)"],
+  "AI & LLM Engineering": ["OpenAI API (GPT-4/4o)", "Anthropic Claude", "LangChain", "LlamaIndex", "RAG Pipelines", "AI Agents", "Function Calling", "Prompt Engineering", "Embeddings", "Fine-tuning", "Whisper / TTS"],
+  "Integrations & Realtime": ["SignalR", "WebSockets", "REST APIs", "GraphQL", "SOAP / WCF", "Stripe", "Twilio", "Webhooks"],
+  "Product & Delivery": ["MVP Architecture", "Technical Discovery", "Fractional CTO", "Product Engineering", "Code Audits"],
+  "Tools & Methods": ["Git", "GitHub", "Jira", "Agile / Scrum", "OWASP Top 10", "ISO 27001", "xUnit", "PyTest"],
 };
 
 const roles = [
