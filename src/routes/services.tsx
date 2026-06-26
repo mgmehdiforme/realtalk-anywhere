@@ -364,3 +364,13 @@ function Meta({
     </div>
   );
 }
+
+function PayStep({ n, title, body, highlight }: { n: string; title: string; body: string; highlight?: boolean }) {
+  return (
+    <div className={`rounded-2xl border p-4 ${highlight ? "border-neon/50 bg-neon/5" : "border-border bg-background/60"}`}>
+      <div className="font-mono text-xs text-neon-gradient">Step {n}</div>
+      <div className="mt-1 font-semibold">{title}</div>
+      <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{body}</p>
+    </div>
+  );
+}
