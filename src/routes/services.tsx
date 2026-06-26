@@ -19,17 +19,17 @@ import { DemoButton } from "@/lib/demo-modal";
 export const Route = createFileRoute("/services")({
   head: () => ({
     meta: [
-      { title: "Engagements — Ways to Work Together | MehdiGolzari.dev" },
+      { title: "Offers — Ways to Work Together | MehdiGolzari.dev" },
       {
         name: "description",
         content:
-          "Six ways founders work with me directly: SaaS MVP, AI MVP, technical partnership, SaaS rescue, product scaling, and fractional CTO — no agency layers in between.",
+          "Six ways founders work with me directly: SaaS MVP, AI MVP, technical partnership, SaaS rescue, product scaling, and fractional CTO — with transparent monthly pricing.",
       },
-      { property: "og:title", content: "Engagements — MehdiGolzari.dev" },
+      { property: "og:title", content: "Offers — MehdiGolzari.dev" },
       {
         property: "og:description",
         content:
-          "Direct engineering engagements for founders: MVPs, AI products, scaling, rescue and fractional CTO.",
+          "Direct engineering offers for founders: MVPs, AI products, scaling, rescue and fractional CTO — transparent pricing.",
       },
     ],
   }),
