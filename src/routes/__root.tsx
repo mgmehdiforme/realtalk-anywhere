@@ -133,7 +133,7 @@ function Footer() {
   return (
     <footer className="border-t border-border py-10">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-5 text-sm text-muted-foreground sm:flex-row sm:px-8">
-        <div>© {new Date().getFullYear()} Mehdi Golzari · Universal Voice Translator</div>
+        <div>© {new Date().getFullYear()} Mehdi Golzari · Independent Technical Partner</div>
         <div className="flex gap-4">
           <a className="hover:text-foreground" href="mailto:MehdiGolzari.official@gmail.com">Email</a>
           <a className="hover:text-foreground" href="https://wa.me/905019390465" target="_blank" rel="noreferrer">WhatsApp</a>
