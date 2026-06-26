@@ -665,7 +665,7 @@ function Landing() {
             to="/services"
             className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-5 py-3 text-sm font-semibold transition hover:bg-muted"
           >
-            See Engagements <ArrowRight className="ml-2 h-4 w-4" />
+            See Offers <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </div>
       </section>
