@@ -3,7 +3,8 @@ import { MessageCircle, Mail, X } from "lucide-react";
 
 const PHONE = "905019390465";
 const EMAIL = "MehdiGolzari.official@gmail.com";
-const MESSAGE = "Hello Mehdi! I am interested in scheduling a live demo of the Universal Voice Translator for Windows.";
+const MESSAGE =
+  "Hi Mehdi! I'd like to book a free discovery call to discuss building/scaling my SaaS or AI product.";
 
 const Ctx = createContext<{ open: () => void } | null>(null);
 
@@ -17,7 +18,7 @@ export function DemoModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setOpen] = useState(false);
 
   const waHref = `https://wa.me/${PHONE}?text=${encodeURIComponent(MESSAGE)}`;
-  const mailHref = `mailto:${EMAIL}?subject=${encodeURIComponent("Live Demo Request — Universal Voice Translator")}&body=${encodeURIComponent(MESSAGE)}`;
+  const mailHref = `mailto:${EMAIL}?subject=${encodeURIComponent("Discovery Call Request — MehdiGolzari.dev")}&body=${encodeURIComponent(MESSAGE)}`;
 
   return (
     <Ctx.Provider value={{ open: () => setOpen(true) }}>
@@ -41,11 +42,11 @@ export function DemoModalProvider({ children }: { children: ReactNode }) {
             </button>
 
             <div className="mb-1 text-xs font-medium uppercase tracking-widest text-neon-gradient">
-              Request a live demo
+              Free discovery call
             </div>
-            <h2 className="text-2xl font-semibold">Send Mehdi a message</h2>
+            <h2 className="text-2xl font-semibold">Talk directly to the engineer</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Pick a channel — your message is pre-filled and ready to send.
+              No sales team. No project managers. Pick a channel — your message is pre-filled.
             </p>
 
             <div className="mt-5 rounded-xl border border-border bg-background/60 p-4 font-mono text-sm leading-relaxed text-foreground/90">
@@ -84,7 +85,7 @@ export function DemoModalProvider({ children }: { children: ReactNode }) {
 
 export function DemoButton({
   className = "",
-  children = "Request a Live Demo",
+  children = "Book Discovery Call",
 }: { className?: string; children?: ReactNode }) {
   const { open } = useDemoModal();
   return (
