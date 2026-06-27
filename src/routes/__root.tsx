@@ -8,6 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Menu, X } from "lucide-react";
 
 import appCss from "../styles.css?url";
@@ -163,54 +164,56 @@ function NavBar() {
         </div>
       </div>
 
-      {/* Mobile slide-in sidebar */}
-      <div
-        className={`fixed inset-0 z-40 md:hidden ${open ? "pointer-events-auto" : "pointer-events-none"}`}
-        aria-hidden={!open}
-      >
+      {/* Mobile slide-in sidebar — portaled to body to escape header's backdrop-filter containing block */}
+      {typeof document !== "undefined" && createPortal(
         <div
-          onClick={() => setOpen(false)}
-          className={`absolute inset-0 bg-background/50 backdrop-blur-xl transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`}
-        />
-        <aside
-          className={`absolute right-0 top-0 flex h-full w-[85%] max-w-sm flex-col border-l border-border bg-background/85 backdrop-blur-2xl shadow-2xl transition-transform duration-300 ease-out ${open ? "translate-x-0" : "translate-x-full"}`}
+          className={`fixed inset-0 z-[100] md:hidden ${open ? "pointer-events-auto" : "pointer-events-none"}`}
+          aria-hidden={!open}
         >
-          <div className="flex h-16 items-center justify-between border-b border-border px-5">
-            <span className="font-display text-sm font-semibold tracking-tight text-muted-foreground">Menu</span>
-            <button
-              onClick={() => setOpen(false)}
-              aria-label="Close menu"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4 text-base">
-            {links.map((l) => (
-              <Link
-                key={l.to}
-                to={l.to}
-                activeOptions={l.exact ? { exact: true } : undefined}
+          <div
+            onClick={() => setOpen(false)}
+            className={`absolute inset-0 bg-foreground/30 backdrop-blur-md transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`}
+          />
+          <aside
+            className={`absolute right-0 top-0 flex h-full w-[86%] max-w-sm flex-col border-l border-border bg-background/95 shadow-2xl transition-transform duration-300 ease-out ${open ? "translate-x-0" : "translate-x-full"}`}
+          >
+            <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-5">
+              <span className="font-display text-sm font-semibold tracking-tight text-muted-foreground">Menu</span>
+              <button
                 onClick={() => setOpen(false)}
-                className="rounded-lg px-4 py-3 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                activeProps={{ className: "rounded-lg px-4 py-3 text-foreground bg-muted" }}
+                aria-label="Close menu"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition hover:text-foreground"
               >
-                {l.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="flex items-center gap-2 border-t border-border px-5 py-4">
-            <LanguageSelect />
-            <ThemeToggle />
-          </div>
-          <div className="border-t border-border px-5 py-4">
-            <DemoButton className="w-full justify-center" onClick={() => setOpen(false)}>Book a Call</DemoButton>
-          </div>
-        </aside>
-      </div>
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4 text-base">
+              {links.map((l) => (
+                <Link
+                  key={l.to}
+                  to={l.to}
+                  activeOptions={l.exact ? { exact: true } : undefined}
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-4 py-3 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                  activeProps={{ className: "rounded-lg px-4 py-3 text-foreground bg-muted" }}
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </nav>
+            <div className="flex shrink-0 items-center gap-2 border-t border-border px-5 py-4">
+              <LanguageSelect />
+              <ThemeToggle />
+            </div>
+            <div className="shrink-0 border-t border-border px-5 py-4">
+              <DemoButton className="w-full justify-center" onClick={() => setOpen(false)}>Book a Call</DemoButton>
+            </div>
+          </aside>
+        </div>,
+        document.body,
+      )}
     </header>
   );
-
 }
 
 
