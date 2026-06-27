@@ -1,0 +1,38 @@
+# Git metadata
+.git
+.gitignore
+.github
+
+# Dev tooling & editor configs
+.vscode
+.idea
+.DS_Store
+*.suo *.ntvs* *.njsproj *.sln *.sw?
+.prettierignore
+.prettierrc
+eslint.config.js
+
+# Lovable / sandbox-specific
+.lovable
+AGENTS.md
+
+# Build artefacts that are regenerated in the Docker build
+node_modules
+dist
+dist-ssr
+.output
+.vinxi
+.tanstack
+.nitro
+.wrangler
+.dev.vars
+
+# Logs
+logs
+*.log
+
+# Test files
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
