@@ -153,11 +153,14 @@ function NavBar() {
             <ThemeToggle />
           </div>
           <DemoButton className="hidden md:inline-flex">Book a Call</DemoButton>
+          <div className="md:hidden">
+            <LanguageSelect />
+          </div>
           <button
             onClick={() => setOpen((o) => !o)}
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition hover:text-foreground md:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-neon text-primary-foreground shadow-neon transition hover:brightness-110 md:hidden"
           >
             {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
