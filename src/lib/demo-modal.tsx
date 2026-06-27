@@ -86,11 +86,12 @@ export function DemoModalProvider({ children }: { children: ReactNode }) {
 export function DemoButton({
   className = "",
   children = "Book Discovery Call",
-}: { className?: string; children?: ReactNode }) {
+  onClick,
+}: { className?: string; children?: ReactNode; onClick?: () => void }) {
   const { open } = useDemoModal();
   return (
     <button
-      onClick={open}
+      onClick={() => { onClick?.(); open(); }}
       className={
         "inline-flex items-center justify-center rounded-xl bg-neon px-5 py-3 text-sm font-semibold text-primary-foreground shadow-neon transition hover:brightness-110 " +
         className

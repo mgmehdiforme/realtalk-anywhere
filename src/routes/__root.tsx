@@ -116,14 +116,22 @@ function NavBar() {
     { to: "/resume" as const, label: "Resume" },
     { to: "/contact" as const, label: "Contact" },
   ];
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
+
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/70 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
-        <Link to="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-neon shadow-neon">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-5 sm:px-8">
+        <Link to="/" className="flex min-w-0 items-center gap-2.5" onClick={() => setOpen(false)}>
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-neon shadow-neon">
             <span className="h-3 w-3 rounded-sm bg-background" />
           </span>
-          <span className="font-display text-base font-semibold tracking-tight">MehdiGolzari<span className="text-neon-gradient">.dev</span></span>
+          <span className="truncate font-display text-base font-semibold tracking-tight">MehdiGolzari<span className="text-neon-gradient">.dev</span></span>
         </Link>
         <nav className="hidden items-center gap-1 text-sm md:flex">
           {links.map((l) => (
@@ -139,9 +147,11 @@ function NavBar() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <LanguageSelect />
-          <ThemeToggle />
-          <DemoButton className="hidden sm:inline-flex">Book a Call</DemoButton>
+          <div className="hidden items-center gap-2 md:flex">
+            <LanguageSelect />
+            <ThemeToggle />
+          </div>
+          <DemoButton className="hidden md:inline-flex">Book a Call</DemoButton>
           <button
             onClick={() => setOpen((o) => !o)}
             aria-label={open ? "Close menu" : "Open menu"}
@@ -152,29 +162,55 @@ function NavBar() {
           </button>
         </div>
       </div>
-      {open && (
-        <div className="border-t border-border bg-background/95 backdrop-blur-xl md:hidden">
-          <nav className="mx-auto flex max-w-7xl flex-col px-5 py-3 text-sm sm:px-8">
+
+      {/* Mobile slide-in sidebar */}
+      <div
+        className={`fixed inset-0 z-40 md:hidden ${open ? "pointer-events-auto" : "pointer-events-none"}`}
+        aria-hidden={!open}
+      >
+        <div
+          onClick={() => setOpen(false)}
+          className={`absolute inset-0 bg-background/50 backdrop-blur-xl transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`}
+        />
+        <aside
+          className={`absolute right-0 top-0 flex h-full w-[85%] max-w-sm flex-col border-l border-border bg-background/85 backdrop-blur-2xl shadow-2xl transition-transform duration-300 ease-out ${open ? "translate-x-0" : "translate-x-full"}`}
+        >
+          <div className="flex h-16 items-center justify-between border-b border-border px-5">
+            <span className="font-display text-sm font-semibold tracking-tight text-muted-foreground">Menu</span>
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Close menu"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4 text-base">
             {links.map((l) => (
               <Link
                 key={l.to}
                 to={l.to}
                 activeOptions={l.exact ? { exact: true } : undefined}
                 onClick={() => setOpen(false)}
-                className="rounded-md px-3 py-3 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                activeProps={{ className: "rounded-md px-3 py-3 text-foreground bg-muted" }}
+                className="rounded-lg px-4 py-3 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                activeProps={{ className: "rounded-lg px-4 py-3 text-foreground bg-muted" }}
               >
                 {l.label}
               </Link>
             ))}
-            <div className="mt-2 px-1 pb-1">
-              <DemoButton className="w-full justify-center">Book a Call</DemoButton>
-            </div>
           </nav>
-        </div>
-      )}
+          <div className="flex items-center gap-2 border-t border-border px-5 py-4">
+            <LanguageSelect />
+            <ThemeToggle />
+          </div>
+          <div className="border-t border-border px-5 py-4">
+            <DemoButton className="w-full justify-center" onClick={() => setOpen(false)}>Book a Call</DemoButton>
+          </div>
+        </aside>
+      </div>
     </header>
   );
+
 }
 
 
