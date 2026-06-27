@@ -153,6 +153,7 @@ function NavBar() {
             <ThemeToggle />
           </div>
           <DemoButton className="hidden md:inline-flex">Book a Call</DemoButton>
+
           <div className="md:hidden">
             <LanguageSelect />
           </div>
