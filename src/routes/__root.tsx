@@ -205,12 +205,9 @@ function NavBar() {
               ))}
             </nav>
             <div className="flex shrink-0 items-center gap-2 border-t border-border px-5 py-4">
-              <LanguageSelect />
               <ThemeToggle />
             </div>
-            <div className="shrink-0 border-t border-border px-5 py-4">
-              <DemoButton className="w-full justify-center" onClick={() => setOpen(false)}>Book a Call</DemoButton>
-            </div>
+
           </aside>
         </div>,
         document.body,
