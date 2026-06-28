@@ -43,6 +43,9 @@ ENV PORT=3000
 # Copy only the Nitro output (self-contained — no node_modules needed)
 COPY --from=builder /app/.output ./.output
 
+# Copy PDFKit standard font metrics so standard fonts can resolve in ESM environment
+COPY --from=builder /app/node_modules/pdfkit/js/data /app/node_modules/pdfkit/js/data
+
 # Nitro's node-server entry point
 EXPOSE 3000
 
