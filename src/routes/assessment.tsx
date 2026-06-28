@@ -166,7 +166,7 @@ export const Route = createFileRoute("/assessment")({
       { title: "Founder Fit Assessment™ — SaaS Qualifications | MehdiGolzari.dev" },
       {
         name: "description",
-        content: "Take the 10-minute SaaS & AI product assessment. Get immediate Qwen AI insights and a downloadable PDF roadmap.",
+        content: "Take the 10-minute SaaS & AI product assessment. Get immediate AI insights and a downloadable PDF roadmap.",
       },
     ],
   }),
@@ -344,7 +344,7 @@ function LandingPage({
 
             <div className="grid gap-4 sm:grid-cols-2">
               {[
-                { title: "AI Executive Summary", desc: "A Qwen-generated summary highlighting your product value and audience fit." },
+                { title: "AI Executive Summary", desc: "An AI-generated summary highlighting your product value and audience fit." },
                 { title: "Methodology Phase", desc: "Identify exactly where your project slots into the 7-phase Founder-to-Launch Framework™." },
                 { title: "Downloadable PDF", desc: "Get a beautifully typeset A4 PDF roadmap to share with team members or advisors." },
                 { title: "Discovery Accelerator", desc: "We use this report during our Discovery Call, eliminating 30 minutes of scoping trivia." }
@@ -452,7 +452,7 @@ function LandingPage({
               },
               {
                 q: "Why is it limited to one submission?",
-                a: "Each submission triggers an API query to Qwen models and compiles a heavy-styled PDF document. To prevent script abuse and ensure resources are available for serious founders, we limit submissions to one per account.",
+                a: "Each submission triggers an API query to AI models and compiles a heavy-styled PDF document. To prevent script abuse and ensure resources are available for serious founders, we limit submissions to one per account.",
               },
               {
                 q: "What happens after I submit?",
@@ -1124,7 +1124,7 @@ function WizardForm({
               {submitting ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  Generating Report with Qwen AI...
+                  Generating Report with AI...
                 </>
               ) : (
                 <>
@@ -1294,7 +1294,7 @@ function DashboardView({
                 </div>
 
                 <div>
-                  <span className="font-mono text-[10px] uppercase text-muted-foreground">Qwen AI Executive Summary</span>
+                  <span className="font-mono text-[10px] uppercase text-muted-foreground">AI Executive Summary</span>
                   <p className="mt-1 text-xs text-foreground/90 leading-relaxed bg-background/40 p-4 rounded-xl border border-border">
                     {analysis.executiveSummary}
                   </p>
