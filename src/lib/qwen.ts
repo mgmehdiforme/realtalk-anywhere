@@ -106,14 +106,18 @@ Do not return any markdown formatting (like \`\`\`json), just return the raw JSO
 ${JSON.stringify(answers, null, 2)}`;
 
   try {
-    const response = await fetch("https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", {
+    const baseUrl = process.env.QWEN_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1";
+    const fetchUrl = baseUrl.endsWith("/chat/completions") ? baseUrl : `${baseUrl.replace(/\/$/, "")}/chat/completions`;
+    const modelName = process.env.QWEN_MODEL || "qwen-plus";
+
+    const response = await fetch(fetchUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "qwen-plus",
+        model: modelName,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
