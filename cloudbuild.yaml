@@ -1,4 +1,4 @@
-﻿steps:
+steps:
   # Build the Docker image
   - name: "gcr.io/cloud-builders/docker"
     args:
@@ -42,6 +42,10 @@
       - "512Mi"
       - --cpu
       - "1"
+      - --add-volume
+      - "name=realtalk-data,type=cloud-storage,bucket=mehdigolzari-realtalk-data"
+      - --add-volume-mount
+      - "volume=realtalk-data,mount-path=/app/data"
 
 # Substitution defaults - override in the Cloud Build trigger UI or --substitutions flag
 substitutions:
