@@ -1110,7 +1110,7 @@ function WizardForm({
                 <span className="font-semibold text-amber-900 dark:text-amber-300">Submission is final.</span> Once submitted:
                 <ul className="list-disc pl-4 mt-1 space-y-1 text-amber-700 dark:text-amber-300/90">
                   <li>Your answers become strictly read-only. No edits are allowed.</li>
-                  <li>Our AI will analyze your scope using Alibaba Cloud Qwen.</li>
+                  <li>Our AI will analyze your scope and validate technical requirements.</li>
                   <li>Your PDF Roadmap report will compile immediately.</li>
                 </ul>
               </div>
