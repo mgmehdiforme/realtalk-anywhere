@@ -88,32 +88,46 @@ export const submitAssessmentAction = createServerFn()
     const { analyzeAssessmentAnswers } = await import("@/lib/qwen");
     const { generateAssessmentPdf } = await import("@/lib/pdf");
 
-    const session = getSessionFromRequest(request);
-    if (!session) {
-      throw new Error("Unauthorized");
+    try {
+      console.log("submitAssessmentAction: Invoked");
+      const session = getSessionFromRequest(request);
+      if (!session) {
+        console.error("submitAssessmentAction: Unauthorized session");
+        throw new Error("Unauthorized");
+      }
+
+      console.log(`submitAssessmentAction: Retrieving assessment for ${session.email}...`);
+      const existing = await getAssessment(session.email);
+      if (!existing) {
+        console.error(`submitAssessmentAction: No assessment found for ${session.email}`);
+        throw new Error("No assessment answers found");
+      }
+
+      if (existing.submittedAt) {
+        console.error(`submitAssessmentAction: Assessment already submitted for ${session.email}`);
+        throw new Error("Assessment already submitted");
+      }
+
+      // 1. Call Qwen for report insights
+      console.log(`submitAssessmentAction: Starting Qwen analysis for ${session.email}...`);
+      const analysis = await analyzeAssessmentAnswers(existing.answers, session.email);
+      console.log(`submitAssessmentAction: Qwen analysis complete. Recommended phase: ${analysis.recommendedPhase}`);
+
+      // 2. Generate PDF using pdfkit
+      console.log(`submitAssessmentAction: Generating PDF report for ${session.email}...`);
+      const pdfPath = await generateAssessmentPdf(session.email, existing.answers, analysis);
+      console.log(`submitAssessmentAction: PDF generation complete: ${pdfPath}`);
+
+      // 3. Mark in DB as submitted
+      console.log(`submitAssessmentAction: Submitting assessment in DB for ${session.email}...`);
+      const updated = await submitAssessment(session.email, pdfPath, analysis);
+      console.log(`submitAssessmentAction: DB submission complete`);
+
+      return { success: true, assessment: updated };
+    } catch (error: any) {
+      console.error("submitAssessmentAction ERROR:", error);
+      throw error;
     }
-
-    const existing = await getAssessment(session.email);
-    if (!existing) {
-      throw new Error("No assessment answers found");
-    }
-
-    if (existing.submittedAt) {
-      throw new Error("Assessment already submitted");
-    }
-
-    // 1. Call Qwen for report insights
-    console.log(`Starting Qwen analysis for ${session.email}...`);
-    const analysis = await analyzeAssessmentAnswers(existing.answers, session.email);
-
-    // 2. Generate PDF using pdfkit
-    console.log(`Generating PDF report for ${session.email}...`);
-    const pdfPath = await generateAssessmentPdf(session.email, existing.answers, analysis);
-
-    // 3. Mark in DB as submitted
-    const updated = await submitAssessment(session.email, pdfPath, analysis);
-
-    return { success: true, assessment: updated };
   });
 
 /**
