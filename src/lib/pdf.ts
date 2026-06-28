@@ -1,5 +1,11 @@
 import fs from "fs";
 import path from "path";
+
+// Shim __dirname globally for PDFKit standard fonts compatibility in ESM environment
+if (typeof globalThis.__dirname === "undefined") {
+  (globalThis as any).__dirname = path.resolve(process.cwd(), "node_modules/pdfkit/js");
+}
+
 import PDFDocument from "pdfkit";
 import { QwenAnalysisResult } from "./qwen";
 
