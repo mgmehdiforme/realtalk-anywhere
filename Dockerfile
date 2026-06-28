@@ -1,21 +1,20 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Stage 1 — deps: install all node_modules with Bun
+# Stage 1 — deps: install all node_modules with NPM
 # ─────────────────────────────────────────────────────────────────────────────
-FROM oven/bun:1.2-slim AS deps
+FROM node:22-slim AS deps
 
 WORKDIR /app
 
 # Copy package manifest and lockfile first for layer-cache efficiency
-COPY package.json bun.lock bunfig.toml ./
+COPY package.json package-lock.json ./
 
 # Install all dependencies (including devDependencies needed for the build)
-# --frozen-lockfile ensures reproducibility
-RUN bun install --frozen-lockfile
+RUN npm ci
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Stage 2 — builder: compile the TanStack Start / Nitro app
 # ─────────────────────────────────────────────────────────────────────────────
-FROM oven/bun:1.2-slim AS builder
+FROM node:22-slim AS builder
 
 WORKDIR /app
 
@@ -27,7 +26,8 @@ COPY . .
 
 # Build using the Cloud Run-compatible script (node-server Nitro preset)
 # NITRO_PRESET is read by @lovable.dev/vite-tanstack-config / Nitro at build time
-RUN NITRO_PRESET=node-server bun run build
+ENV NITRO_PRESET=node-server
+RUN npm run build
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Stage 3 — runner: minimal production image
