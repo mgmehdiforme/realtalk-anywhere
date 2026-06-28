@@ -1,39 +1,70 @@
 export interface QwenAnalysisResult {
   executiveSummary: string;
-  insights: Array<{
-    category: string;
-    observation: string;
-    tip: string;
-  }>;
+  founderStrengths: string[];
+  biggestOpportunities: Array<{ title: string; description: string }>;
+  whatCouldSlowYouDown: Array<{ risk: string; businessImpact: string; technicalImpact: string }>;
+  ifThisWereMyStartup: string[];
+  engineeringStrategy: Array<{ area: string; recommendation: string; why: string }>;
+  fastestPathToLaunch: string[];
   recommendedPhase: "Discover" | "Validate" | "Blueprint" | "Build" | "Launch" | "Scale" | "Partner";
   recommendedPhaseReasoning: string;
   currentStage: string;
-  challengesSummary: string;
 }
 
 const DEFAULT_MOCK_RESULT: QwenAnalysisResult = {
-  executiveSummary: "Your project represents a highly promising initiative addressing a real-world market friction. By combining a clear understanding of the target audience with a well-scoped MVP, you are positioned to validate your key hypotheses quickly. Focus on tightening your feedback loops with initial design partners before scaling the underlying technical infrastructure.",
-  insights: [
+  executiveSummary: "Your SaaS project addresses a clear market friction by aiming to streamline early MVP blueprinting and scoping. The biggest opportunity is standardizing unstructured specifications into direct roadmaps, while the primary execution risk is technical scope creep before validating core demand. We recommend entering the Validate phase to isolate key assumptions before building.",
+  founderStrengths: [
+    "Clear vision of the primary problem and targeted audience niche.",
+    "Strong understanding of the modern web tech stack preferences.",
+    "Highly realistic launch expectations and milestones."
+  ],
+  biggestOpportunities: [
     {
-      category: "Problem & Market Fit",
-      observation: "The problem identified is experienced by a specific, high-intent B2B target group who currently rely on manual, Excel-based workarounds.",
-      tip: "Focus your MVP messaging on time saved and elimination of manual copy-paste errors rather than broad feature coverage."
+      title: "Fast Validation Window",
+      description: "You can validate the demand by offering manual scoping to 5 active pilot users before writing code."
     },
     {
-      category: "Product & Scope",
-      observation: "Your core feature set is solid, but there is a slight risk of scope creep in the initial launch by adding secondary integrations too early.",
-      tip: "Defer the payment gateway and advanced analytics until you have 5 active pilot users. Use manual invoicing initially."
-    },
-    {
-      category: "Technology & Stack",
-      observation: "Your stack choice is modern and scalable. However, the lack of experienced in-house developers means you need a clean, maintainable architecture from day one.",
-      tip: "Adopt a monolithic structure with a modular design (e.g., NestJS or structured .NET) instead of a complex microservices architecture."
+      title: "AI Scoping Differentiation",
+      description: "Positioning the platform as a domain-specific scoped blueprint generator makes it stand out from generic AI agents."
     }
   ],
-  recommendedPhase: "Blueprint",
-  recommendedPhaseReasoning: "Based on your answers, you have validated the core problem but require a technical blueprint (architecture diagrams, schema definitions, and API specifications) before writing production code. This will prevent expensive rewrites later.",
-  currentStage: "Validated Idea & Requirements Defined",
-  challengesSummary: "The chief risks are hiring speed, coordination of external tech partners, and technical scope creep before reaching product-market fit."
+  whatCouldSlowYouDown: [
+    {
+      risk: "Scope Creep & Secondary Features",
+      businessImpact: "Increases cost and delays launch by several months, risking competitor entry.",
+      technicalImpact: "Complex database relationships and API mocks created before core validation."
+    },
+    {
+      risk: "Sourcing Qualified Developers",
+      businessImpact: "Slows down development pace and leads to communication gaps.",
+      technicalImpact: "Technical debt accumulates if the initial code structure is not modular and well-documented."
+    }
+  ],
+  ifThisWereMyStartup: [
+    "Defer all secondary integrations (like Stripe/advanced analytics) until you onboard 5 active design partners.",
+    "Verify the core user flow manually by acting as the scoping engineer behind the scenes first.",
+    "Establish a modular monolithic backend to keep scaling simple and codebase highly maintainable."
+  ],
+  engineeringStrategy: [
+    {
+      area: "Backend Architecture",
+      recommendation: "Modular Monolith using NestJS or structured .NET Core.",
+      why: "Avoids the overhead of microservices while keeping domains separated for future scaling."
+    },
+    {
+      area: "Database Design",
+      recommendation: "Relational SQL database (PostgreSQL).",
+      why: "Provides strong transactional guarantees and clear schemas for entities like founders, roadmaps, and features."
+    }
+  ],
+  fastestPathToLaunch: [
+    "Design a simple 3-step interactive questionnaire instead of a complex multi-wizard UI.",
+    "Manually compile the first 20 roadmap PDF reports and email them to users to check if they find them valuable.",
+    "Postpone payment gateway integration and bill early design partners manually via Stripe invoicing."
+  ],
+  recommendedPhase: "Validate",
+  recommendedPhaseReasoning: "Before committing resources to full engineering, we must validate that founders are willing to spend time filling out assessments to get these blueprints. Focus on customer problem confirmation.",
+  currentStage: "Ideation & Problem Confirmed"
 };
 
 /**
@@ -77,30 +108,55 @@ Analyze the provided startup assessment answers and return a JSON object with a 
 The JSON object MUST exactly match the following structure:
 {
   "executiveSummary": "A concise 2-3 sentence overview summarizing the founder profile, startup idea, and primary opportunity.",
-  "insights": [
+  "founderStrengths": [
+    "Strength 1...",
+    "Strength 2...",
+    "Strength 3..."
+  ],
+  "biggestOpportunities": [
     {
-      "category": "Problem & Market Fit",
-      "observation": "What you observe from their problem description and audience.",
-      "tip": "Direct actionable recommendation."
-    },
-    {
-      "category": "Product & Scope",
-      "observation": "What you observe from their product features and prototype status.",
-      "tip": "Direct actionable recommendation."
-    },
-    {
-      "category": "Technology & Stack",
-      "observation": "What you observe from their tech stack preference and existing code.",
-      "tip": "Direct actionable recommendation."
+      "title": "Opportunity Title",
+      "description": "Opportunity description and rationale."
     }
+  ],
+  "whatCouldSlowYouDown": [
+    {
+      "risk": "Description of the risk",
+      "businessImpact": "The impact on timeline, cost, launch, or customer confusion.",
+      "technicalImpact": "The impact on engineering, complexity, and debt."
+    }
+  ],
+  "ifThisWereMyStartup": [
+    "Actionable priority 1 in Mehdi's voice...",
+    "Actionable priority 2 in Mehdi's voice..."
+  ],
+  "engineeringStrategy": [
+    {
+      "area": "Area (e.g. Architecture, Database, AI integrations)",
+      "recommendation": "Technology choice or design structure",
+      "why": "Clear engineering explanation of why this was chosen."
+    }
+  ],
+  "fastestPathToLaunch": [
+    "Actionable step 1 to launch sooner...",
+    "Actionable step 2 to launch sooner..."
   ],
   "recommendedPhase": "Discover" | "Validate" | "Blueprint" | "Build" | "Launch" | "Scale" | "Partner",
   "recommendedPhaseReasoning": "Explain why this specific Founder-to-Launch phase is the logical next step.",
-  "currentStage": "A 3-5 word label of their current stage.",
-  "challengesSummary": "A summary of their technical, timeline, and budgetary challenges."
+  "currentStage": "A 3-5 word label of their current stage."
 }
 
-Do not return any markdown formatting (like \`\`\`json), just return the raw JSON string. Ensure the response parses correctly as JSON.`;
+Style Guidelines:
+1. Speak in Mehdi Golzari's voice as an Independent Technical Partner.
+2. Use phrases like:
+   - "If this were my startup..."
+   - "The biggest execution risk I see..."
+   - "The first assumption I would challenge..."
+   - "Before investing months in development..."
+   - "If we were working together..."
+3. DO NOT use generic templates like "Based on your answers..." or "We recommend...". Write naturally as if talking directly to a founder.
+4. Keep the tone optimistic but highly realistic and strategic.
+5. Do not return any markdown formatting (like \`\`\`json), just return the raw JSON string. Ensure the response parses correctly as JSON.`;
 
   const userPrompt = `Assessment answers for founder ${founderEmail}:
 ${JSON.stringify(answers, null, 2)}`;

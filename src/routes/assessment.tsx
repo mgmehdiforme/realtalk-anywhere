@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createServerFn } from "@tanstack/react-start";
 import { useDemoModal } from "@/lib/demo-modal";
 import { authWithGoogle } from "@/lib/auth-functions";
+import type { QwenAnalysisResult } from "@/lib/qwen";
 import {
   Loader2,
   CheckCircle,
@@ -20,6 +21,16 @@ import {
   Check,
   ChevronDown,
   Info,
+  Brain,
+  Shield,
+  Zap,
+  Target,
+  Rocket,
+  AlertTriangle,
+  TrendingUp,
+  Lightbulb,
+  Wrench,
+  ExternalLink,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -522,6 +533,42 @@ function WizardForm({
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [loadingStep, setLoadingStep] = useState(0);
+  const loadingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const LOADING_STEPS = [
+    { label: "Reading your assessment answers...", icon: "📋" },
+    { label: "Analyzing founder strengths...", icon: "💪" },
+    { label: "Identifying biggest opportunities...", icon: "🚀" },
+    { label: "Evaluating execution risks...", icon: "⚠️" },
+    { label: "Formulating engineering strategy...", icon: "🔧" },
+    { label: "Designing fastest path to launch...", icon: "⚡" },
+    { label: "Compiling your PDF roadmap report...", icon: "📄" },
+    { label: "Finalizing your Founder Fit Assessment™...", icon: "✨" },
+  ];
+
+  useEffect(() => {
+    if (submitting) {
+      setLoadingStep(0);
+      loadingInterval.current = setInterval(() => {
+        setLoadingStep((prev) => {
+          if (prev < LOADING_STEPS.length - 1) return prev + 1;
+          return prev;
+        });
+      }, 5000);
+    } else {
+      if (loadingInterval.current) {
+        clearInterval(loadingInterval.current);
+        loadingInterval.current = null;
+      }
+      setLoadingStep(0);
+    }
+    return () => {
+      if (loadingInterval.current) {
+        clearInterval(loadingInterval.current);
+      }
+    };
+  }, [submitting]);
 
   // Auto-save triggers
   const saveDraft = async (updatedAnswers: Record<string, any>) => {
@@ -696,6 +743,71 @@ function WizardForm({
       {/* Form Content */}
       <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-card min-h-[40vh] transition-all">
         
+        {/* ── PREMIUM LOADING OVERLAY ── */}
+        {submitting ? (
+          <div className="flex flex-col items-center justify-center py-12 sm:py-20 animate-in fade-in duration-500">
+            {/* Glowing Brain Icon */}
+            <div className="relative mb-8">
+              <div className="absolute inset-0 rounded-full bg-neon/20 blur-2xl animate-pulse" style={{ width: 96, height: 96, top: -8, left: -8 }} />
+              <div className="relative grid h-20 w-20 place-items-center rounded-full bg-gradient-to-br from-neon/30 to-primary/20 border border-neon/30 shadow-lg">
+                <Brain className="h-10 w-10 text-neon animate-pulse" />
+              </div>
+            </div>
+
+            {/* Title */}
+            <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground mb-2">
+              Analyzing Your Assessment
+            </h2>
+            <p className="text-xs text-muted-foreground mb-8 text-center max-w-md">
+              Our AI is reviewing your answers and building a personalized Founder Fit Report™. This typically takes 30–60 seconds.
+            </p>
+
+            {/* Progress Bar */}
+            <div className="w-full max-w-sm mb-8">
+              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-neon to-primary rounded-full transition-all duration-[4500ms] ease-out"
+                  style={{ width: `${Math.min(((loadingStep + 1) / LOADING_STEPS.length) * 100, 98)}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] text-muted-foreground mt-1.5">
+                <span>{Math.min(Math.round(((loadingStep + 1) / LOADING_STEPS.length) * 100), 98)}%</span>
+                <span>Step {loadingStep + 1} of {LOADING_STEPS.length}</span>
+              </div>
+            </div>
+
+            {/* Step-by-step status list */}
+            <div className="w-full max-w-sm space-y-2.5">
+              {LOADING_STEPS.map((ls, idx) => (
+                <div 
+                  key={idx}
+                  className={`flex items-center gap-3 rounded-lg px-4 py-2.5 text-xs transition-all duration-500 ${
+                    idx < loadingStep 
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                      : idx === loadingStep
+                        ? "bg-neon/10 text-neon border border-neon/30 shadow-sm"
+                        : "bg-muted/30 text-muted-foreground/50 border border-transparent"
+                  }`}
+                >
+                  <span className="text-base shrink-0">{ls.icon}</span>
+                  <span className="flex-1 font-medium">{ls.label}</span>
+                  {idx < loadingStep && (
+                    <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
+                  )}
+                  {idx === loadingStep && (
+                    <Loader2 className="h-4 w-4 animate-spin text-neon shrink-0" />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Reassurance message */}
+            <p className="mt-8 text-[10px] text-muted-foreground/60 text-center">
+              Please don't close this tab. Your report is being compiled in real-time.
+            </p>
+          </div>
+        ) : (
+        <>
         {/* STEP 1: FOUNDER PROFILE */}
         {step === 1 && (
           <div className="space-y-5">
@@ -1182,13 +1294,16 @@ function WizardForm({
           )}
         </div>
 
+        </>
+        )}
+
       </div>
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. DASHBOARD VIEW (COMPLETED STATE)
+// 3. DASHBOARD VIEW (COMPLETED STATE) — Version 2.0
 // ─────────────────────────────────────────────────────────────────────────────
 
 function DashboardView({ 
@@ -1201,6 +1316,7 @@ function DashboardView({
   onLogout: () => void; 
 }) {
   const [downloading, setDownloading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "strategy" | "next-steps">("overview");
   const { open: openContactModal } = useDemoModal();
 
   const handleDownload = async () => {
@@ -1208,7 +1324,6 @@ function DashboardView({
     try {
       const res = await downloadPdfReport();
       if (res.success && res.base64) {
-        // Trigger browser file download
         const blob = base64ToBlob(res.base64, "application/pdf");
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -1227,22 +1342,18 @@ function DashboardView({
     }
   };
 
-  // Convert base64 to Blob helper
   const base64ToBlob = (base64: string, contentType: string) => {
     const sliceSize = 1024;
     const byteCharacters = atob(base64);
     const byteArrays = [];
-
     for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
       const slice = byteCharacters.slice(offset, offset + sliceSize);
       const byteNumbers = new Array(slice.length);
       for (let i = 0; i < slice.length; i++) {
         byteNumbers[i] = slice.charCodeAt(i);
       }
-      const byteArray = new Uint8Array(byteNumbers);
-      byteArrays.push(byteArray);
+      byteArrays.push(new Uint8Array(byteNumbers));
     }
-
     return new Blob(byteArrays, { type: contentType });
   };
 
@@ -1256,17 +1367,32 @@ function DashboardView({
 
   const analysis = assessment.reportData as QwenAnalysisResult | null;
 
+  const tabs = [
+    { id: "overview" as const, label: "Overview", icon: Target },
+    { id: "strategy" as const, label: "Technical Strategy", icon: Wrench },
+    { id: "next-steps" as const, label: "Next Steps", icon: Rocket },
+  ];
+
   return (
-    <div className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
-      {/* Dashboard Top header */}
+    <div className="mx-auto max-w-5xl px-5 py-12 sm:px-8">
+      {/* Dashboard Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-border pb-6 mb-8 gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs text-neon font-semibold uppercase tracking-wider">
-            <Lock className="h-3.5 w-3.5" /> Founder Portal
+            <Lock className="h-3.5 w-3.5" /> Founder Fit Assessment™ Report
           </div>
-          <h1 className="font-display text-2xl font-bold mt-1">Founder Dashboard</h1>
+          <h1 className="font-display text-2xl font-bold mt-1">Your Founder Dashboard</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">Submitted on {formattedDate}</p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="flex items-center gap-1.5 rounded-lg bg-neon px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-neon transition hover:brightness-110 disabled:opacity-50"
+          >
+            {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+            {downloading ? "Generating..." : "Download PDF"}
+          </button>
           <button
             onClick={onLogout}
             className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-xs font-semibold hover:bg-muted transition text-muted-foreground hover:text-foreground"
@@ -1276,90 +1402,234 @@ function DashboardView({
         </div>
       </div>
 
-      {/* Main Grid */}
-      <div className="grid gap-8 lg:grid-cols-12 items-start">
-        
-        {/* Left column: Status Card */}
-        <div className="lg:col-span-8 space-y-6">
-          <div className="rounded-3xl border border-emerald-500/30 bg-emerald-500/5 p-6 sm:p-8 relative overflow-hidden">
-            <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-emerald-500 opacity-10 blur-2xl" />
-            <div className="flex items-start gap-4">
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-emerald-500 text-white shadow-lg">
-                <CheckCircle className="h-6 w-6" />
+      {analysis ? (
+        <>
+          {/* Phase Recommendation Banner */}
+          <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 to-neon/5 p-5 sm:p-6 mb-8 relative overflow-hidden">
+            <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-neon opacity-10 blur-2xl" />
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-neon to-primary text-white shadow-lg">
+                <Zap className="h-7 w-7" />
               </div>
-              <div>
-                <h2 className="font-display text-xl font-semibold">Assessment Complete & Locked</h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Submitted on {formattedDate}. Your answers are locked in read-only mode.
-                </p>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-mono text-[10px] uppercase text-muted-foreground tracking-wider">Founder-to-Launch Framework™</span>
+                </div>
+                <div className="flex items-center gap-2.5 mb-2">
+                  <span className="rounded-lg bg-neon/15 border border-neon/30 px-3 py-1 font-mono text-sm font-bold text-neon">
+                    {analysis.recommendedPhase.toUpperCase()}™
+                  </span>
+                  <span className="text-xs text-muted-foreground">({analysis.currentStage})</span>
+                </div>
+                <p className="text-xs text-foreground/80 leading-relaxed">{analysis.recommendedPhaseReasoning}</p>
               </div>
             </div>
+          </div>
 
-            {analysis && (
-              <div className="mt-6 border-t border-emerald-500/10 pt-5 space-y-4">
-                <div>
-                  <span className="font-mono text-[10px] uppercase text-muted-foreground">Recommended Framework Phase</span>
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="rounded bg-primary/10 border border-primary/20 px-2.5 py-1 font-mono text-xs font-bold text-primary">
-                      {analysis.recommendedPhase.toUpperCase()}™
+          {/* Tab Navigation */}
+          <div className="flex gap-1 rounded-xl bg-muted/50 p-1 mb-8 border border-border">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 text-xs font-semibold transition-all ${
+                  activeTab === tab.id
+                    ? "bg-card text-foreground shadow-sm border border-border"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <tab.icon className="h-4 w-4" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* ─── TAB: OVERVIEW ─── */}
+          {activeTab === "overview" && (
+            <div className="space-y-8">
+              {/* Executive Summary */}
+              <section className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-card">
+                <h2 className="flex items-center gap-2 font-display text-lg font-semibold mb-4">
+                  <Brain className="h-5 w-5 text-neon" /> Executive Summary
+                </h2>
+                <p className="text-sm text-foreground/90 leading-relaxed">{analysis.executiveSummary}</p>
+              </section>
+
+              {/* Founder Strengths */}
+              <section className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 sm:p-8">
+                <h2 className="flex items-center gap-2 font-display text-lg font-semibold mb-4">
+                  <Shield className="h-5 w-5 text-emerald-500" /> Founder Strengths
+                </h2>
+                <div className="space-y-2.5">
+                  {analysis.founderStrengths.map((strength, idx) => (
+                    <div key={idx} className="flex items-start gap-3 rounded-lg bg-emerald-500/10 border border-emerald-500/15 p-3">
+                      <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span className="text-sm text-foreground/90">{strength}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Biggest Opportunities */}
+              <section className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-card">
+                <h2 className="flex items-center gap-2 font-display text-lg font-semibold mb-4">
+                  <TrendingUp className="h-5 w-5 text-neon" /> Biggest Opportunities
+                </h2>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {analysis.biggestOpportunities.map((opp, idx) => (
+                    <div key={idx} className="rounded-xl border border-neon/15 bg-neon/5 p-5 hover:border-neon/30 transition-colors">
+                      <h3 className="text-sm font-semibold text-neon mb-2">{opp.title}</h3>
+                      <p className="text-xs text-foreground/80 leading-relaxed">{opp.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* What Could Slow You Down */}
+              <section className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 sm:p-8">
+                <h2 className="flex items-center gap-2 font-display text-lg font-semibold mb-4">
+                  <AlertTriangle className="h-5 w-5 text-amber-500" /> What Could Slow You Down
+                </h2>
+                <div className="space-y-4">
+                  {analysis.whatCouldSlowYouDown.map((item, idx) => (
+                    <div key={idx} className="rounded-xl border border-amber-500/15 bg-background/50 p-5">
+                      <h3 className="text-sm font-semibold text-amber-600 dark:text-amber-400 mb-2">{item.risk}</h3>
+                      <div className="grid gap-3 sm:grid-cols-2 text-xs text-foreground/80">
+                        <div className="rounded-lg bg-amber-500/5 p-3 border border-amber-500/10">
+                          <span className="font-semibold text-amber-600 dark:text-amber-400">Business Impact</span>
+                          <p className="mt-1 leading-relaxed">{item.businessImpact}</p>
+                        </div>
+                        <div className="rounded-lg bg-amber-500/5 p-3 border border-amber-500/10">
+                          <span className="font-semibold text-amber-600 dark:text-amber-400">Technical Impact</span>
+                          <p className="mt-1 leading-relaxed">{item.technicalImpact}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
+          )}
+
+          {/* ─── TAB: TECHNICAL STRATEGY ─── */}
+          {activeTab === "strategy" && (
+            <div className="space-y-8">
+              {/* If This Were My Startup */}
+              <section className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-neon/5 p-6 sm:p-8">
+                <h2 className="flex items-center gap-2 font-display text-lg font-semibold mb-1">
+                  <Lightbulb className="h-5 w-5 text-neon" /> If This Were My Startup
+                </h2>
+                <p className="text-xs text-muted-foreground mb-5">Mehdi's direct priorities as your Independent Technical Partner</p>
+                <div className="space-y-3">
+                  {analysis.ifThisWereMyStartup.map((point, idx) => (
+                    <div key={idx} className="flex items-start gap-3 rounded-xl bg-card border border-border p-4 shadow-sm">
+                      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-neon/15 text-neon text-xs font-bold">{idx + 1}</span>
+                      <p className="text-sm text-foreground/90 leading-relaxed pt-0.5">{point}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Engineering Strategy */}
+              <section className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-card">
+                <h2 className="flex items-center gap-2 font-display text-lg font-semibold mb-4">
+                  <Wrench className="h-5 w-5 text-neon" /> Engineering Strategy
+                </h2>
+                <div className="space-y-4">
+                  {analysis.engineeringStrategy.map((strat, idx) => (
+                    <div key={idx} className="rounded-xl border border-border bg-background/50 p-5">
+                      <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-neon" />
+                        {strat.area}
+                      </h3>
+                      <div className="grid gap-3 sm:grid-cols-2 text-xs">
+                        <div className="rounded-lg bg-neon/5 p-3 border border-neon/10">
+                          <span className="font-semibold text-neon block mb-1">Recommendation</span>
+                          <p className="text-foreground/80 leading-relaxed">{strat.recommendation}</p>
+                        </div>
+                        <div className="rounded-lg bg-primary/5 p-3 border border-primary/10">
+                          <span className="font-semibold text-primary block mb-1">Why</span>
+                          <p className="text-foreground/80 leading-relaxed">{strat.why}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
+          )}
+
+          {/* ─── TAB: NEXT STEPS ─── */}
+          {activeTab === "next-steps" && (
+            <div className="space-y-8">
+              {/* Fastest Path to Launch */}
+              <section className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-card">
+                <h2 className="flex items-center gap-2 font-display text-lg font-semibold mb-4">
+                  <Rocket className="h-5 w-5 text-neon" /> Fastest Path to Launch
+                </h2>
+                <div className="space-y-3">
+                  {analysis.fastestPathToLaunch.map((point, idx) => (
+                    <div key={idx} className="flex items-start gap-3 rounded-lg border border-border bg-background/50 p-4 hover:border-neon/20 transition-colors">
+                      <Zap className="h-4 w-4 text-neon shrink-0 mt-0.5" />
+                      <p className="text-sm text-foreground/90 leading-relaxed">{point}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Time Savings Callout */}
+              <section className="rounded-2xl border border-border bg-muted/30 p-6 text-center">
+                <p className="text-sm text-muted-foreground italic leading-relaxed max-w-2xl mx-auto">
+                  "Resolving the recommendations in this report before development begins could reduce unnecessary engineering effort by several weeks. Validating assumptions early is significantly less expensive than rebuilding after launch."
+                </p>
+              </section>
+
+              {/* Discovery Session CTA */}
+              <section className="rounded-2xl border border-neon/20 bg-gradient-to-br from-card to-neon/5 p-6 sm:p-8 relative overflow-hidden">
+                <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-neon opacity-5 blur-3xl" />
+                <h2 className="font-display text-lg font-semibold mb-2">Continue Your Founder-to-Launch Journey</h2>
+                <p className="text-xs text-muted-foreground leading-relaxed mb-5 max-w-2xl">
+                  This report is intentionally the beginning—not the conclusion. A Discovery Session builds on these findings instead of starting from scratch. Whether we decide to work together afterward or not, you will leave with greater clarity, a stronger execution strategy, and a practical roadmap.
+                </p>
+                <div className="flex flex-wrap gap-3 mb-6 text-xs text-foreground/80">
+                  {[
+                    "Challenge key product assumptions",
+                    "Refine your MVP scope",
+                    "Prioritize highest-value features",
+                    "Identify technical risks early",
+                    "Design the fastest path to launch",
+                  ].map((item) => (
+                    <span key={item} className="flex items-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/15 px-3 py-1.5">
+                      <CheckCircle className="h-3 w-3 text-emerald-500" /> {item}
                     </span>
-                    <span className="text-xs text-muted-foreground">({analysis.currentStage})</span>
-                  </div>
+                  ))}
                 </div>
-
-                <div>
-                  <span className="font-mono text-[10px] uppercase text-muted-foreground">AI Executive Summary</span>
-                  <p className="mt-1 text-xs text-foreground/90 leading-relaxed bg-background/40 p-4 rounded-xl border border-border">
-                    {analysis.executiveSummary}
-                  </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={openContactModal}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-neon px-6 py-3 text-sm font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
+                  >
+                    <Calendar className="h-4 w-4" /> Book Your Discovery Session
+                  </button>
+                  <button
+                    onClick={handleDownload}
+                    disabled={downloading}
+                    className="flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 py-3 text-sm font-semibold hover:bg-muted transition disabled:opacity-50"
+                  >
+                    {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+                    Download Full PDF Report
+                  </button>
                 </div>
-              </div>
-            )}
-          </div>
+              </section>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="rounded-2xl border border-border bg-card p-8 text-center">
+          <p className="text-sm text-muted-foreground">Report data is being processed. Please refresh in a few moments.</p>
         </div>
-
-        {/* Right column: Action Sidebar */}
-        <div className="lg:col-span-4 space-y-6 sticky top-24">
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-card space-y-4">
-            <h3 className="font-display text-base font-semibold">Download Center</h3>
-            <p className="text-xs text-muted-foreground">
-              Retrieve your customized PDF containing the full answers, framework assessment, and architecture insights.
-            </p>
-            
-            <button
-              onClick={handleDownload}
-              disabled={downloading}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-neon py-3 text-sm font-semibold text-primary-foreground shadow-neon transition hover:brightness-110 disabled:opacity-50"
-            >
-              {downloading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Generating file...
-                </>
-              ) : (
-                <>
-                  <FileDown className="h-4 w-4" /> Download PDF Report
-                </>
-              )}
-            </button>
-          </div>
-
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-card space-y-4">
-            <h3 className="font-display text-base font-semibold">Discovery Review</h3>
-            <p className="text-xs text-muted-foreground">
-              Ready to review your report findings together? Book a discovery call and we'll evaluate your scope in detail.
-            </p>
-
-            <button
-              onClick={openContactModal}
-              className="w-full flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary hover:bg-muted py-3 text-sm font-semibold transition"
-            >
-              <PhoneCall className="h-4 w-4 text-neon" /> Book Discovery Call
-            </button>
-          </div>
-        </div>
-
-      </div>
+      )}
     </div>
   );
 }
+

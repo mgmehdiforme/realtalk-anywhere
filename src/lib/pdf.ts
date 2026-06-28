@@ -98,138 +98,277 @@ export function generateAssessmentPdf(
 
       doc.y = metaY + 90; // reset cursor below metadata
 
-      // Executive Summary
+      // Helper function to check page boundaries and add page if needed
+      const ensureSpace = (heightNeeded: number) => {
+        if (doc.y + heightNeeded > doc.page.height - 65) {
+          doc.addPage();
+        }
+      };
+
+      // 1. Executive Summary
+      ensureSpace(120);
       doc
         .font("Helvetica-Bold")
-        .fontSize(14)
+        .fontSize(13)
         .fillColor(darkColor)
         .text("Executive Summary")
-        .moveDown(0.5);
+        .moveDown(0.3);
 
       doc
         .font("Helvetica")
-        .fontSize(10)
+        .fontSize(9.5)
         .fillColor(textColor)
-        .text(analysis.executiveSummary, { align: "justify", lineGap: 3 })
-        .moveDown(1.5);
+        .text(analysis.executiveSummary, { align: "justify", lineGap: 2.5 })
+        .moveDown(1.2);
 
-      // Phase Recommendation
-      doc
-        .font("Helvetica-Bold")
-        .fontSize(14)
-        .fillColor(darkColor)
-        .text("Framework Placement & Next Step")
-        .moveDown(0.5);
-
+      // 2. Phase Recommendation Banner
+      ensureSpace(95);
       const recY = doc.y;
       doc
-        .rect(50, recY, 495, 80)
-        .fill("#e0e7ff") // Indigo 100 bg
-        .strokeColor("#a5b4fc") // Indigo 300 border
+        .rect(50, recY, 495, 75)
+        .fill("#e0e7ff")
+        .strokeColor("#a5b4fc")
         .stroke();
 
       doc
         .font("Helvetica-Bold")
-        .fontSize(12)
+        .fontSize(11)
         .fillColor(primaryColor)
-        .text(`Recommended Phase: ${analysis.recommendedPhase.toUpperCase()}™`, 65, recY + 15);
+        .text(`Recommended Phase: ${analysis.recommendedPhase.toUpperCase()}™`, 65, recY + 12);
 
       doc
         .font("Helvetica")
-        .fontSize(9.5)
+        .fontSize(9)
         .fillColor(textColor)
-        .text(analysis.recommendedPhaseReasoning, 65, recY + 35, { width: 465, lineGap: 2 });
+        .text(analysis.recommendedPhaseReasoning, 65, recY + 30, { width: 465, lineGap: 1.5 });
 
-      doc.y = recY + 95;
+      doc.y = recY + 90;
 
-      // Key Insights
+      // 3. Founder Strengths
+      ensureSpace(120);
       doc
         .font("Helvetica-Bold")
-        .fontSize(14)
+        .fontSize(13)
         .fillColor(darkColor)
-        .text("AI-Powered Insights")
-        .moveDown(0.5);
+        .text("Founder Strengths")
+        .moveDown(0.4);
 
-      analysis.insights.forEach((insight) => {
-        const insightY = doc.y;
-        
-        // Render Category Heading
+      const strengthsY = doc.y;
+      const strengthsHeight = 15 + (analysis.founderStrengths.length * 18);
+      doc
+        .rect(50, strengthsY, 495, strengthsHeight)
+        .fill("#f0fdf4")
+        .strokeColor("#bbf7d0")
+        .stroke();
+
+      let strengthTextY = strengthsY + 10;
+      analysis.founderStrengths.forEach((strength) => {
         doc
           .font("Helvetica-Bold")
-          .fontSize(10.5)
-          .fillColor(darkColor)
-          .text(insight.category)
-          .moveDown(0.2);
-
-        doc
-          .font("Helvetica-Oblique")
-          .fontSize(9.5)
-          .fillColor(textColor)
-          .text(`Observation: `, { continued: true })
+          .fillColor("#16a34a")
+          .text("✓ ", 65, strengthTextY)
           .font("Helvetica")
-          .text(insight.observation, { lineGap: 2 })
-          .moveDown(0.2);
+          .fillColor(textColor)
+          .text(strength, 80, strengthTextY, { width: 450 });
+        strengthTextY += 18;
+      });
 
+      doc.y = strengthsY + strengthsHeight + 15;
+
+      // 4. Biggest Opportunities
+      ensureSpace(130);
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(13)
+        .fillColor(darkColor)
+        .text("Biggest Opportunities")
+        .moveDown(0.4);
+
+      analysis.biggestOpportunities.forEach((opp) => {
+        ensureSpace(45);
         doc
           .font("Helvetica-Bold")
-          .fontSize(9.5)
+          .fontSize(10)
           .fillColor(primaryColor)
-          .text(`Recommendation: `, { continued: true })
+          .text(opp.title)
           .font("Helvetica")
+          .fontSize(9)
           .fillColor(textColor)
-          .text(insight.tip, { lineGap: 2 })
+          .text(opp.description, { lineGap: 1.5 })
+          .moveDown(0.6);
+      });
+
+      doc.moveDown(0.6);
+
+      // 5. What Could Slow You Down (Risks)
+      ensureSpace(130);
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(13)
+        .fillColor(darkColor)
+        .text("What Could Slow You Down")
+        .moveDown(0.4);
+
+      analysis.whatCouldSlowYouDown.forEach((item) => {
+        ensureSpace(65);
+        doc
+          .font("Helvetica-Bold")
+          .fontSize(10)
+          .fillColor("#ea580c") // Orange text
+          .text(item.risk)
+          .font("Helvetica-Oblique")
+          .fontSize(9)
+          .fillColor(textColor)
+          .text("Business Impact: ", { continued: true })
+          .font("Helvetica")
+          .text(item.businessImpact, { lineGap: 1.5 })
+          .font("Helvetica-Oblique")
+          .text("Technical Impact: ", { continued: true })
+          .font("Helvetica")
+          .text(item.technicalImpact, { lineGap: 1.5 })
           .moveDown(0.8);
       });
 
-      // AI Recommendations Placeholder Section
+      doc.moveDown(0.4);
+
+      // 6. If This Were My Startup
+      ensureSpace(120);
       doc
         .font("Helvetica-Bold")
-        .fontSize(14)
+        .fontSize(13)
         .fillColor(darkColor)
-        .text("Detailed Technical Recommendations")
-        .moveDown(0.5);
+        .text("If This Were My Startup")
+        .moveDown(0.4);
 
+      let stepNum = 1;
+      analysis.ifThisWereMyStartup.forEach((point) => {
+        ensureSpace(45);
+        doc
+          .font("Helvetica-Bold")
+          .fontSize(10)
+          .fillColor(primaryColor)
+          .text(`${stepNum}. `, { continued: true })
+          .font("Helvetica")
+          .fontSize(9)
+          .fillColor(textColor)
+          .text(point, { lineGap: 1.5 })
+          .moveDown(0.5);
+        stepNum++;
+      });
+
+      doc.moveDown(0.6);
+
+      // 7. Engineering Strategy
+      ensureSpace(120);
       doc
         .font("Helvetica-Bold")
-        .fontSize(10)
-        .fillColor(secondaryColor)
-        .text("AI Recommendations:")
-        .font("Helvetica")
-        .fontSize(9.5)
-        .fillColor(textColor)
-        .text("Available in the next version after your Discovery Call.", { oblique: true })
-        .moveDown(2);
+        .fontSize(13)
+        .fillColor(darkColor)
+        .text("Engineering Strategy")
+        .moveDown(0.4);
 
-      // Book Discovery Call CTA Footer Banner
-      const ctaY = doc.y;
-      // If we are too close to the bottom, start a new page
-      if (ctaY > 700) {
-        doc.addPage();
-      }
-      
+      analysis.engineeringStrategy.forEach((strat) => {
+        ensureSpace(60);
+        doc
+          .font("Helvetica-Bold")
+          .fontSize(10)
+          .fillColor(darkColor)
+          .text(strat.area)
+          .font("Helvetica-Bold")
+          .fontSize(9)
+          .fillColor(secondaryColor)
+          .text("Recommendation: ", { continued: true })
+          .font("Helvetica")
+          .fillColor(textColor)
+          .text(strat.recommendation)
+          .font("Helvetica-Oblique")
+          .text("Why: ", { continued: true })
+          .font("Helvetica")
+          .text(strat.why, { lineGap: 1.5 })
+          .moveDown(0.8);
+      });
+
+      doc.moveDown(0.4);
+
+      // 8. Fastest Path to Launch
+      ensureSpace(120);
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(13)
+        .fillColor(darkColor)
+        .text("Fastest Path to Launch")
+        .moveDown(0.4);
+
+      analysis.fastestPathToLaunch.forEach((point) => {
+        ensureSpace(35);
+        doc
+          .font("Helvetica-Bold")
+          .fillColor(primaryColor)
+          .text("• ", { continued: true })
+          .font("Helvetica")
+          .fontSize(9)
+          .fillColor(textColor)
+          .text(point, { lineGap: 1.5 })
+          .moveDown(0.5);
+      });
+
+      doc.moveDown(0.8);
+
+      // 9. Potential Time Savings Callout
+      ensureSpace(70);
+      const savingsY = doc.y;
+      doc
+        .rect(50, savingsY, 495, 55)
+        .fill("#fafaf9")
+        .strokeColor("#e7e5e4")
+        .stroke();
+
+      doc
+        .font("Helvetica-Oblique")
+        .fontSize(8.5)
+        .fillColor("#57534e")
+        .text(
+          "Resolving the recommendations in this report before development begins could reduce unnecessary engineering effort by several weeks. Validating assumptions early is significantly less expensive than rebuilding after launch.",
+          65,
+          savingsY + 12,
+          { width: 465, align: "center", lineGap: 2 }
+        );
+
+      doc.y = savingsY + 70;
+
+      // 10. Book Discovery Call CTA Footer Banner
+      ensureSpace(150);
       const drawCtaY = doc.y;
       doc
-        .rect(50, drawCtaY, 495, 70)
+        .rect(50, drawCtaY, 495, 125)
         .fill(darkColor)
         .stroke();
 
       doc
         .font("Helvetica-Bold")
-        .fontSize(12)
+        .fontSize(11)
         .fillColor("#ffffff")
-        .text("Ready to discuss your product?", 65, drawCtaY + 15);
+        .text("Continue Your Founder-to-Launch Journey", 65, drawCtaY + 12);
 
       doc
         .font("Helvetica")
-        .fontSize(9)
+        .fontSize(8.5)
         .fillColor("#e2e8f0")
-        .text("Book a Discovery Call and we will review this assessment together in detail.", 65, drawCtaY + 32);
+        .text("This report is intentionally the beginning—not the conclusion. A Discovery Session builds on these findings to refine MVP scope, prioritize value, and design the fastest path to launch. Whether we decide to work together or not, you will leave with a practical roadmap.", 65, drawCtaY + 28, { width: 465, lineGap: 1.5 });
 
       doc
         .font("Helvetica-Bold")
-        .fontSize(9.5)
-        .fillColor(primaryColor)
-        .text("Go to: MehdiGolzari.dev", 65, drawCtaY + 47);
+        .fontSize(9)
+        .fillColor("#34d399")
+        .text("✓ Refine MVP Scope   ✓ Challenge Key Assumptions   ✓ Identify Risks Early   ✓ Design Launch Path", 65, drawCtaY + 80);
+
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(10)
+        .fillColor("#f472b6")
+        .text("Book Your Discovery Session at: MehdiGolzari.dev", 65, drawCtaY + 102);
+
+      doc.y = drawCtaY + 135;
 
       // Global Footer (Page numbers)
       const range = doc.bufferedPageRange();
