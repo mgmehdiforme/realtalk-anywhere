@@ -11,9 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as ResumeRouteImport } from './routes/resume'
+import { Route as FounderToLaunchFrameworkRouteImport } from './routes/founder-to-launch-framework'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as AssessmentRouteImport } from './routes/assessment'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
@@ -25,9 +28,20 @@ const ResumeRoute = ResumeRouteImport.update({
   path: '/resume',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FounderToLaunchFrameworkRoute =
+  FounderToLaunchFrameworkRouteImport.update({
+    id: '/founder-to-launch-framework',
+    path: '/founder-to-launch-framework',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssessmentRoute = AssessmentRouteImport.update({
+  id: '/assessment',
+  path: '/assessment',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -40,43 +54,85 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/assessment': typeof AssessmentRoute
   '/contact': typeof ContactRoute
+  '/founder-to-launch-framework': typeof FounderToLaunchFrameworkRoute
   '/resume': typeof ResumeRoute
   '/services': typeof ServicesRoute
+  '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/assessment': typeof AssessmentRoute
   '/contact': typeof ContactRoute
+  '/founder-to-launch-framework': typeof FounderToLaunchFrameworkRoute
   '/resume': typeof ResumeRoute
   '/services': typeof ServicesRoute
+  '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/assessment': typeof AssessmentRoute
   '/contact': typeof ContactRoute
+  '/founder-to-launch-framework': typeof FounderToLaunchFrameworkRoute
   '/resume': typeof ResumeRoute
   '/services': typeof ServicesRoute
+  '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/contact' | '/resume' | '/services'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/assessment'
+    | '/contact'
+    | '/founder-to-launch-framework'
+    | '/resume'
+    | '/services'
+    | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/contact' | '/resume' | '/services'
-  id: '__root__' | '/' | '/about' | '/contact' | '/resume' | '/services'
+  to:
+    | '/'
+    | '/about'
+    | '/assessment'
+    | '/contact'
+    | '/founder-to-launch-framework'
+    | '/resume'
+    | '/services'
+    | '/auth/callback'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/assessment'
+    | '/contact'
+    | '/founder-to-launch-framework'
+    | '/resume'
+    | '/services'
+    | '/auth/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  AssessmentRoute: typeof AssessmentRoute
   ContactRoute: typeof ContactRoute
+  FounderToLaunchFrameworkRoute: typeof FounderToLaunchFrameworkRoute
   ResumeRoute: typeof ResumeRoute
   ServicesRoute: typeof ServicesRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -95,11 +151,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResumeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/founder-to-launch-framework': {
+      id: '/founder-to-launch-framework'
+      path: '/founder-to-launch-framework'
+      fullPath: '/founder-to-launch-framework'
+      preLoaderRoute: typeof FounderToLaunchFrameworkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contact': {
       id: '/contact'
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assessment': {
+      id: '/assessment'
+      path: '/assessment'
+      fullPath: '/assessment'
+      preLoaderRoute: typeof AssessmentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -116,16 +186,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  AssessmentRoute: AssessmentRoute,
   ContactRoute: ContactRoute,
+  FounderToLaunchFrameworkRoute: FounderToLaunchFrameworkRoute,
   ResumeRoute: ResumeRoute,
   ServicesRoute: ServicesRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

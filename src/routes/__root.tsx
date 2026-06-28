@@ -13,7 +13,7 @@ import { Menu, X } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { DemoModalProvider, DemoButton } from "../lib/demo-modal";
+import { DemoModalProvider, DemoButton, useDemoModal } from "../lib/demo-modal";
 import { ThemeProvider, ThemeToggle } from "../lib/theme";
 import { LanguageSelect } from "../lib/translate";
 
@@ -116,6 +116,7 @@ function NavBar() {
     { to: "/about" as const, label: "About" },
     { to: "/resume" as const, label: "Resume" },
     { to: "/contact" as const, label: "Contact" },
+    { to: "/assessment" as const, label: "Founder Assessment" },
   ];
 
   useEffect(() => {
@@ -218,14 +219,22 @@ function NavBar() {
 
 
 function Footer() {
+  const { open } = useDemoModal();
   return (
     <footer className="border-t border-border py-10">
-      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-5 text-sm text-muted-foreground sm:flex-row sm:px-8">
-        <div>© {new Date().getFullYear()} Mehdi Golzari · Independent Technical Partner</div>
-        <div className="flex gap-4">
-          <a className="hover:text-foreground" href="mailto:MehdiGolzari.official@gmail.com">Email</a>
-          <a className="hover:text-foreground" href="https://wa.me/905019390465" target="_blank" rel="noreferrer">WhatsApp</a>
-          <a className="hover:text-foreground" href="https://linkedin.com/in/mehdigolzariofficial" target="_blank" rel="noreferrer">LinkedIn</a>
+      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-5 text-sm text-muted-foreground sm:flex-row sm:px-8">
+        <div className="flex flex-col gap-1">
+          <div>© {new Date().getFullYear()} Mehdi Golzari · Independent Technical Partner</div>
+          <div className="flex gap-4 mt-2 sm:mt-0">
+            <a className="hover:text-foreground" href="mailto:MehdiGolzari.official@gmail.com">Email</a>
+            <a className="hover:text-foreground" href="https://wa.me/905019390465" target="_blank" rel="noreferrer">WhatsApp</a>
+            <a className="hover:text-foreground" href="https://linkedin.com/in/mehdigolzariofficial" target="_blank" rel="noreferrer">LinkedIn</a>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 text-left sm:items-end">
+          <Link to="/founder-to-launch-framework" className="hover:text-foreground">Founder-to-Launch Framework™</Link>
+          <Link to="/assessment" className="hover:text-foreground">Founder Assessment</Link>
+          <button onClick={open} className="hover:text-foreground cursor-pointer bg-transparent border-0 p-0 text-muted-foreground font-sans text-sm text-left sm:text-right">Book Discovery Call</button>
         </div>
       </div>
     </footer>

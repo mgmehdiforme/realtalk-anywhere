@@ -108,10 +108,10 @@ function Landing() {
                 Book a Free Discovery Call <ArrowRight className="ml-2 h-4 w-4" />
               </DemoButton>
               <Link
-                to="/services"
+                to="/assessment"
                 className="inline-flex items-center justify-center rounded-xl border border-border bg-card/40 px-5 py-3.5 text-sm font-semibold text-foreground backdrop-blur transition hover:bg-card"
               >
-                See services
+                Start Free Assessment
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
@@ -240,6 +240,66 @@ function Landing() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* FOUNDER TO LAUNCH FRAMEWORK */}
+      <section className="relative overflow-hidden border-b border-border bg-background">
+        <div className="mx-auto max-w-7xl px-5 py-20 sm:px-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <div className="text-xs font-semibold uppercase tracking-widest text-neon-gradient">
+              Methodology
+            </div>
+            <h2 className="mt-3 font-display text-3xl font-semibold sm:text-4xl">
+              Every successful SaaS starts with a <span className="text-neon-gradient">structured process</span>.
+            </h2>
+            <p className="mt-4 text-base text-muted-foreground">
+              Launching a product shouldn't be a guessing game. Every project I build follows the 
+              <strong> Founder-to-Launch Framework™</strong>—a structured engineering methodology designed to mitigate 
+              technical debt, eliminate scope creep, and ensure scalability.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+            {[
+              { phase: "01", name: "Discover", desc: "Scope locking and product boundaries." },
+              { phase: "02", name: "Validate", desc: "Testing integrations and assumptions." },
+              { phase: "03", name: "Blueprint", desc: "System and database architecture." },
+              { phase: "04", name: "Build", desc: "Production-ready coding and tests." },
+              { phase: "05", name: "Launch", desc: "CI/CD and production deployment." },
+              { phase: "06", name: "Scale", desc: "Performance tuning and optimization." },
+              { phase: "07", name: "Partner", desc: "Ongoing strategy and fractional CTO." },
+            ].map((p, idx) => (
+              <div 
+                key={p.name} 
+                className="relative flex flex-col rounded-2xl border border-border bg-card/50 p-5 transition hover:border-neon/30 hover:bg-card"
+              >
+                <div className="font-mono text-xs font-semibold text-neon">{p.phase}</div>
+                <h3 className="mt-2 font-display text-lg font-semibold">{p.name}</h3>
+                <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{p.desc}</p>
+                {idx < 6 && (
+                  <div className="hidden xl:block absolute -right-2.5 top-1/2 -translate-y-1/2 z-10 text-muted-foreground/30 font-display text-base">
+                    →
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 flex flex-wrap justify-center gap-3">
+            <Link
+              to="/assessment"
+              className="inline-flex items-center justify-center rounded-xl bg-neon px-5 py-3 text-sm font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
+            >
+              Start Free Assessment
+            </Link>
+            <Link
+              to="/founder-to-launch-framework"
+              className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-5 py-3 text-sm font-semibold transition hover:bg-muted"
+            >
+              Learn More
+            </Link>
+          </div>
         </div>
       </section>
 

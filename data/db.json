@@ -1,0 +1,111 @@
+{
+  "users": {
+    "testfounder@example.comtest@example.com": {
+      "email": "testfounder@example.comtest@example.com",
+      "name": "TESTFOUNDER",
+      "picture": "https://api.dicebear.com/7.x/bottts/svg?seed=testfounder@example.comtest@example.com",
+      "createdAt": 1782675988093
+    },
+    "testfounder@example.com": {
+      "email": "testfounder@example.com",
+      "name": "TESTFOUNDER",
+      "picture": "https://api.dicebear.com/7.x/bottts/svg?seed=testfounder@example.com",
+      "createdAt": 1782676016924
+    },
+    "test@example.com": {
+      "email": "test@example.com",
+      "name": "TEST",
+      "picture": "https://api.dicebear.com/7.x/bottts/svg?seed=test@example.com",
+      "createdAt": 1782676223186
+    },
+    "testfou1nder@example.com": {
+      "email": "testfou1nder@example.com",
+      "name": "TESTFOU1NDER",
+      "picture": "https://api.dicebear.com/7.x/bottts/svg?seed=testfou1nder@example.com",
+      "createdAt": 1782677380055
+    }
+  },
+  "assessments": {
+    "testfounder@example.com": {
+      "email": "testfounder@example.com",
+      "answers": {},
+      "submittedAt": "2026-06-28T20:06:17.548Z",
+      "reportPdfPath": "D:\\MehdiGolzari\\realtalk-anywhere\\data\\reports\\testfounder_example_com.pdf",
+      "reportData": {
+        "executiveSummary": "[AI Fallback Mode] Analysis for your startup: Your project represents a highly promising initiative addressing a real-world market friction. By combining a clear understanding of the target audience with a well-scoped MVP, you are positioned to validate your key hypotheses quickly. Focus on tightening your feedback loops with initial design partners before scaling the underlying technical infrastructure.",
+        "insights": [
+          {
+            "category": "Problem & Market Fit",
+            "observation": "The problem identified is experienced by a specific, high-intent B2B target group who currently rely on manual, Excel-based workarounds.",
+            "tip": "Focus your MVP messaging on time saved and elimination of manual copy-paste errors rather than broad feature coverage."
+          },
+          {
+            "category": "Product & Scope",
+            "observation": "Your core feature set is solid, but there is a slight risk of scope creep in the initial launch by adding secondary integrations too early.",
+            "tip": "Defer the payment gateway and advanced analytics until you have 5 active pilot users. Use manual invoicing initially."
+          },
+          {
+            "category": "Technology & Stack",
+            "observation": "Your stack choice is modern and scalable. However, the lack of experienced in-house developers means you need a clean, maintainable architecture from day one.",
+            "tip": "Adopt a monolithic structure with a modular design (e.g., NestJS or structured .NET) instead of a complex microservices architecture."
+          }
+        ],
+        "recommendedPhase": "Blueprint",
+        "recommendedPhaseReasoning": "Based on your answers, you have validated the core problem but require a technical blueprint (architecture diagrams, schema definitions, and API specifications) before writing production code. This will prevent expensive rewrites later.",
+        "currentStage": "Validated Idea & Requirements Defined",
+        "challengesSummary": "The chief risks are hiring speed, coordination of external tech partners, and technical scope creep before reaching product-market fit."
+      }
+    },
+    "testfou1nder@example.com": {
+      "email": "testfou1nder@example.com",
+      "answers": {
+        "founderName": "kjnkjn",
+        "founderRole": "Solo Founder",
+        "startupName": "kllkm",
+        "industryNiche": [
+          "HealthTech",
+          "FinTech",
+          "Marketplace"
+        ],
+        "targetAudience": "Other",
+        "fundingStage": "Other",
+        "problemDescription": ",mknkj",
+        "urgencyDescription": "knknj",
+        "alternativesDescription": "bjhb",
+        "productDescription": "jkjn",
+        "mvpFeatures": "llkmlkm",
+        "designStatus": "in_progress",
+        "sixMonthGoal": "Launch MVP",
+        "targetAudienceOther": "kml",
+        "fundingStageOther": "kmlm",
+        "monetization": "Usage-based"
+      },
+      "submittedAt": "2026-06-28T20:12:49.985Z",
+      "reportPdfPath": "D:\\MehdiGolzari\\realtalk-anywhere\\data\\reports\\testfou1nder_example_com.pdf",
+      "reportData": {
+        "executiveSummary": "[AI Fallback Mode] Analysis for kllkm: Your project represents a highly promising initiative addressing a real-world market friction. By combining a clear understanding of the target audience with a well-scoped MVP, you are positioned to validate your key hypotheses quickly. Focus on tightening your feedback loops with initial design partners before scaling the underlying technical infrastructure.",
+        "insights": [
+          {
+            "category": "Problem & Market Fit",
+            "observation": "The problem identified is experienced by a specific, high-intent B2B target group who currently rely on manual, Excel-based workarounds.",
+            "tip": "Focus your MVP messaging on time saved and elimination of manual copy-paste errors rather than broad feature coverage."
+          },
+          {
+            "category": "Product & Scope",
+            "observation": "Your core feature set is solid, but there is a slight risk of scope creep in the initial launch by adding secondary integrations too early.",
+            "tip": "Defer the payment gateway and advanced analytics until you have 5 active pilot users. Use manual invoicing initially."
+          },
+          {
+            "category": "Technology & Stack",
+            "observation": "Your stack choice is modern and scalable. However, the lack of experienced in-house developers means you need a clean, maintainable architecture from day one.",
+            "tip": "Adopt a monolithic structure with a modular design (e.g., NestJS or structured .NET) instead of a complex microservices architecture."
+          }
+        ],
+        "recommendedPhase": "Blueprint",
+        "recommendedPhaseReasoning": "Based on your answers, you have validated the core problem but require a technical blueprint (architecture diagrams, schema definitions, and API specifications) before writing production code. This will prevent expensive rewrites later.",
+        "currentStage": "Validated Idea & Requirements Defined",
+        "challengesSummary": "The chief risks are hiring speed, coordination of external tech partners, and technical scope creep before reaching product-market fit."
+      }
+    }
+  }
+}

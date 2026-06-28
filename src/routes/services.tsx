@@ -46,6 +46,7 @@ type Service = {
   idealFor: string;
   timeline: string;
   outcome: string;
+  frameworkPhases: string[];
 };
 
 const SERVICES: Service[] = [
@@ -68,6 +69,7 @@ const SERVICES: Service[] = [
     idealFor: "First-time and non-technical founders launching their first SaaS.",
     timeline: "4–10 weeks, milestone-based.",
     outcome: "A live, paying-customer-ready product with a clean codebase you fully own.",
+    frameworkPhases: ["Discover", "Validate", "Blueprint", "Build", "Launch"],
   },
   {
     icon: Brain,
@@ -88,6 +90,7 @@ const SERVICES: Service[] = [
     idealFor: "Founders building AI-native SaaS or adding AI to an existing product.",
     timeline: "3–8 weeks for a focused AI MVP.",
     outcome: "An AI feature or product that's accurate, observable, and safe to put in front of users.",
+    frameworkPhases: ["Discover", "Validate", "Blueprint", "Build", "Launch"],
   },
   {
     icon: Handshake,
@@ -108,6 +111,7 @@ const SERVICES: Service[] = [
     idealFor: "Founders who've shipped an MVP and want a senior partner for the long game.",
     timeline: "Monthly retainer, often quarterly commitment.",
     outcome: "Confident technical decisions, fewer wrong turns, faster shipping.",
+    frameworkPhases: ["Scale", "Partner"],
   },
   {
     icon: LifeBuoy,
@@ -128,6 +132,7 @@ const SERVICES: Service[] = [
     idealFor: "Founders inheriting a SaaS that's painful to change or unreliable in production.",
     timeline: "2–6 weeks for stabilization; longer for full refactor.",
     outcome: "A codebase you can ship into again, with a clear path forward.",
+    frameworkPhases: ["Blueprint", "Build", "Launch"],
   },
   {
     icon: TrendingUp,
@@ -148,6 +153,7 @@ const SERVICES: Service[] = [
     idealFor: "SaaS teams with real users hitting growth ceilings.",
     timeline: "Project-based or fractional, usually 6–12 weeks of focus.",
     outcome: "Faster product, calmer on-call, safer releases.",
+    frameworkPhases: ["Scale", "Partner"],
   },
   {
     icon: Compass,
@@ -168,6 +174,7 @@ const SERVICES: Service[] = [
     idealFor: "Funded startups between first hires and a full-time CTO.",
     timeline: "Fractional retainer, typically 2–4 days per week.",
     outcome: "Engineering that runs like a real org — not a series of fire drills.",
+    frameworkPhases: ["Discover", "Validate", "Blueprint", "Build", "Launch", "Scale", "Partner"],
   },
 ];
 
@@ -198,7 +205,7 @@ function ServicesPage() {
       <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-20">
         <div className="grid gap-6 md:grid-cols-2">
           {SERVICES.map(
-            ({ icon: Icon, tag, title, pitch, overview, deliverables, idealFor, timeline, outcome }) => (
+            ({ icon: Icon, tag, title, pitch, overview, deliverables, idealFor, timeline, outcome, frameworkPhases }) => (
               <article
                 key={title}
                 className="flex flex-col rounded-2xl border border-border bg-card p-7 shadow-card"
@@ -229,6 +236,26 @@ function ServicesPage() {
                       </li>
                     ))}
                   </ul>
+                </div>
+
+                {/* Framework phases section */}
+                <div className="mt-5 rounded-xl border border-border bg-background/50 p-4">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Framework Delivery
+                  </div>
+                  <div className="mt-1 text-xs text-foreground/80 leading-normal">
+                    This service is delivered through the <span className="text-neon font-semibold">Founder-to-Launch Framework™</span>.
+                  </div>
+                  <div className="mt-2.5 flex flex-wrap gap-1">
+                    {frameworkPhases.map((phase) => (
+                      <span 
+                        key={phase} 
+                        className="rounded border border-neon/20 bg-neon/5 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-neon"
+                      >
+                        {phase}
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="mt-6 grid gap-3 border-t border-border pt-5 text-sm sm:grid-cols-3">

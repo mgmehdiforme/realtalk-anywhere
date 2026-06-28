@@ -1,0 +1,1351 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createServerFn } from "@tanstack/react-start";
+import { useDemoModal } from "@/lib/demo-modal";
+import { authWithGoogle } from "@/lib/auth-functions";
+import {
+  Loader2,
+  CheckCircle,
+  FileDown,
+  PhoneCall,
+  LogOut,
+  Calendar,
+  Lock,
+  ArrowRight,
+  ArrowLeft,
+  CloudLightning,
+  Sparkles,
+  Play,
+  HelpCircle,
+  Check,
+  ChevronDown,
+  Info,
+} from "lucide-react";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SERVER FUNCTIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Fetch the current user state, assessment progress/submission, and env configs
+ */
+export const getAssessmentState = createServerFn()
+  .handler(async ({ request }) => {
+    const { getSessionFromRequest } = await import("@/lib/auth");
+    const { getUser, getAssessment } = await import("@/lib/db");
+
+    const session = getSessionFromRequest(request);
+    const googleClientId = process.env.GOOGLE_CLIENT_ID || "";
+    const showMockLogin = !googleClientId || !process.env.GOOGLE_CLIENT_SECRET;
+
+    if (!session) {
+      return { 
+        authenticated: false, 
+        user: null, 
+        assessment: null, 
+        showMockLogin,
+        googleClientId
+      };
+    }
+
+    const dbUser = await getUser(session.email);
+    const assessment = await getAssessment(session.email);
+
+    return {
+      authenticated: true,
+      user: dbUser,
+      assessment,
+      showMockLogin,
+      googleClientId
+    };
+  });
+
+/**
+ * Save current wizard answers as a draft
+ */
+export const saveAssessmentDraft = createServerFn()
+  .validator((d: { answers: Record<string, any> }) => d)
+  .handler(async ({ data, request }) => {
+    const { getSessionFromRequest } = await import("@/lib/auth");
+    const { saveAssessment } = await import("@/lib/db");
+
+    const session = getSessionFromRequest(request);
+    if (!session) {
+      throw new Error("Unauthorized");
+    }
+
+    const assessment = await saveAssessment(session.email, data.answers);
+    return { success: true, assessment };
+  });
+
+/**
+ * Finalize assessment, trigger Qwen analysis, and compile PDF
+ */
+export const submitAssessmentAction = createServerFn()
+  .handler(async ({ request }) => {
+    const { getSessionFromRequest } = await import("@/lib/auth");
+    const { getAssessment, submitAssessment } = await import("@/lib/db");
+    const { analyzeAssessmentAnswers } = await import("@/lib/qwen");
+    const { generateAssessmentPdf } = await import("@/lib/pdf");
+
+    const session = getSessionFromRequest(request);
+    if (!session) {
+      throw new Error("Unauthorized");
+    }
+
+    const existing = await getAssessment(session.email);
+    if (!existing) {
+      throw new Error("No assessment answers found");
+    }
+
+    if (existing.submittedAt) {
+      throw new Error("Assessment already submitted");
+    }
+
+    // 1. Call Qwen for report insights
+    console.log(`Starting Qwen analysis for ${session.email}...`);
+    const analysis = await analyzeAssessmentAnswers(existing.answers, session.email);
+
+    // 2. Generate PDF using pdfkit
+    console.log(`Generating PDF report for ${session.email}...`);
+    const pdfPath = await generateAssessmentPdf(session.email, existing.answers, analysis);
+
+    // 3. Mark in DB as submitted
+    const updated = await submitAssessment(session.email, pdfPath, analysis);
+
+    return { success: true, assessment: updated };
+  });
+
+/**
+ * Download the generated PDF as base64
+ */
+export const downloadPdfReport = createServerFn()
+  .handler(async ({ request }) => {
+    const { getSessionFromRequest } = await import("@/lib/auth");
+    const { getAssessment } = await import("@/lib/db");
+
+    const session = getSessionFromRequest(request);
+    if (!session) {
+      throw new Error("Unauthorized");
+    }
+
+    const assessment = await getAssessment(session.email);
+    if (!assessment || !assessment.reportPdfPath) {
+      throw new Error("Report not generated yet");
+    }
+
+    try {
+      const fs = await import("fs/promises");
+      const pdfBuffer = await fs.readFile(assessment.reportPdfPath);
+      return { 
+        success: true, 
+        base64: pdfBuffer.toString("base64"),
+        fileName: `MehdiGolzari_Founder_Assessment_${session.email.split("@")[0]}.pdf`
+      };
+    } catch (error) {
+      console.error("PDF read error:", error);
+      throw new Error("Failed to read report file on server");
+    }
+  });
+
+/**
+ * Log the user out by clearing the session cookie
+ */
+export const logoutAction = createServerFn()
+  .handler(async () => {
+    return { success: true };
+  });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ROUTE REGISTRATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const Route = createFileRoute("/assessment")({
+  head: () => ({
+    meta: [
+      { title: "Founder Fit Assessment™ — SaaS Qualifications | MehdiGolzari.dev" },
+      {
+        name: "description",
+        content: "Take the 10-minute SaaS & AI product assessment. Get immediate Qwen AI insights and a downloadable PDF roadmap.",
+      },
+    ],
+  }),
+  component: AssessmentFlowPage,
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPONENT IMPLEMENTATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+function AssessmentFlowPage() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [state, setState] = useState<{
+    authenticated: boolean;
+    user: any;
+    assessment: any;
+    showMockLogin: boolean;
+  } | null>(null);
+
+  // Authentication trigger redirect helper
+  const handleGoogleLogin = () => {
+    if (!state || !state.googleClientId) {
+      alert("Google Client ID is not configured on the server.");
+      return;
+    }
+    
+    const host = window.location.host;
+    const protocol = window.location.protocol;
+    const redirectUri = `${protocol}//${host}/auth/callback`;
+    
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${state.googleClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20profile%20email`;
+  };
+
+  // Mock login trigger for dev
+  const handleMockLogin = async (email: string) => {
+    setLoading(true);
+    try {
+      const res = await authWithGoogle({
+        data: {
+          mockUser: {
+            email,
+            name: email.split("@")[0].toUpperCase(),
+            picture: `https://api.dicebear.com/7.x/bottts/svg?seed=${email}`,
+          },
+        },
+      });
+      if (res.success) {
+        if (res.token) {
+          document.cookie = `founder_session=${res.token}; Path=/; Max-Age=${30 * 24 * 60 * 60}; SameSite=Lax`;
+        }
+        refreshState();
+      }
+    } catch (e) {
+      console.error(e);
+      setLoading(false);
+    }
+  };
+
+  const refreshState = async () => {
+    setLoading(true);
+    try {
+      const data = await getAssessmentState();
+      setState(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    setLoading(true);
+    document.cookie = "founder_session=; Path=/; Max-Age=0";
+    await logoutAction();
+    refreshState();
+  };
+
+  useEffect(() => {
+    refreshState();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[70vh] items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-neon" />
+      </div>
+    );
+  }
+
+  if (!state?.authenticated) {
+    return (
+      <LandingPage 
+        showMockLogin={state?.showMockLogin ?? true} 
+        onGoogleLogin={handleGoogleLogin} 
+        onMockLogin={handleMockLogin} 
+      />
+    );
+  }
+
+  if (state.assessment?.submittedAt) {
+    return (
+      <DashboardView 
+        user={state.user} 
+        assessment={state.assessment} 
+        onLogout={handleLogout} 
+      />
+    );
+  }
+
+  return (
+    <WizardForm 
+      user={state.user} 
+      initialAnswers={state.assessment?.answers || {}} 
+      onComplete={refreshState} 
+      onLogout={handleLogout}
+    />
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. LANDING PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+
+function LandingPage({ 
+  showMockLogin, 
+  onGoogleLogin, 
+  onMockLogin 
+}: { 
+  showMockLogin: boolean; 
+  onGoogleLogin: () => void; 
+  onMockLogin: (email: string) => void; 
+}) {
+  const [mockEmail, setMockEmail] = useState("testfounder@example.com");
+
+  return (
+    <div className="bg-background">
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-hero border-b border-border py-16 sm:py-24">
+        <div className="absolute inset-0 grid-bg opacity-30" />
+        <div className="relative mx-auto max-w-5xl px-5 text-center sm:px-8">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-semibold text-neon-gradient backdrop-blur">
+            <Sparkles className="h-3.5 w-3.5" /> Launch Qualification
+          </div>
+          <h1 className="mt-5 font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
+            Founder Fit <span className="text-neon-gradient">Assessment™</span>
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
+            Qualify your SaaS or AI product idea, identify technical bottleneck risks, and receive an 
+            AI-assisted architecture review report in 10 minutes.
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-neon" /> 10-15 mins completion</span>
+            <span className="opacity-50">·</span>
+            <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-neon" /> Structured PDF Output</span>
+            <span className="opacity-50">·</span>
+            <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-neon" /> Google Account login</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Login & Core Value Grid */}
+      <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8">
+        <div className="grid gap-12 lg:grid-cols-12 items-start">
+          
+          {/* Why Complete Card & Receivables */}
+          <div className="lg:col-span-7 space-y-8">
+            <div>
+              <h2 className="font-display text-2xl font-semibold sm:text-3xl">Why complete the assessment?</h2>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                Before booking a discovery call, completing this assessment structures your startup requirements. 
+                It helps lock features, map technology expectations, and isolate technical complexity early.
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[
+                { title: "AI Executive Summary", desc: "A Qwen-generated summary highlighting your product value and audience fit." },
+                { title: "Methodology Phase", desc: "Identify exactly where your project slots into the 7-phase Founder-to-Launch Framework™." },
+                { title: "Downloadable PDF", desc: "Get a beautifully typeset A4 PDF roadmap to share with team members or advisors." },
+                { title: "Discovery Accelerator", desc: "We use this report during our Discovery Call, eliminating 30 minutes of scoping trivia." }
+              ].map((item) => (
+                <div key={item.title} className="rounded-2xl border border-border bg-card/40 p-5">
+                  <h3 className="font-display text-sm font-semibold text-neon">{item.title}</h3>
+                  <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Example PDF layout preview */}
+            <div className="rounded-2xl border border-border bg-card/20 p-5 relative overflow-hidden">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <span className="font-mono text-[10px] tracking-wider uppercase text-muted-foreground">Report Preview (Sample Layout)</span>
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              </div>
+              <div className="mt-4 space-y-2.5 opacity-60">
+                <div className="h-4 w-1/3 rounded bg-muted" />
+                <div className="h-2 w-full rounded bg-muted" />
+                <div className="h-2 w-5/6 rounded bg-muted" />
+                <div className="h-10 w-full rounded bg-primary/10 border border-primary/20 flex items-center px-3 text-[10px] font-mono text-primary font-semibold">
+                  RECOMMENDED PHASE: BLUEPRINT™
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Login Card */}
+          <div className="lg:col-span-5 rounded-3xl border border-border bg-card p-8 shadow-card sticky top-24">
+            <h3 className="font-display text-xl font-semibold">Get Started</h3>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Login is required to auto-save progress and secure your report. Only one submission is permitted per Google account.
+            </p>
+
+            <div className="mt-6 space-y-4">
+              {showMockLogin ? (
+                <div className="rounded-2xl border border-neon/30 bg-neon/5 p-4 space-y-3">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-neon">
+                    <CloudLightning className="h-4 w-4" /> Local Testing Mode Enabled
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    Google Client credentials are not configured in your environment. Use this mock field to simulate authentication.
+                  </p>
+                  <input
+                    type="email"
+                    value={mockEmail}
+                    onChange={(e) => setMockEmail(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-neon focus:outline-none"
+                    placeholder="Enter mock email address"
+                  />
+                  <button
+                    onClick={() => onMockLogin(mockEmail)}
+                    className="w-full rounded-lg bg-neon py-2.5 text-xs font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
+                  >
+                    Launch Mock Assessment
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={onGoogleLogin}
+                  className="w-full flex items-center justify-center gap-3 rounded-xl border border-border bg-background hover:bg-muted py-3 px-4 text-sm font-semibold transition"
+                >
+                  {/* Google SVG */}
+                  <svg className="h-4 w-4" viewBox="0 0 24 24">
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.54 14.98 1 12 1 7.35 1 3.37 3.68 1.42 7.57l3.8 2.95C6.18 7.37 8.87 5.04 12 5.04z"
+                    />
+                    <path
+                      fill="#4285F4"
+                      d="M23.45 12.27c0-.82-.07-1.61-.21-2.38H12v4.51h6.43c-.28 1.48-1.12 2.73-2.38 3.58l3.7 2.87c2.16-1.99 3.7-4.91 3.7-8.58z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.22 14.77c-.24-.73-.38-1.51-.38-2.32s.14-1.59.38-2.32L1.42 7.18C.51 9 .01 11 .01 13.1c0 2.1.5 4.1 1.41 5.92l3.8-3.25z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23.01c3.24 0 5.97-1.07 7.96-2.91l-3.7-2.87c-1.03.69-2.35 1.1-3.95 1.1-3.13 0-5.82-2.33-6.77-5.48l-3.8 2.95c1.95 3.89 5.93 6.57 10.59 6.57z"
+                    />
+                  </svg>
+                  Continue with Google
+                </button>
+              )}
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="bg-card/20 border-t border-border">
+        <div className="mx-auto max-w-4xl px-5 py-16 sm:px-8">
+          <h2 className="font-display text-2xl font-semibold text-center">Frequently Asked Questions</h2>
+          <div className="mt-8 space-y-4">
+            {[
+              {
+                q: "Is there any cost for this report?",
+                a: "No. The assessment and PDF report generation are completely free. It helps me prepare for our call so that we spend the conversation solving core technical challenges rather than reviewing basic project details.",
+              },
+              {
+                q: "How does the auto-save feature work?",
+                a: "Once signed in, every answer you type is saved in real-time as you transition between pages or click away. You can close the tab and return later to finish without losing your data.",
+              },
+              {
+                q: "Why is it limited to one submission?",
+                a: "Each submission triggers an API query to Qwen models and compiles a heavy-styled PDF document. To prevent script abuse and ensure resources are available for serious founders, we limit submissions to one per account.",
+              },
+              {
+                q: "What happens after I submit?",
+                a: "Your assessment transitions to Read-Only mode. Your dashboard will immediately display your generated AI insights, a button to download the PDF report, and direct contact CTAs to schedule your review session.",
+              },
+            ].map((faq) => (
+              <FaqItem key={faq.q} question={faq.q} answer={faq.a} />
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function FaqItem({ question, answer }: { question: string; answer: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-xl border border-border bg-card/40 overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between p-5 text-left font-semibold text-sm transition hover:bg-card"
+      >
+        <span className="flex items-center gap-2"><HelpCircle className="h-4 w-4 text-neon shrink-0" /> {question}</span>
+        <ChevronDown className={`h-4 w-4 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="border-t border-border p-5 text-xs text-muted-foreground leading-relaxed bg-background/30">
+          {answer}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. ASSESSMENT WIZARD FORM
+// ─────────────────────────────────────────────────────────────────────────────
+
+function WizardForm({ 
+  user, 
+  initialAnswers, 
+  onComplete, 
+  onLogout 
+}: { 
+  user: any; 
+  initialAnswers: Record<string, any>; 
+  onComplete: () => void; 
+  onLogout: () => void; 
+}) {
+  const [step, setStep] = useState(1);
+  const [answers, setAnswers] = useState<Record<string, any>>(initialAnswers);
+  const [saving, setSaving] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Auto-save triggers
+  const saveDraft = async (updatedAnswers: Record<string, any>) => {
+    setSaving(true);
+    try {
+      await saveAssessmentDraft({ data: { answers: updatedAnswers } });
+    } catch (e) {
+      console.error("Auto-save failed", e);
+    } finally {
+      // Small simulated delay for satisfying UI save animation
+      setTimeout(() => setSaving(false), 400);
+    }
+  };
+
+  const handleInputChange = (field: string, value: any) => {
+    const updated = { ...answers, [field]: value };
+    setAnswers(updated);
+    setValidationError(null); // Clear validation error on change
+  };
+
+  const handleBlur = () => {
+    saveDraft(answers);
+  };
+
+  const getSelectedIndustries = (): string[] => {
+    return Array.isArray(answers.industryNiche)
+      ? answers.industryNiche
+      : typeof answers.industryNiche === "string"
+        ? answers.industryNiche.split(",").map(i => i.trim()).filter(Boolean)
+        : [];
+  };
+
+  const toggleIndustry = (ind: string) => {
+    const current = getSelectedIndustries();
+    let updated: string[];
+    if (current.includes(ind)) {
+      updated = current.filter((i) => i !== ind);
+    } else {
+      updated = [...current, ind];
+    }
+    handleInputChange("industryNiche", updated);
+    saveDraft({ ...answers, industryNiche: updated });
+  };
+
+  const isStepValid = (stepNum: number) => {
+    if (stepNum === 1) {
+      return !!answers.founderName?.trim() && !!answers.founderRole;
+    }
+    if (stepNum === 2) {
+      const currentInd = getSelectedIndustries();
+      const industryOk = currentInd.includes("Other")
+        ? currentInd.length > 1 && !!answers.industryNicheOther?.trim()
+        : currentInd.length > 0;
+      
+      const targetAudienceOk = answers.targetAudience === "Other"
+        ? !!answers.targetAudienceOther?.trim()
+        : !!answers.targetAudience;
+
+      const fundingStageOk = answers.fundingStage === "Other"
+        ? !!answers.fundingStageOther?.trim()
+        : !!answers.fundingStage;
+
+      return !!answers.startupName?.trim() && industryOk && targetAudienceOk && fundingStageOk;
+    }
+    if (stepNum === 3) {
+      return (
+        !!answers.problemDescription?.trim() &&
+        !!answers.urgencyDescription?.trim() &&
+        !!answers.alternativesDescription?.trim()
+      );
+    }
+    if (stepNum === 4) {
+      return (
+        !!answers.productDescription?.trim() &&
+        !!answers.mvpFeatures?.trim() &&
+        !!answers.designStatus
+      );
+    }
+    if (stepNum === 5) {
+      return !!answers.sixMonthGoal && !!answers.monetization;
+    }
+    return true;
+  };
+
+  const nextStep = () => {
+    if (!isStepValid(step)) {
+      setValidationError("Please fill out all required fields before continuing.");
+      return;
+    }
+    setValidationError(null);
+    saveDraft(answers);
+    setStep((s) => Math.min(s + 1, 6));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const prevStep = () => {
+    setValidationError(null);
+    setStep((s) => Math.max(s - 1, 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleSubmit = async () => {
+    if (!isStepValid(5)) {
+      setStep(5);
+      setValidationError("Please complete all required fields on Business Goals first.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await submitAssessmentAction();
+      if (res.success) {
+        onComplete();
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Submission failed. Please check your answers and try again.");
+      setSubmitting(false);
+    }
+  };
+
+  const totalSteps = 6;
+  const progressPercent = Math.round((step / totalSteps) * 100);
+
+  return (
+    <div className="mx-auto max-w-3xl px-5 py-10 sm:px-8">
+      {/* Top Wizard Bar */}
+      <div className="flex items-center justify-between border-b border-border pb-4 mb-6">
+        <div className="flex items-center gap-3">
+          <img src={user.picture} alt="" className="h-8 w-8 rounded-full border border-border" />
+          <div className="text-xs">
+            <div className="font-semibold">{user.name}</div>
+            <div className="text-muted-foreground text-[10px]">{user.email}</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 text-xs">
+          <div className="text-muted-foreground text-[10px] flex items-center gap-1.5">
+            {saving ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin text-neon" />
+                Saving draft...
+              </>
+            ) : (
+              <>
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Draft saved
+              </>
+            )}
+          </div>
+          <button 
+            onClick={onLogout}
+            className="flex items-center gap-1 text-muted-foreground hover:text-foreground text-[10px] font-semibold"
+          >
+            <LogOut className="h-3 w-3" /> Log out
+          </button>
+        </div>
+      </div>
+
+      {/* Progress Indicator */}
+      <div className="mb-8">
+        <div className="flex justify-between text-xs text-muted-foreground mb-2">
+          <span className="font-mono uppercase tracking-wider text-[10px] text-neon">Section {step} of {totalSteps}</span>
+          <span>{progressPercent}% Complete</span>
+        </div>
+        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+          <div 
+            className="h-full bg-neon transition-all duration-300 ease-out" 
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Form Content */}
+      <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-card min-h-[40vh] transition-all">
+        
+        {/* STEP 1: FOUNDER PROFILE */}
+        {step === 1 && (
+          <div className="space-y-5">
+            <h2 className="font-display text-xl font-semibold text-neon-gradient">Founder Profile</h2>
+            <p className="text-xs text-muted-foreground">Tell me a bit about yourself and your role in this project.</p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                  Founder Full Name <span className="text-destructive">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={answers.founderName || ""}
+                  onChange={(e) => handleInputChange("founderName", e.target.value)}
+                  onBlur={handleBlur}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                  placeholder="e.g. Jane Doe"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">LinkedIn Profile URL</label>
+                <input
+                  type="url"
+                  value={answers.linkedinUrl || ""}
+                  onChange={(e) => handleInputChange("linkedinUrl", e.target.value)}
+                  onBlur={handleBlur}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                  placeholder="https://linkedin.com/in/username"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                  Founder Role <span className="text-destructive">*</span>
+                </label>
+                <select
+                  value={answers.founderRole || ""}
+                  onChange={(e) => handleInputChange("founderRole", e.target.value)}
+                  onBlur={handleBlur}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                >
+                  <option value="">Select your profile...</option>
+                  <option value="Solo Founder">Solo Founder (Non-Technical)</option>
+                  <option value="Solo Founder (Technical)">Solo Founder (Technical)</option>
+                  <option value="Co-Founder (Technical)">Co-Founder & CTO / Lead Developer</option>
+                  <option value="Co-Founder (Non-Technical)">Co-Founder & CEO / Business Lead</option>
+                  <option value="Product Manager/Other">Product Owner / Director / PM</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 2: STARTUP SUMMARY */}
+        {step === 2 && (
+          <div className="space-y-5">
+            <h2 className="font-display text-xl font-semibold text-neon-gradient">Startup Summary</h2>
+            <p className="text-xs text-muted-foreground">General context regarding the startup company and market target.</p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                  Startup or Project Name <span className="text-destructive">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={answers.startupName || ""}
+                  onChange={(e) => handleInputChange("startupName", e.target.value)}
+                  onBlur={handleBlur}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                  placeholder="e.g. Vendoroo.Ai"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                  Industry or Niche <span className="text-destructive">*</span>
+                </label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {[
+                    "B2B SaaS",
+                    "AI / Machine Learning",
+                    "FinTech",
+                    "HealthTech",
+                    "EdTech",
+                    "E-commerce",
+                    "Creator Economy",
+                    "Marketplace",
+                    "PropTech",
+                    "Other"
+                  ].map((ind) => {
+                    const isSelected = getSelectedIndustries().includes(ind);
+                    return (
+                      <button
+                        key={ind}
+                        type="button"
+                        onClick={() => toggleIndustry(ind)}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-medium border transition-colors ${
+                          isSelected
+                            ? "bg-neon border-neon text-primary-foreground"
+                            : "bg-background border-border text-foreground hover:bg-muted"
+                        }`}
+                      >
+                        {ind}
+                      </button>
+                    );
+                  })}
+                </div>
+                {getSelectedIndustries().includes("Other") && (
+                  <div className="mt-2">
+                    <input
+                      type="text"
+                      value={answers.industryNicheOther || ""}
+                      onChange={(e) => handleInputChange("industryNicheOther", e.target.value)}
+                      onBlur={handleBlur}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                      placeholder="Please specify other industry/niche..."
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                  Target Audience <span className="text-destructive">*</span>
+                </label>
+                <select
+                  value={answers.targetAudience || ""}
+                  onChange={(e) => handleInputChange("targetAudience", e.target.value)}
+                  onBlur={handleBlur}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                >
+                  <option value="">Select target...</option>
+                  <option value="B2B (Enterprise)">B2B (Enterprise clients)</option>
+                  <option value="B2B (SMEs)">B2B (Small/Medium Businesses)</option>
+                  <option value="B2C (Consumers)">B2C (General consumer mass market)</option>
+                  <option value="B2B2C">B2B2C (Partner distribution)</option>
+                  <option value="Marketplace">Two-sided Marketplace / Platform</option>
+                  <option value="Other">Other</option>
+                </select>
+                {answers.targetAudience === "Other" && (
+                  <div className="mt-2">
+                    <input
+                      type="text"
+                      value={answers.targetAudienceOther || ""}
+                      onChange={(e) => handleInputChange("targetAudienceOther", e.target.value)}
+                      onBlur={handleBlur}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                      placeholder="Please specify other target audience..."
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                  Current Funding Stage <span className="text-destructive">*</span>
+                </label>
+                <select
+                  value={answers.fundingStage || ""}
+                  onChange={(e) => handleInputChange("fundingStage", e.target.value)}
+                  onBlur={handleBlur}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                >
+                  <option value="">Select funding stage...</option>
+                  <option value="Bootstrapped">Bootstrapped / Self-Funded</option>
+                  <option value="Pre-seed (Friends & Family)">Pre-seed (Friends & Family / Angels)</option>
+                  <option value="Seed Funded">Seed Funded (Institutional VCs)</option>
+                  <option value="Series A+">Series A or beyond</option>
+                  <option value="Other">Other</option>
+                </select>
+                {answers.fundingStage === "Other" && (
+                  <div className="mt-2">
+                    <input
+                      type="text"
+                      value={answers.fundingStageOther || ""}
+                      onChange={(e) => handleInputChange("fundingStageOther", e.target.value)}
+                      onBlur={handleBlur}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                      placeholder="Please specify other funding stage..."
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3: PROBLEM DEFINITION */}
+        {step === 3 && (
+          <div className="space-y-5">
+            <h2 className="font-display text-xl font-semibold text-neon-gradient">Problem Definition</h2>
+            <p className="text-xs text-muted-foreground">Describe the market pain point you are solving.</p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                  What primary problem does your product solve? <span className="text-destructive">*</span>
+                </label>
+                <textarea
+                  value={answers.problemDescription || ""}
+                  onChange={(e) => handleInputChange("problemDescription", e.target.value)}
+                  onBlur={handleBlur}
+                  rows={3}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                  placeholder="Explain the specific frustration or inefficiencies your audience deals with daily."
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                  Why now? What makes this problem urgent today? <span className="text-destructive">*</span>
+                </label>
+                <textarea
+                  value={answers.urgencyDescription || ""}
+                  onChange={(e) => handleInputChange("urgencyDescription", e.target.value)}
+                  onBlur={handleBlur}
+                  rows={2}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                  placeholder="Are there new regulations, AI technologies, or market shifts triggering this?"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                  How do your users solve this problem today? <span className="text-destructive">*</span>
+                </label>
+                <textarea
+                  value={answers.alternativesDescription || ""}
+                  onChange={(e) => handleInputChange("alternativesDescription", e.target.value)}
+                  onBlur={handleBlur}
+                  rows={2}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                  placeholder="Are they using spreadsheets, manual labor, or legacy competitors?"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4: PRODUCT DETAILS */}
+        {step === 4 && (
+          <div className="space-y-5">
+            <h2 className="font-display text-xl font-semibold text-neon-gradient">Product & Solution</h2>
+            <p className="text-xs text-muted-foreground">Outline your product's architecture scope.</p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                  Product Description (Elevator Pitch) <span className="text-destructive">*</span>
+                </label>
+                <textarea
+                  value={answers.productDescription || ""}
+                  onChange={(e) => handleInputChange("productDescription", e.target.value)}
+                  onBlur={handleBlur}
+                  rows={3}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                  placeholder="Describe your solution in 2-3 sentences. How does it fix the problem described?"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                  What are the core 2-3 MVP features? <span className="text-destructive">*</span>
+                </label>
+                <textarea
+                  value={answers.mvpFeatures || ""}
+                  onChange={(e) => handleInputChange("mvpFeatures", e.target.value)}
+                  onBlur={handleBlur}
+                  rows={3}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                  placeholder="e.g. 1. Google sign-in & team workspace. 2. PDF parsing using LLMs. 3. Excel exporting."
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                  Do you have wireframes, designs, or prototypes? <span className="text-destructive">*</span>
+                </label>
+                <select
+                  value={answers.designStatus || ""}
+                  onChange={(e) => handleInputChange("designStatus", e.target.value)}
+                  onBlur={handleBlur}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                >
+                  <option value="">Select status...</option>
+                  <option value="no">No designs (just text/ideas)</option>
+                  <option value="in_progress">In progress (basic sketches / mockups)</option>
+                  <option value="yes_figma">Yes, completed Figma wireframes/mockups</option>
+                  <option value="yes_prototype">Yes, clickable interactive prototype</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 5: BUSINESS GOALS */}
+        {step === 5 && (
+          <div className="space-y-5">
+            <h2 className="font-display text-xl font-semibold text-neon-gradient">Business Goals</h2>
+            <p className="text-xs text-muted-foreground">Aligning technology with commercial objectives.</p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                  Primary Goal for the Next 6 Months <span className="text-destructive">*</span>
+                </label>
+                <select
+                  value={answers.sixMonthGoal || ""}
+                  onChange={(e) => handleInputChange("sixMonthGoal", e.target.value)}
+                  onBlur={handleBlur}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                >
+                  <option value="">Select goal...</option>
+                  <option value="Launch MVP">Launch MVP to get initial user feedback</option>
+                  <option value="First 10 Customers">Acquire first 10 paying customers</option>
+                  <option value="Raise Funding">Build prototype to raise Seed/Angel funding</option>
+                  <option value="Scale & Stabilize">Optimize scaling and system stability</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                  Monetization Strategy <span className="text-destructive">*</span>
+                </label>
+                <select
+                  value={answers.monetization || ""}
+                  onChange={(e) => handleInputChange("monetization", e.target.value)}
+                  onBlur={handleBlur}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                >
+                  <option value="">Select monetization...</option>
+                  <option value="Subscription">Monthly/Annual SaaS Subscription</option>
+                  <option value="Transaction Fee">Commission / Transaction Fee</option>
+                  <option value="Usage-based">Usage-based / API Credits</option>
+                  <option value="Freemium">Freemium model (features behind paywall)</option>
+                  <option value="Other">Other / Licensing / Services</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                  What does success look like for this launch? <span className="text-muted-foreground">(Optional)</span>
+                </label>
+                <textarea
+                  value={answers.successCriteria || ""}
+                  onChange={(e) => handleInputChange("successCriteria", e.target.value)}
+                  onBlur={handleBlur}
+                  rows={2}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                  placeholder="e.g. 50 active pilot companies, 5% conversion to paid plans, or securing angel backing."
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 6: REVIEW & SUBMIT */}
+        {step === 6 && (
+          <div className="space-y-6">
+            <h2 className="font-display text-xl font-semibold text-neon-gradient">Review & Confirm</h2>
+            <p className="text-xs text-muted-foreground">Please double check your inputs. Once submitted, your answers will lock.</p>
+            
+            <div className="rounded-xl border border-border bg-background/50 p-5 space-y-4 max-h-[30vh] overflow-y-auto text-xs text-foreground/90 leading-relaxed">
+              <div>
+                <span className="font-semibold text-neon">Founder:</span> {answers.founderName || "N/A"} ({answers.founderRole || "N/A"})
+              </div>
+              {answers.linkedinUrl && (
+                <div>
+                  <span className="font-semibold text-neon">LinkedIn:</span> {answers.linkedinUrl}
+                </div>
+              )}
+              <div>
+                <span className="font-semibold text-neon">Startup Name:</span> {answers.startupName || "N/A"}
+              </div>
+              <div>
+                <span className="font-semibold text-neon">Industry/Niche:</span> {
+                  (() => {
+                    const currentInd = getSelectedIndustries();
+                    return currentInd.map(i => i === "Other" ? `Other (${answers.industryNicheOther || ""})` : i).join(", ") || "N/A";
+                  })()
+                }
+              </div>
+              <div>
+                <span className="font-semibold text-neon">Target Audience:</span> {
+                  answers.targetAudience === "Other"
+                    ? `Other (${answers.targetAudienceOther || ""})`
+                    : answers.targetAudience || "N/A"
+                }
+              </div>
+              <div>
+                <span className="font-semibold text-neon">Funding Stage:</span> {
+                  answers.fundingStage === "Other"
+                    ? `Other (${answers.fundingStageOther || ""})`
+                    : answers.fundingStage || "N/A"
+                }
+              </div>
+              <div>
+                <span className="font-semibold text-neon">Problem Description:</span> {answers.problemDescription || "N/A"}
+              </div>
+              <div>
+                <span className="font-semibold text-neon">Product Summary:</span> {answers.productDescription || "N/A"}
+              </div>
+              <div>
+                <span className="font-semibold text-neon">Core MVP Features:</span> {answers.mvpFeatures || "N/A"}
+              </div>
+              <div>
+                <span className="font-semibold text-neon">Six Month Goal:</span> {answers.sixMonthGoal || "N/A"}
+              </div>
+              <div>
+                <span className="font-semibold text-neon">Monetization:</span> {answers.monetization || "N/A"}
+              </div>
+              {answers.successCriteria && (
+                <div>
+                  <span className="font-semibold text-neon">Success Criteria:</span> {answers.successCriteria}
+                </div>
+              )}
+            </div>
+
+            {/* Read-only Warning Alert */}
+            <div className="rounded-xl border border-amber-500/30 bg-amber-50 dark:bg-amber-950/20 p-4 flex gap-3 text-amber-800 dark:text-amber-200">
+              <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div className="text-xs leading-relaxed">
+                <span className="font-semibold text-amber-900 dark:text-amber-300">Submission is final.</span> Once submitted:
+                <ul className="list-disc pl-4 mt-1 space-y-1 text-amber-700 dark:text-amber-300/90">
+                  <li>Your answers become strictly read-only. No edits are allowed.</li>
+                  <li>Our AI will analyze your scope using Alibaba Cloud Qwen.</li>
+                  <li>Your PDF Roadmap report will compile immediately.</li>
+                </ul>
+              </div>
+            </div>
+
+            <button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-neon py-3.5 text-sm font-semibold text-primary-foreground shadow-neon transition hover:brightness-110 disabled:opacity-50"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Generating Report with Qwen AI...
+                </>
+              ) : (
+                <>
+                  Submit Assessment & Generate PDF Report <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Validation Error Message */}
+        {validationError && (
+          <div className="mt-4 rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive font-semibold">
+            {validationError}
+          </div>
+        )}
+
+        {/* Navigation Buttons */}
+        <div className="mt-8 flex justify-between border-t border-border pt-5">
+          {step > 1 ? (
+            <button
+              onClick={prevStep}
+              disabled={submitting}
+              className="flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-xs font-semibold hover:bg-muted transition disabled:opacity-50"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back
+            </button>
+          ) : (
+            <div />
+          )}
+
+          {step < 6 ? (
+            <button
+              onClick={nextStep}
+              className="flex items-center gap-2 rounded-xl bg-neon px-5 py-2.5 text-xs font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
+            >
+              Continue <ArrowRight className="h-4 w-4" />
+            </button>
+          ) : (
+            <div />
+          )}
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. DASHBOARD VIEW (COMPLETED STATE)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function DashboardView({ 
+  user, 
+  assessment, 
+  onLogout 
+}: { 
+  user: any; 
+  assessment: any; 
+  onLogout: () => void; 
+}) {
+  const [downloading, setDownloading] = useState(false);
+  const { open: openContactModal } = useDemoModal();
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const res = await downloadPdfReport();
+      if (res.success && res.base64) {
+        // Trigger browser file download
+        const blob = base64ToBlob(res.base64, "application/pdf");
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = res.fileName || "MehdiGolzari_Assessment_Report.pdf";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to download PDF report. Please contact support.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  // Convert base64 to Blob helper
+  const base64ToBlob = (base64: string, contentType: string) => {
+    const sliceSize = 1024;
+    const byteCharacters = atob(base64);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+      const slice = byteCharacters.slice(offset, offset + sliceSize);
+      const byteNumbers = new Array(slice.length);
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+
+    return new Blob(byteArrays, { type: contentType });
+  };
+
+  const formattedDate = assessment.submittedAt
+    ? new Date(assessment.submittedAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "N/A";
+
+  const analysis = assessment.reportData as QwenAnalysisResult | null;
+
+  return (
+    <div className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
+      {/* Dashboard Top header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-border pb-6 mb-8 gap-4">
+        <div>
+          <div className="inline-flex items-center gap-1.5 text-xs text-neon font-semibold uppercase tracking-wider">
+            <Lock className="h-3.5 w-3.5" /> Founder Portal
+          </div>
+          <h1 className="font-display text-2xl font-bold mt-1">Founder Dashboard</h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onLogout}
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-xs font-semibold hover:bg-muted transition text-muted-foreground hover:text-foreground"
+          >
+            <LogOut className="h-4 w-4" /> Sign Out
+          </button>
+        </div>
+      </div>
+
+      {/* Main Grid */}
+      <div className="grid gap-8 lg:grid-cols-12 items-start">
+        
+        {/* Left column: Status Card */}
+        <div className="lg:col-span-8 space-y-6">
+          <div className="rounded-3xl border border-emerald-500/30 bg-emerald-500/5 p-6 sm:p-8 relative overflow-hidden">
+            <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-emerald-500 opacity-10 blur-2xl" />
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-emerald-500 text-white shadow-lg">
+                <CheckCircle className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="font-display text-xl font-semibold">Assessment Complete & Locked</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Submitted on {formattedDate}. Your answers are locked in read-only mode.
+                </p>
+              </div>
+            </div>
+
+            {analysis && (
+              <div className="mt-6 border-t border-emerald-500/10 pt-5 space-y-4">
+                <div>
+                  <span className="font-mono text-[10px] uppercase text-muted-foreground">Recommended Framework Phase</span>
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="rounded bg-primary/10 border border-primary/20 px-2.5 py-1 font-mono text-xs font-bold text-primary">
+                      {analysis.recommendedPhase.toUpperCase()}™
+                    </span>
+                    <span className="text-xs text-muted-foreground">({analysis.currentStage})</span>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="font-mono text-[10px] uppercase text-muted-foreground">Qwen AI Executive Summary</span>
+                  <p className="mt-1 text-xs text-foreground/90 leading-relaxed bg-background/40 p-4 rounded-xl border border-border">
+                    {analysis.executiveSummary}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right column: Action Sidebar */}
+        <div className="lg:col-span-4 space-y-6 sticky top-24">
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-card space-y-4">
+            <h3 className="font-display text-base font-semibold">Download Center</h3>
+            <p className="text-xs text-muted-foreground">
+              Retrieve your customized PDF containing the full answers, framework assessment, and architecture insights.
+            </p>
+            
+            <button
+              onClick={handleDownload}
+              disabled={downloading}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-neon py-3 text-sm font-semibold text-primary-foreground shadow-neon transition hover:brightness-110 disabled:opacity-50"
+            >
+              {downloading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating file...
+                </>
+              ) : (
+                <>
+                  <FileDown className="h-4 w-4" /> Download PDF Report
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-card space-y-4">
+            <h3 className="font-display text-base font-semibold">Discovery Review</h3>
+            <p className="text-xs text-muted-foreground">
+              Ready to review your report findings together? Book a discovery call and we'll evaluate your scope in detail.
+            </p>
+
+            <button
+              onClick={openContactModal}
+              className="w-full flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary hover:bg-muted py-3 text-sm font-semibold transition"
+            >
+              <PhoneCall className="h-4 w-4 text-neon" /> Book Discovery Call
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}

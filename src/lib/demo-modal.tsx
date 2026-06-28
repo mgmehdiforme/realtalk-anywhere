@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
-import { MessageCircle, Mail, X } from "lucide-react";
+import { MessageCircle, Mail, X, ClipboardCheck } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 const PHONE = "905019390465";
 const EMAIL = "MehdiGolzari.official@gmail.com";
@@ -53,23 +54,40 @@ export function DemoModalProvider({ children }: { children: ReactNode }) {
               "{MESSAGE}"
             </div>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <a
-                href={waHref}
-                target="_blank"
-                rel="noreferrer"
-                className="group flex items-center justify-center gap-2 rounded-xl bg-neon px-5 py-3.5 font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
+            <div className="mt-6 flex flex-col gap-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <a
+                  href={waHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group flex items-center justify-center gap-2 rounded-xl bg-neon px-5 py-3.5 font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  WhatsApp
+                </a>
+                <a
+                  href={mailHref}
+                  className="flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary px-5 py-3.5 font-semibold text-secondary-foreground transition hover:bg-muted"
+                >
+                  <Mail className="h-5 w-5" />
+                  Email
+                </a>
+              </div>
+
+              <div className="relative flex py-1 items-center">
+                <div className="flex-grow border-t border-border" />
+                <span className="flex-shrink mx-4 text-[10px] text-muted-foreground uppercase tracking-widest">Or qualify your project first</span>
+                <div className="flex-grow border-t border-border" />
+              </div>
+
+              <Link
+                to="/assessment"
+                onClick={() => setOpen(false)}
+                className="flex items-center justify-center gap-2 rounded-xl border border-neon/30 bg-neon/5 hover:bg-neon/10 text-neon px-5 py-3.5 font-semibold transition"
               >
-                <MessageCircle className="h-5 w-5" />
-                WhatsApp
-              </a>
-              <a
-                href={mailHref}
-                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary px-5 py-3.5 font-semibold text-secondary-foreground transition hover:bg-muted"
-              >
-                <Mail className="h-5 w-5" />
-                Email
-              </a>
+                <ClipboardCheck className="h-4 w-4" />
+                Start Free Founder Assessment
+              </Link>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-muted-foreground">
