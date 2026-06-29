@@ -649,9 +649,9 @@ function Landing() {
             Simple, transparent <span className="text-neon-gradient">pricing</span>.
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Pricing is always a conversation — every project is a little different. As a soft
-            starting point, engagements typically begin from <span className="text-foreground font-semibold">€2,000 / month</span>,
-            and we shape the rest together based on scope and pace.
+            Pricing is always a conversation — every project is a little different. Instead of
+            locking you into rigid monthly overheads, we tie pricing directly to deliverables
+            so you only pay for actual working results.
           </p>
         </div>
 
@@ -661,14 +661,14 @@ function Landing() {
             <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-neon opacity-10 blur-3xl" aria-hidden />
             <div className="relative">
               <div className="flex flex-wrap items-end gap-3">
-                <div className="text-xs font-semibold uppercase tracking-widest text-neon">Starting from</div>
+                <div className="text-xs font-semibold uppercase tracking-widest text-neon">Pricing model</div>
               </div>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="font-display text-5xl font-semibold">€2,000</span>
-                <span className="text-muted-foreground">/ month</span>
+                <span className="font-display text-4xl font-semibold">Milestone-Based</span>
+                <span className="text-muted-foreground">/ deliverables</span>
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
-                Negotiable based on scope, timeline and the kind of partnership you need.
+                Zero hourly billing. We define clear delivery phases, and you only settle payments as milestones are met.
               </p>
 
               <div className="mt-7 grid gap-4 sm:grid-cols-3">
