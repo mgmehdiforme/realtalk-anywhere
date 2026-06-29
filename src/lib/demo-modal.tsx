@@ -47,47 +47,62 @@ export function DemoModalProvider({ children }: { children: ReactNode }) {
             </div>
             <h2 className="text-2xl font-semibold">Talk directly to the engineer</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              No sales team. No project managers. Pick a channel — your message is pre-filled.
+              No sales team. No project managers. Select an option below to begin.
             </p>
 
-            <div className="mt-5 rounded-xl border border-border bg-background/60 p-4 font-mono text-sm leading-relaxed text-foreground/90">
+            {/* Highly Recommended Scoping Callout Card */}
+            <div className="mt-5 rounded-2xl border border-neon/30 bg-gradient-to-r from-neon/15 to-primary/5 p-4 sm:p-5 relative overflow-hidden shadow-card">
+              <div className="absolute top-0 right-0 rounded-bl-lg bg-neon/20 px-2.5 py-0.5 font-mono text-[9px] font-bold text-neon uppercase tracking-wider">
+                Highly Recommended
+              </div>
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                <ClipboardCheck className="h-4.5 w-4.5 text-neon" />
+                Qualify Your Project First
+              </h3>
+              <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
+                Take the 10-minute assessment to receive an instant AI technical report & PDF roadmap. Doing this first ensures we spend our conversation designing real solutions rather than gathering basic scope details.
+              </p>
+              <div className="mt-4">
+                <Link
+                  to="/assessment"
+                  onClick={() => setOpen(false)}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-neon px-5 py-3 text-xs font-bold text-primary-foreground shadow-neon transition hover:brightness-110"
+                >
+                  Start Free Founder Assessment ⚡
+                </Link>
+              </div>
+            </div>
+
+            {/* Separator */}
+            <div className="relative flex py-4 items-center">
+              <div className="flex-grow border-t border-border" />
+              <span className="flex-shrink mx-4 text-[9px] text-muted-foreground uppercase tracking-widest font-semibold">Or contact directly</span>
+              <div className="flex-grow border-t border-border" />
+            </div>
+
+            <div className="rounded-xl border border-border bg-background/60 p-3.5 font-mono text-[11px] leading-relaxed text-foreground/80">
               "{MESSAGE}"
             </div>
 
-            <div className="mt-6 flex flex-col gap-4">
+            <div className="mt-4 flex flex-col gap-4">
               <div className="grid gap-3 sm:grid-cols-2">
                 <a
                   href={waHref}
                   target="_blank"
                   rel="noreferrer"
-                  className="group flex items-center justify-center gap-2 rounded-xl bg-neon px-5 py-3.5 font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
+                  className="group flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary hover:bg-muted px-5 py-3 text-xs font-semibold transition"
                 >
-                  <MessageCircle className="h-5 w-5" />
+                  <MessageCircle className="h-4 w-4 text-neon" />
                   WhatsApp
                 </a>
                 <a
                   href={mailHref}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary px-5 py-3.5 font-semibold text-secondary-foreground transition hover:bg-muted"
+                  className="flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary hover:bg-muted px-5 py-3 text-xs font-semibold transition"
                 >
-                  <Mail className="h-5 w-5" />
+                  <Mail className="h-4 w-4 text-neon" />
                   Email
                 </a>
               </div>
-
-              <div className="relative flex py-1 items-center">
-                <div className="flex-grow border-t border-border" />
-                <span className="flex-shrink mx-4 text-[10px] text-muted-foreground uppercase tracking-widest">Or qualify your project first</span>
-                <div className="flex-grow border-t border-border" />
-              </div>
-
-              <Link
-                to="/assessment"
-                onClick={() => setOpen(false)}
-                className="flex items-center justify-center gap-2 rounded-xl border border-neon/30 bg-neon/5 hover:bg-neon/10 text-neon px-5 py-3.5 font-semibold transition"
-              >
-                <ClipboardCheck className="h-4 w-4" />
-                Start Free Founder Assessment
-              </Link>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-muted-foreground">
