@@ -1577,52 +1577,46 @@ function DashboardView({
                 </div>
               </section>
 
-              {/* Time Savings Callout */}
-              <section className="rounded-2xl border border-border bg-muted/30 p-6 text-center">
-                <p className="text-sm text-muted-foreground italic leading-relaxed max-w-2xl mx-auto">
-                  "Resolving the recommendations in this report before development begins could reduce unnecessary engineering effort by several weeks. Validating assumptions early is significantly less expensive than rebuilding after launch."
-                </p>
-              </section>
-
-              {/* Discovery Session CTA */}
-              <section className="rounded-2xl border border-neon/20 bg-gradient-to-br from-card to-neon/5 p-6 sm:p-8 relative overflow-hidden">
-                <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-neon opacity-5 blur-3xl" />
-                <h2 className="font-display text-lg font-semibold mb-2">Continue Your Founder-to-Launch Journey</h2>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-5 max-w-2xl">
-                  This report is intentionally the beginning—not the conclusion. A Discovery Session builds on these findings instead of starting from scratch. Whether we decide to work together afterward or not, you will leave with greater clarity, a stronger execution strategy, and a practical roadmap.
-                </p>
-                <div className="flex flex-wrap gap-3 mb-6 text-xs text-foreground/80">
-                  {[
-                    "Challenge key product assumptions",
-                    "Refine your MVP scope",
-                    "Prioritize highest-value features",
-                    "Identify technical risks early",
-                    "Design the fastest path to launch",
-                  ].map((item) => (
-                    <span key={item} className="flex items-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/15 px-3 py-1.5">
-                      <CheckCircle className="h-3 w-3 text-emerald-500" /> {item}
-                    </span>
-                  ))}
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    onClick={openContactModal}
-                    className="flex items-center justify-center gap-2 rounded-xl bg-neon px-6 py-3 text-sm font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
-                  >
-                    <Calendar className="h-4 w-4" /> Book Your Discovery Session
-                  </button>
-                  <button
-                    onClick={handleDownload}
-                    disabled={downloading}
-                    className="flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 py-3 text-sm font-semibold hover:bg-muted transition disabled:opacity-50"
-                  >
-                    {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-                    Download Full PDF Report
-                  </button>
-                </div>
-              </section>
             </div>
           )}
+
+          {/* Discovery Session CTA (Always Visible) */}
+          <section className="rounded-2xl border border-neon/20 bg-gradient-to-br from-card to-neon/5 p-6 sm:p-8 relative overflow-hidden mt-8">
+            <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-neon opacity-5 blur-3xl" />
+            <h2 className="font-display text-lg font-semibold mb-2">Continue Your Founder-to-Launch Journey</h2>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-5 max-w-2xl">
+              This report is intentionally the beginning—not the conclusion. A Discovery Session builds on these findings instead of starting from scratch. Whether we decide to work together afterward or not, you will leave with greater clarity, a stronger execution strategy, and a practical roadmap.
+            </p>
+            <div className="flex flex-wrap gap-3 mb-6 text-xs text-foreground/80">
+              {[
+                "Challenge key product assumptions",
+                "Refine your MVP scope",
+                "Prioritize highest-value features",
+                "Identify technical risks early",
+                "Design the fastest path to launch",
+              ].map((item) => (
+                <span key={item} className="flex items-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/15 px-3 py-1.5">
+                  <CheckCircle className="h-3 w-3 text-emerald-500" /> {item}
+                </span>
+              ))}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={openContactModal}
+                className="flex items-center justify-center gap-2 rounded-xl bg-neon px-6 py-3 text-sm font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
+              >
+                <Calendar className="h-4 w-4" /> Book Your Discovery Session
+              </button>
+              <button
+                onClick={handleDownload}
+                disabled={downloading}
+                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 py-3 text-sm font-semibold hover:bg-muted transition disabled:opacity-50"
+              >
+                {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+                Download Full PDF Report
+              </button>
+            </div>
+          </section>
         </>
       ) : (
         <div className="rounded-2xl border border-border bg-card p-8 text-center">
