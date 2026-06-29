@@ -145,14 +145,6 @@ export function generateAssessmentPdf(
       doc.y = recY + 90;
 
       // 3. Founder Strengths
-      ensureSpace(120);
-      doc
-        .font("Helvetica-Bold")
-        .fontSize(13)
-        .fillColor(darkColor)
-        .text("Founder Strengths")
-        .moveDown(0.4);
-
       // Measure total height first to draw the rect
       let strengthsHeight = 15;
       analysis.founderStrengths.forEach((strength) => {
@@ -161,8 +153,16 @@ export function generateAssessmentPdf(
         strengthsHeight += itemHeight + 10;
       });
 
+      ensureSpace(strengthsHeight + 45); // Check if heading + box fits on the current page
+
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(13)
+        .fillColor(darkColor)
+        .text("Founder Strengths")
+        .moveDown(0.4);
+
       const strengthsY = doc.y;
-      ensureSpace(strengthsHeight + 20); // Make sure the entire strengths box fits on page
       
       doc
         .rect(50, strengthsY, 495, strengthsHeight)

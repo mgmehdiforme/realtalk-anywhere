@@ -1778,14 +1778,7 @@ function DashboardView({
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
                     placeholder="https://www.linkedin.com/feed/update/urn:li:activity:..."
                   />
-                </div>
 
-                {/* Info block */}
-                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3.5 flex gap-2.5 text-[11px] text-amber-600 dark:text-amber-400">
-                  <Info className="h-4 w-4 shrink-0 mt-0.5" />
-                  <p className="leading-relaxed">
-                    We will review your post and unlock editing for you in the next 6 hours.
-                  </p>
                 </div>
 
                 <div className="flex gap-3 justify-end pt-2">
