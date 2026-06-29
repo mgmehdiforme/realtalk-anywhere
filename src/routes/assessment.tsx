@@ -400,20 +400,60 @@ function LandingPage({
               ))}
             </div>
 
-            {/* Example PDF layout preview */}
-            <div className="rounded-2xl border border-border bg-card/20 p-5 relative overflow-hidden">
-              <div className="flex items-center justify-between border-b border-border pb-3">
-                <span className="font-mono text-[10px] tracking-wider uppercase text-muted-foreground">Report Preview (Sample Layout)</span>
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            {/* Redesigned Premium PDF Preview Mockup */}
+            <div className="rounded-2xl border border-border/80 bg-gradient-to-b from-card/30 to-background/20 p-5 relative overflow-hidden shadow-sm">
+              <div className="flex items-center justify-between border-b border-border/50 pb-3 mb-4">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="font-mono text-[9px] tracking-wider uppercase text-muted-foreground font-semibold">Report Preview (Sample Layout)</span>
+                </div>
+                <span className="rounded bg-neon/10 border border-neon/30 px-2 py-0.5 font-mono text-[8px] font-bold text-neon uppercase">A4 PDF ROADMAP</span>
               </div>
-              <div className="mt-4 space-y-2.5 opacity-60">
-                <div className="h-4 w-1/3 rounded bg-muted" />
-                <div className="h-2 w-full rounded bg-muted" />
-                <div className="h-2 w-5/6 rounded bg-muted" />
-                <div className="h-10 w-full rounded bg-primary/10 border border-primary/20 flex items-center px-3 text-[10px] font-mono text-primary font-semibold">
-                  RECOMMENDED PHASE: BLUEPRINT™
+              
+              <div className="space-y-3.5 opacity-70 text-left">
+                {/* Simulated Header */}
+                <div className="flex justify-between items-start gap-4">
+                  <div>
+                    <h4 className="text-[11px] font-bold text-foreground">Founder Fit Assessment™ Report</h4>
+                    <p className="text-[9px] text-muted-foreground font-mono mt-0.5">PROJECT: SAAS MVP SCOPE</p>
+                  </div>
+                  <span className="text-[9px] text-muted-foreground font-mono">Page 1 of 3</span>
+                </div>
+
+                {/* Simulated Recommendation Banner */}
+                <div className="rounded-lg border border-neon/20 bg-neon/5 p-2.5 flex items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <span className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wider block">Recommended Strategy Phase</span>
+                    <span className="text-[10px] font-bold text-neon">VALIDATE™ Phase</span>
+                  </div>
+                  <span className="rounded bg-neon/20 px-2 py-0.5 text-[8px] font-mono text-neon font-bold">PRE-PRODUCT VALIDATION</span>
+                </div>
+
+                {/* Simulated Core Sections */}
+                <div className="space-y-1.5">
+                  <div className="text-[9px] font-bold text-foreground uppercase tracking-wider">1. Executive Summary</div>
+                  <p className="text-[9px] text-muted-foreground leading-relaxed">
+                    The primary opportunity is to validate structural market demand using high-fidelity scoping templates before committing engineering runway. Focus on core user loops...
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="text-[9px] font-bold text-foreground uppercase tracking-wider">2. Technical & Architecture Recommendations</div>
+                  <div className="grid grid-cols-2 gap-2 text-[8px]">
+                    <div className="rounded border border-border bg-card/40 p-2">
+                      <span className="font-bold text-neon block">AI Scoping</span>
+                      <span className="text-muted-foreground">Strict JSON output schemas via Qwen API.</span>
+                    </div>
+                    <div className="rounded border border-border bg-card/40 p-2">
+                      <span className="font-bold text-neon block">Frontend Tech</span>
+                      <span className="text-muted-foreground">Next.js + Zustand for wizard auto-saving.</span>
+                    </div>
+                  </div>
                 </div>
               </div>
+              
+              {/* Fade out mask to look like a document preview */}
+              <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-background to-transparent pointer-events-none" />
             </div>
           </div>
 
@@ -432,7 +472,7 @@ function LandingPage({
               </h3>
               
               <p className="mt-2.5 text-xs text-muted-foreground leading-relaxed">
-                Login is <strong className="text-foreground font-semibold">required</strong> to secure your progress, enable real-time auto-saving, and generate your report. Limit: one submission per Google account.
+                Login is <strong className="text-foreground font-semibold">required</strong> to secure your progress, enable real-time auto-saving, and generate your report.
               </p>
 
               <div className="mt-6 space-y-4">
@@ -508,10 +548,7 @@ function LandingPage({
                 q: "How does the auto-save feature work?",
                 a: "Once signed in, every answer you type is saved in real-time as you transition between pages or click away. You can close the tab and return later to finish without losing your data.",
               },
-              {
-                q: "Why is it limited to one submission?",
-                a: "Each submission triggers an API query to AI models and compiles a heavy-styled PDF document. To prevent script abuse and ensure resources are available for serious founders, we limit submissions to one per account.",
-              },
+
               {
                 q: "What happens after I submit?",
                 a: "Your assessment transitions to Read-Only mode. Your dashboard will immediately display your generated AI insights, a button to download the PDF report, and direct contact CTAs to schedule your review session.",
