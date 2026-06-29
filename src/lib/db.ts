@@ -17,6 +17,8 @@ export interface Assessment {
   submittedAt: string | null;
   reportPdfPath: string | null;
   reportData: any | null;
+  unlockRequestedAt?: string | null;
+  unlockLinkedInUrl?: string | null;
 }
 
 export interface DatabaseSchema {
@@ -111,6 +113,8 @@ export async function saveAssessment(email: string, answers: Record<string, any>
     submittedAt: existing ? existing.submittedAt : null,
     reportPdfPath: existing ? existing.reportPdfPath : null,
     reportData: existing ? existing.reportData : null,
+    unlockRequestedAt: existing ? existing.unlockRequestedAt : null,
+    unlockLinkedInUrl: existing ? existing.unlockLinkedInUrl : null,
   };
   
   dbCache.assessments[emailKey] = updated;
@@ -140,6 +144,25 @@ export async function submitAssessment(
     submittedAt: new Date().toISOString(),
     reportPdfPath,
     reportData,
+  };
+  
+  dbCache.assessments[emailKey] = updated;
+  await saveToDisk();
+  return updated;
+}
+
+export async function requestUnlock(email: string, linkedinUrl: string): Promise<Assessment> {
+  await initDb();
+  const emailKey = email.toLowerCase();
+  const existing = dbCache.assessments[emailKey];
+  if (!existing) {
+    throw new Error("No assessment found to unlock.");
+  }
+  
+  const updated: Assessment = {
+    ...existing,
+    unlockRequestedAt: new Date().toISOString(),
+    unlockLinkedInUrl: linkedinUrl,
   };
   
   dbCache.assessments[emailKey] = updated;

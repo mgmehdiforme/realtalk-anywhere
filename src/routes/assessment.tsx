@@ -174,6 +174,24 @@ export const downloadPdfReport = createServerFn()
   });
 
 /**
+ * Request edit unlock by sharing on LinkedIn
+ */
+export const requestAssessmentUnlockAction = createServerFn()
+  .validator((d: { linkedinUrl: string }) => d)
+  .handler(async ({ data, request }) => {
+    const { getSessionFromRequest } = await import("@/lib/auth");
+    const { requestUnlock } = await import("@/lib/db");
+
+    const session = getSessionFromRequest(request);
+    if (!session) {
+      throw new Error("Unauthorized");
+    }
+
+    const assessment = await requestUnlock(session.email, data.linkedinUrl);
+    return { success: true, assessment };
+  });
+
+/**
  * Log the user out by clearing the session cookie
  */
 export const logoutAction = createServerFn()
@@ -298,6 +316,7 @@ function AssessmentFlowPage() {
         user={state.user} 
         assessment={state.assessment} 
         onLogout={handleLogout} 
+        onRefresh={refreshState}
       />
     );
   }
@@ -1309,15 +1328,83 @@ function WizardForm({
 function DashboardView({ 
   user, 
   assessment, 
-  onLogout 
+  onLogout,
+  onRefresh
 }: { 
   user: any; 
   assessment: any; 
   onLogout: () => void; 
+  onRefresh: () => void;
 }) {
   const [downloading, setDownloading] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "strategy" | "next-steps">("overview");
+  const [isUnlockModalOpen, setIsUnlockModalOpen] = useState(false);
+  const [linkedinPostUrl, setLinkedinPostUrl] = useState("");
+  const [unlockSubmitting, setUnlockSubmitting] = useState(false);
+  const [unlockSuccess, setUnlockSuccess] = useState(false);
   const { open: openContactModal } = useDemoModal();
+
+  const handleRequestUnlock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!linkedinPostUrl.trim()) return;
+
+    setUnlockSubmitting(true);
+    try {
+      const res = await requestAssessmentUnlockAction({
+        data: { linkedinUrl: linkedinPostUrl }
+      });
+      if (res.success) {
+        setUnlockSuccess(true);
+        setTimeout(() => {
+          setIsUnlockModalOpen(false);
+          onRefresh();
+        }, 3000);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to submit unlock request. Please try again.");
+    } finally {
+      setUnlockSubmitting(false);
+    }
+  };
+
+  const hasRequestedUnlock = !!assessment.unlockRequestedAt;
+
+  const PromoUnlockBanner = () => (
+    <div className="rounded-xl border border-neon/30 bg-gradient-to-r from-neon/10 to-primary/5 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-in fade-in duration-300">
+      <div className="flex gap-3">
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-neon/10 border border-neon/20 text-neon">
+          <Lock className="h-5 w-5 animate-pulse" />
+        </div>
+        <div>
+          <h4 className="text-sm font-bold text-foreground">Made a typo or want to edit your answers?</h4>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {hasRequestedUnlock 
+              ? "Your request is pending review. We will verify your post and unlock editing within the next 6 hours."
+              : "Share your experience working with this tool on LinkedIn to unlock editing capabilities."}
+          </p>
+        </div>
+      </div>
+      <div>
+        {hasRequestedUnlock ? (
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 text-xs font-semibold text-amber-500">
+            <Loader2 className="h-3 w-3 animate-spin" /> Pending Review
+          </span>
+        ) : (
+          <button
+            onClick={() => {
+              setUnlockSuccess(false);
+              setLinkedinPostUrl("");
+              setIsUnlockModalOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-neon px-4 py-2 text-xs font-semibold text-primary-foreground shadow-neon transition hover:brightness-110 shrink-0"
+          >
+            Unlock Editing 🔓
+          </button>
+        )}
+      </div>
+    </div>
+  );
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -1400,6 +1487,11 @@ function DashboardView({
             <LogOut className="h-4 w-4" /> Sign Out
           </button>
         </div>
+      </div>
+
+      {/* Promoted Section: Unlock Editing (Top) */}
+      <div className="mb-8">
+        <PromoUnlockBanner />
       </div>
 
       {analysis ? (
@@ -1617,10 +1709,97 @@ function DashboardView({
               </button>
             </div>
           </section>
+
+          {/* Promoted Section: Unlock Editing (Bottom) */}
+          <div className="mt-8">
+            <PromoUnlockBanner />
+          </div>
         </>
       ) : (
         <div className="rounded-2xl border border-border bg-card p-8 text-center">
           <p className="text-sm text-muted-foreground">Report data is being processed. Please refresh in a few moments.</p>
+        </div>
+      )}
+
+      {/* ─── EDITING UNLOCK MODAL ─── */}
+      {isUnlockModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-card animate-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setIsUnlockModalOpen(false)}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition"
+            >
+              ✕
+            </button>
+
+            {unlockSuccess ? (
+              <div className="text-center py-6 space-y-3">
+                <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-emerald-500/10 text-emerald-500">
+                  <CheckCircle className="h-6 w-6" />
+                </div>
+                <h3 className="text-base font-bold">Request Submitted Successfully!</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  We will review your post and unlock editing for you in the next 6 hours.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleRequestUnlock} className="space-y-4">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    Unlock Assessment Editing 🔓
+                  </h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    To unlock editing for your assessment, please share your experience using MehdiGolzari.dev on LinkedIn. Enter the URL of your post below:
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-semibold text-foreground/80">
+                    LinkedIn Post URL <span className="text-destructive">*</span>
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    value={linkedinPostUrl}
+                    onChange={(e) => setLinkedinPostUrl(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                    placeholder="https://www.linkedin.com/feed/update/urn:li:activity:..."
+                  />
+                </div>
+
+                {/* Info block */}
+                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3.5 flex gap-2.5 text-[11px] text-amber-600 dark:text-amber-400">
+                  <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                  <p className="leading-relaxed">
+                    We will review your post and unlock editing for you in the next 6 hours.
+                  </p>
+                </div>
+
+                <div className="flex gap-3 justify-end pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsUnlockModalOpen(false)}
+                    className="rounded-lg border border-border bg-background px-4 py-2 text-xs font-semibold hover:bg-muted transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={unlockSubmitting || !linkedinPostUrl.trim()}
+                    className="rounded-lg bg-neon px-4 py-2 text-xs font-semibold text-primary-foreground shadow-neon transition hover:brightness-110 disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {unlockSubmitting ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" /> Submitting...
+                      </>
+                    ) : (
+                      "Submit Request"
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
         </div>
       )}
     </div>
