@@ -353,14 +353,14 @@ function LandingPage({
         <div className="absolute inset-0 grid-bg opacity-30" />
         <div className="relative mx-auto max-w-5xl px-5 text-center sm:px-8">
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-semibold text-neon-gradient backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5" /> Launch Qualification
+            <Sparkles className="h-3.5 w-3.5" /> 100% Free Launch Qualification
           </div>
           <h1 className="mt-5 font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-            Founder Fit <span className="text-neon-gradient">Assessment™</span>
+            Free Founder Fit <span className="text-neon-gradient">Assessment™</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
             Qualify your SaaS or AI product idea, identify technical bottleneck risks, and receive an 
-            AI-assisted architecture review report in 10 minutes.
+            AI-assisted architecture review report in 10 minutes — completely free.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-neon" /> 10-15 mins completion</span>
