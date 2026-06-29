@@ -1342,6 +1342,7 @@ function DashboardView({
   const [linkedinPostUrl, setLinkedinPostUrl] = useState("");
   const [unlockSubmitting, setUnlockSubmitting] = useState(false);
   const [unlockSuccess, setUnlockSuccess] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { open: openContactModal } = useDemoModal();
 
   const handleRequestUnlock = async (e: React.FormEvent) => {
@@ -1453,6 +1454,118 @@ function DashboardView({
     : "N/A";
 
   const analysis = assessment.reportData as QwenAnalysisResult | null;
+
+  // Pre-filled LinkedIn post copywriting
+  const startupName = assessment.answers?.startupName || "my startup";
+  const phaseName = analysis?.recommendedPhase || "Validate";
+  const currentStage = analysis?.currentStage || "Pre-product validation";
+  const reasoning = analysis?.recommendedPhaseReasoning || "";
+
+  const postText = `🚀 Just completed the Founder Fit Assessment™ by Mehdi Golzari (mehdigolzari.dev) to map the execution strategy for my startup, ${startupName}.
+
+My project slot is: ${phaseName.toUpperCase()}™ (${currentStage})
+
+Here's the direct, independent technical recommendation I received:
+"${reasoning}"
+
+If you're an early-stage founder building SaaS or AI, I highly recommend qualifying your project here: https://mehdigolzari.dev
+
+#startup #saas #buildinginpublic #technicalfounder`;
+
+  const downloadPostImage = (phase: string, stage: string, nameOfStartup: string) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1200;
+    canvas.height = 630;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // 1. Background Gradient
+    const grad = ctx.createLinearGradient(0, 0, 1200, 630);
+    grad.addColorStop(0, "#09090b");
+    grad.addColorStop(0.5, "#0f172a");
+    grad.addColorStop(1, "#1e1b4b");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1200, 630);
+
+    // 2. Glowing Orbs
+    ctx.globalCompositeOperation = "screen";
+    const orb = ctx.createRadialGradient(200, 150, 50, 200, 150, 400);
+    orb.addColorStop(0, "rgba(99, 102, 241, 0.15)");
+    orb.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = orb;
+    ctx.beginPath();
+    ctx.arc(200, 150, 400, 0, Math.PI * 2);
+    ctx.fill();
+
+    const orb2 = ctx.createRadialGradient(1000, 450, 50, 1000, 450, 400);
+    orb2.addColorStop(0, "rgba(168, 85, 247, 0.15)");
+    orb2.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = orb2;
+    ctx.beginPath();
+    ctx.arc(1000, 450, 400, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalCompositeOperation = "source-over";
+
+    // 3. Branded Header
+    ctx.font = "bold 32px sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText("MehdiGolzari", 80, 90);
+    ctx.fillStyle = "#a855f7";
+    ctx.fillText(".dev", 280, 90);
+
+    // Divider
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(80, 130);
+    ctx.lineTo(1120, 130);
+    ctx.stroke();
+
+    // 4. Assessment Title
+    ctx.font = "normal 20px monospace";
+    ctx.fillStyle = "#38bdf8";
+    ctx.fillText("FOUNDER FIT ASSESSMENT™ REPORT", 80, 180);
+
+    // 5. Startup Name
+    ctx.font = "bold 44px sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(nameOfStartup, 80, 245);
+
+    // 6. Phase Recommendation
+    ctx.font = "normal 18px monospace";
+    ctx.fillStyle = "#94a3b8";
+    ctx.fillText("RECOMMENDED FRAMEWORK PHASE:", 80, 340);
+
+    ctx.font = "bold 72px sans-serif";
+    const neonGrad = ctx.createLinearGradient(80, 0, 800, 0);
+    neonGrad.addColorStop(0, "#38bdf8");
+    neonGrad.addColorStop(1, "#a855f7");
+    ctx.fillStyle = neonGrad;
+    ctx.fillText(`${phase.toUpperCase()}™`, 80, 425);
+
+    ctx.font = "italic 28px sans-serif";
+    ctx.fillStyle = "#94a3b8";
+    ctx.fillText(`(${stage})`, 80, 480);
+
+    // 7. Footer Call to Action
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+    ctx.beginPath();
+    ctx.moveTo(80, 530);
+    ctx.lineTo(1120, 530);
+    ctx.stroke();
+
+    ctx.font = "normal 18px sans-serif";
+    ctx.fillStyle = "#64748b";
+    ctx.fillText("Get your personalized SaaS / AI architecture roadmap at MehdiGolzari.dev", 80, 580);
+
+    // Trigger Download
+    const link = document.createElement("a");
+    link.download = `MehdiGolzari_${phase.replace(/[^a-zA-Z0-9]/g, "_")}_Phase_Cover.png`;
+    link.href = canvas.toDataURL("image/png");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const tabs = [
     { id: "overview" as const, label: "Overview", icon: Target },
@@ -1756,29 +1869,91 @@ function DashboardView({
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleRequestUnlock} className="space-y-4">
+              <form onSubmit={handleRequestUnlock} className="space-y-5">
                 <div className="space-y-2">
                   <h3 className="text-lg font-bold flex items-center gap-2">
                     Unlock Assessment Editing 🔓
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    To unlock editing for your assessment, please share your experience using MehdiGolzari.dev on LinkedIn. Enter the URL of your post below:
+                    Share your assessment result on LinkedIn to request editing permissions. We've prepared everything for you:
                   </p>
                 </div>
 
-                <div className="space-y-2">
+                {/* STEP 1: Copy Text */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-semibold text-foreground/80">
+                    <span>1. Copy Pre-Written Post Text</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(postText);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                      className="text-neon flex items-center gap-1 hover:underline font-bold animate-pulse"
+                    >
+                      {copied ? "✓ Copied!" : "📋 Copy Text"}
+                    </button>
+                  </div>
+                  <div className="max-h-28 overflow-y-auto rounded-lg border border-border bg-background p-2.5 text-[11px] text-muted-foreground font-mono leading-relaxed select-all">
+                    {postText}
+                  </div>
+                </div>
+
+                {/* STEP 2: Cover Image */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-semibold text-foreground/80">
+                    <span>2. Branded Post Cover Image</span>
+                    <button
+                      type="button"
+                      onClick={() => downloadPostImage(phaseName, currentStage, startupName)}
+                      className="text-neon flex items-center gap-1 hover:underline font-bold"
+                    >
+                      📥 Download PNG
+                    </button>
+                  </div>
+                  <div className="rounded-xl border border-border bg-background/40 p-3 text-center">
+                    <p className="text-[10px] text-muted-foreground">
+                      Attach this styled layout graphic to your LinkedIn post to boost engagement.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => downloadPostImage(phaseName, currentStage, startupName)}
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-neon/30 bg-neon/5 hover:bg-neon/10 text-neon px-3 py-1.5 text-xs font-semibold transition"
+                    >
+                      <FileDown className="h-3.5 w-3.5" /> Download Cover Graphic
+                    </button>
+                  </div>
+                </div>
+
+                {/* STEP 3: Share Button */}
+                <div className="space-y-1.5">
+                  <div className="text-xs font-semibold text-foreground/80">
+                    <span>3. Post on LinkedIn</span>
+                  </div>
+                  <a
+                    href="https://www.linkedin.com/feed/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-neon px-4 py-2.5 text-xs font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
+                  >
+                    Open LinkedIn Feed to Post 🚀
+                  </a>
+                </div>
+
+                {/* STEP 4: URL Input */}
+                <div className="space-y-1.5 pt-2 border-t border-border">
                   <label className="block text-xs font-semibold text-foreground/80">
-                    LinkedIn Post URL <span className="text-destructive">*</span>
+                    4. Paste LinkedIn Post URL <span className="text-destructive">*</span>
                   </label>
                   <input
                     type="url"
                     required
                     value={linkedinPostUrl}
                     onChange={(e) => setLinkedinPostUrl(e.target.value)}
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-neon focus:outline-none"
                     placeholder="https://www.linkedin.com/feed/update/urn:li:activity:..."
                   />
-
                 </div>
 
                 <div className="flex gap-3 justify-end pt-2">
