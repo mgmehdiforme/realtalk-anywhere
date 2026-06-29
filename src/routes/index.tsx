@@ -834,10 +834,7 @@ function Landing() {
                 You'll have the best time working together — that's a promise.
               </h2>
               <p className="mt-3 text-muted-foreground leading-relaxed">
-                I genuinely love what I do, and I love helping ideas grow — in{" "}
-                <span className="text-foreground font-medium">any industry</span>, at any stage.
-                Expect calm communication, real ownership, and someone who treats your product
-                like it's their own.
+                I genuinely love what I do, and I love helping ideas grow — in <span className="text-foreground font-medium">any industry</span>, at any stage. Expect calm communication, real ownership, and someone who treats your product like it's their own.
               </p>
             </div>
           </div>
