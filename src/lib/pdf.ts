@@ -153,24 +153,44 @@ export function generateAssessmentPdf(
         .text("Founder Strengths")
         .moveDown(0.4);
 
+      // Measure total height first to draw the rect
+      let strengthsHeight = 15;
+      analysis.founderStrengths.forEach((strength) => {
+        doc.font("Helvetica").fontSize(9.5);
+        const itemHeight = doc.heightOfString(strength, { width: 440, lineGap: 2 });
+        strengthsHeight += itemHeight + 10;
+      });
+
       const strengthsY = doc.y;
-      const strengthsHeight = 15 + (analysis.founderStrengths.length * 18);
+      ensureSpace(strengthsHeight + 20); // Make sure the entire strengths box fits on page
+      
       doc
         .rect(50, strengthsY, 495, strengthsHeight)
         .fill("#f0fdf4")
         .strokeColor("#bbf7d0")
         .stroke();
 
-      let strengthTextY = strengthsY + 10;
+      let currentStrengthY = strengthsY + 10;
       analysis.founderStrengths.forEach((strength) => {
+        doc.font("Helvetica").fontSize(9.5);
+        const itemHeight = doc.heightOfString(strength, { width: 440, lineGap: 2 });
+        
+        // Draw bullet checkmark
         doc
           .font("Helvetica-Bold")
+          .fontSize(9.5)
           .fillColor("#16a34a")
-          .text("✓ ", 65, strengthTextY)
+          .text("✓ ", 65, currentStrengthY);
+
+        // Draw strength text
+        doc
           .font("Helvetica")
+          .fontSize(9.5)
           .fillColor(textColor)
-          .text(strength, 80, strengthTextY, { width: 450 });
-        strengthTextY += 18;
+          .text(strength, 80, currentStrengthY, { width: 440, lineGap: 2 });
+
+        // Advance to next strength position
+        currentStrengthY += itemHeight + 10;
       });
 
       doc.y = strengthsY + strengthsHeight + 15;
