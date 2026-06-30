@@ -107,13 +107,13 @@ function Landing() {
                 to="/blueprint"
                 className="inline-flex items-center justify-center rounded-xl bg-neon px-6 py-3.5 text-base font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
               >
-                Build My Blueprint
+                Build My Blueprint Report | Free
               </Link>
               <Link
                 to="/founder-to-launch-framework"
                 className="inline-flex items-center justify-center rounded-xl border border-border bg-card/40 px-5 py-3.5 text-sm font-semibold text-foreground backdrop-blur transition hover:bg-card"
               >
-                Learn About the Founder-to-Launch Framework™
+                Learn More
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
