@@ -45,7 +45,8 @@ export const getBlueprintState = createServerFn({ method: "GET" })
     const { getSessionFromRequest } = await import("@/lib/auth");
     const { getUser, getBlueprint } = await import("@/lib/db");
 
-    const session = getSessionFromRequest(request);
+    const session = getSessionFromRequest(context.request);
+
 
 
     const googleClientId = process.env.GOOGLE_CLIENT_ID || "";
