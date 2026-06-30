@@ -84,7 +84,9 @@ export const saveBlueprintDraft = createServerFn()
     const { getSessionFromRequest } = await import("@/lib/auth");
     const { saveBlueprint } = await import("@/lib/db");
 
-    const session = getSessionFromRequest(request);
+    const { getWebRequest } = await import("@tanstack/react-start/server");
+    const session = getSessionFromRequest(getWebRequest()!);
+
     if (!session) {
       throw new Error("Unauthorized");
     }
