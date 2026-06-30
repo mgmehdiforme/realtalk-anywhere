@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
 import { createServerFn } from "@tanstack/react-start";
+import { getWebRequest } from "vinxi/http";
+
 import { useDemoModal } from "@/lib/demo-modal";
 import { authWithGoogle } from "@/lib/auth-functions";
 import type { QwenAnalysisResult } from "@/lib/qwen";
