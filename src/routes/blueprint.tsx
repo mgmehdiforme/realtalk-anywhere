@@ -79,7 +79,8 @@ export const getBlueprintState = createServerFn({ method: "GET" })
  */
 export const saveBlueprintDraft = createServerFn()
   .validator((d: { answers: Record<string, any> }) => d)
-  .handler(async ({ data, request }) => {
+  .handler(async ({ data }) => {
+
     const { getSessionFromRequest } = await import("@/lib/auth");
     const { saveBlueprint } = await import("@/lib/db");
 
