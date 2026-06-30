@@ -81,7 +81,6 @@ const SERVICES = [
   },
 ];
 
-
 function Landing() {
   return (
     <div>
@@ -92,7 +91,9 @@ function Landing() {
           <div className="lg:col-span-7">
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
               <span className="h-1.5 w-1.5 rounded-full bg-neon animate-pulse" />
-              <span className="text-neon-gradient font-semibold">Independent Technical Partner</span>
+              <span className="text-neon-gradient font-semibold">
+                Independent Technical Partner
+              </span>
               <span className="opacity-50">·</span> Senior Engineer · AI & SaaS
             </div>
             <h1 className="mt-5 font-display text-4xl font-semibold leading-[1.05] sm:text-5xl lg:text-6xl">
@@ -100,7 +101,8 @@ function Landing() {
               <span className="text-neon-gradient">build your Go-to-Launch Blueprint™ first.</span>
             </h1>
             <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
-              Answer a few strategic questions and receive a personalized execution blueprint that highlights risks, opportunities, and the fastest path to launch.
+              Answer a few strategic questions and receive a personalized execution blueprint that
+              highlights risks, opportunities, and the fastest path to launch.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
@@ -128,7 +130,10 @@ function Landing() {
           <div className="lg:col-span-5">
             <div className="relative">
               {/* Glow */}
-              <div className="absolute -inset-4 rounded-3xl bg-neon opacity-20 blur-3xl" aria-hidden />
+              <div
+                className="absolute -inset-4 rounded-3xl bg-neon opacity-20 blur-3xl"
+                aria-hidden
+              />
 
               {/* Identity card */}
               <div className="relative overflow-hidden rounded-2xl border border-border bg-card/80 shadow-card backdrop-blur">
@@ -139,9 +144,13 @@ function Landing() {
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                       <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
                     </span>
-                    <span className="text-xs font-medium text-foreground/80">Online · accepting projects</span>
+                    <span className="text-xs font-medium text-foreground/80">
+                      Online · accepting projects
+                    </span>
                   </div>
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">v10.0</span>
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                    v10.0
+                  </span>
                 </div>
 
                 {/* Profile */}
@@ -159,7 +168,9 @@ function Landing() {
                     </div>
                     <div>
                       <div className="font-display text-lg font-semibold">Mehdi Golzari</div>
-                      <div className="text-xs text-muted-foreground">Senior Engineer · .NET · AI · SaaS</div>
+                      <div className="text-xs text-muted-foreground">
+                        Senior Engineer · .NET · AI · SaaS
+                      </div>
                     </div>
                   </div>
 
@@ -178,8 +189,18 @@ function Landing() {
                   {/* Live metrics */}
                   <div className="mt-6 space-y-3">
                     {[
-                      { icon: Wifi, label: "Avg. reply (WhatsApp)", value: "< 10 min", tone: "emerald" },
-                      { icon: Gauge, label: "MVP delivery", value: "weeks, not months", tone: "neon" },
+                      {
+                        icon: Wifi,
+                        label: "Avg. reply (WhatsApp)",
+                        value: "< 10 min",
+                        tone: "emerald",
+                      },
+                      {
+                        icon: Gauge,
+                        label: "MVP delivery",
+                        value: "weeks, not months",
+                        tone: "neon",
+                      },
                       { icon: Cpu, label: "Engagement model", value: "direct → you", tone: "neon" },
                     ].map(({ icon: Icon, label, value, tone }) => (
                       <div
@@ -192,7 +213,9 @@ function Landing() {
                           />
                           {label}
                         </div>
-                        <div className="font-mono text-xs font-semibold text-foreground">{value}</div>
+                        <div className="font-mono text-xs font-semibold text-foreground">
+                          {value}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -205,11 +228,10 @@ function Landing() {
                     { v: "70k", l: "Users served" },
                     { v: "0", l: "Middlemen" },
                   ].map(({ v, l }, i) => (
-                    <div
-                      key={l}
-                      className={`px-3 py-4 ${i < 2 ? "border-r border-border" : ""}`}
-                    >
-                      <div className="font-display text-xl font-semibold text-neon-gradient">{v}</div>
+                    <div key={l} className={`px-3 py-4 ${i < 2 ? "border-r border-border" : ""}`}>
+                      <div className="font-display text-xl font-semibold text-neon-gradient">
+                        {v}
+                      </div>
                       <div className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
                         {l}
                       </div>
@@ -219,7 +241,6 @@ function Landing() {
               </div>
             </div>
           </div>
-
         </div>
       </section>
 
@@ -227,8 +248,16 @@ function Landing() {
       <section className="border-y border-border bg-card/40">
         <div className="mx-auto grid max-w-7xl gap-6 px-5 py-8 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
           {[
-            { icon: Award, title: "Letter of Appreciation", body: "Iran Khodro Co. — 70,000+ employees" },
-            { icon: ShieldCheck, title: "OWASP Top 10 certified", body: "Secure-by-default architecture" },
+            {
+              icon: Award,
+              title: "Letter of Appreciation",
+              body: "Iran Khodro Co. — 70,000+ employees",
+            },
+            {
+              icon: ShieldCheck,
+              title: "OWASP Top 10 certified",
+              body: "Secure-by-default architecture",
+            },
             { icon: Building2, title: "Enterprise clients", body: "Vendoroo.Ai · ITShams · Manir" },
             { icon: Sparkles, title: "ISO 27001 aligned", body: "ISMS-compliant engineering" },
           ].map(({ icon: Icon, title, body }) => (
@@ -253,12 +282,13 @@ function Landing() {
               Methodology
             </div>
             <h2 className="mt-3 font-display text-3xl font-semibold sm:text-4xl">
-              Every successful SaaS starts with a <span className="text-neon-gradient">structured process</span>.
+              Every successful SaaS starts with a{" "}
+              <span className="text-neon-gradient">structured process</span>.
             </h2>
             <p className="mt-4 text-base text-muted-foreground">
-              Launching a product shouldn't be a guessing game. Every project I build follows the 
-              <strong> Founder-to-Launch Framework™</strong>—a structured engineering methodology designed to mitigate 
-              technical debt, eliminate scope creep, and ensure scalability.
+              Launching a product shouldn't be a guessing game. Every project I build follows the
+              <strong> Founder-to-Launch Framework™</strong>—a structured engineering methodology
+              designed to mitigate technical debt, eliminate scope creep, and ensure scalability.
             </p>
           </div>
 
@@ -272,8 +302,8 @@ function Landing() {
               { phase: "06", name: "Scale", desc: "Performance tuning and optimization." },
               { phase: "07", name: "Partner", desc: "Ongoing strategy and fractional CTO." },
             ].map((p, idx) => (
-              <div 
-                key={p.name} 
+              <div
+                key={p.name}
                 className="relative flex flex-col rounded-2xl border border-border bg-card/50 p-5 transition hover:border-neon/30 hover:bg-card"
               >
                 <div className="font-mono text-xs font-semibold text-neon">{p.phase}</div>
@@ -314,12 +344,13 @@ function Landing() {
               <Globe className="h-3.5 w-3.5" /> No borders. No language wall.
             </div>
             <h2 className="mt-3 font-display text-3xl font-semibold sm:text-4xl">
-              I meet you in <span className="text-neon-gradient">your native language</span> — wherever you are.
+              I meet you in <span className="text-neon-gradient">your native language</span> —
+              wherever you are.
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Calls, Google Meet, WhatsApp voice — I run them in your country's language, in real time.
-              Powered by a translation product I designed and use myself, so the conversation feels natural,
-              not robotic.
+              Calls, Google Meet, WhatsApp voice — I run them in your country's language, in real
+              time. Powered by a translation product I designed and use myself, so the conversation
+              feels natural, not robotic.
             </p>
             <ul className="mt-6 space-y-2.5 text-sm">
               {[
@@ -338,7 +369,10 @@ function Landing() {
 
           {/* Floating language orb */}
           <div className="relative mx-auto aspect-square w-full max-w-md">
-            <div className="absolute inset-0 rounded-full bg-neon opacity-20 blur-3xl" aria-hidden />
+            <div
+              className="absolute inset-0 rounded-full bg-neon opacity-20 blur-3xl"
+              aria-hidden
+            />
             {/* Concentric rings */}
             <div className="absolute inset-6 rounded-full border border-[color:var(--neon)]/30" />
             <div className="absolute inset-16 rounded-full border border-[color:var(--neon)]/20" />
@@ -391,14 +425,14 @@ function Landing() {
               Direct execution model
             </div>
             <h2 className="mt-3 font-display text-3xl font-semibold sm:text-4xl">
-              Two ways to build your product. <span className="text-neon-gradient">Which one is better?</span>
+              Two ways to build your product.{" "}
+              <span className="text-neon-gradient">Which one is better?</span>
             </h2>
             <p className="mt-3 text-muted-foreground">
               Side by side — the agency path most founders default to, and the direct path I offer.
               Same goal, very different cost, speed and clarity.
             </p>
           </div>
-
 
           <div className="mx-auto mt-12 grid max-w-5xl gap-6 md:grid-cols-2">
             {/* Most agencies */}
@@ -412,24 +446,20 @@ function Landing() {
                 </span>
               </div>
               <ol className="mt-5 space-y-2">
-                {[
-                  "Sales team",
-                  "Account manager",
-                  "Project manager",
-                  "Tech lead",
-                  "Developer",
-                ].map((s, i) => (
-                  <li
-                    key={s}
-                    className="flex items-center gap-3 rounded-lg border border-border bg-background/50 px-3 py-2.5 text-sm text-muted-foreground"
-                  >
-                    <span className="font-mono text-[10px] text-muted-foreground/70">
-                      0{i + 1}
-                    </span>
-                    <span className="flex-1">{s}</span>
-                    <X className="h-3.5 w-3.5 opacity-50" />
-                  </li>
-                ))}
+                {["Sales team", "Account manager", "Project manager", "Tech lead", "Developer"].map(
+                  (s, i) => (
+                    <li
+                      key={s}
+                      className="flex items-center gap-3 rounded-lg border border-border bg-background/50 px-3 py-2.5 text-sm text-muted-foreground"
+                    >
+                      <span className="font-mono text-[10px] text-muted-foreground/70">
+                        0{i + 1}
+                      </span>
+                      <span className="flex-1">{s}</span>
+                      <X className="h-3.5 w-3.5 opacity-50" />
+                    </li>
+                  ),
+                )}
                 <li className="flex items-center gap-3 rounded-lg border border-dashed border-border px-3 py-2.5 text-sm text-muted-foreground">
                   <span className="font-mono text-[10px]">→</span>
                   <span className="flex-1 font-medium">You</span>
@@ -442,7 +472,10 @@ function Landing() {
 
             {/* MehdiGolzari.dev */}
             <div className="relative rounded-2xl border border-[color:var(--neon)]/40 bg-card p-6 shadow-neon">
-              <div className="absolute -inset-px rounded-2xl bg-neon opacity-10 blur-2xl" aria-hidden />
+              <div
+                className="absolute -inset-px rounded-2xl bg-neon opacity-10 blur-2xl"
+                aria-hidden
+              />
               <div className="relative">
                 <div className="flex items-center justify-between">
                   <div className="font-mono text-xs uppercase tracking-widest text-neon-gradient">
@@ -465,16 +498,13 @@ function Landing() {
                     </div>
                   </div>
                   <ul className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                    {[
-                      "Direct chat",
-                      "Same-day decisions",
-                      "Full context",
-                      "Owns the code",
-                    ].map((t) => (
-                      <li key={t} className="flex items-center gap-1.5 text-foreground/90">
-                        <Check className="h-3.5 w-3.5 text-neon" /> {t}
-                      </li>
-                    ))}
+                    {["Direct chat", "Same-day decisions", "Full context", "Owns the code"].map(
+                      (t) => (
+                        <li key={t} className="flex items-center gap-1.5 text-foreground/90">
+                          <Check className="h-3.5 w-3.5 text-neon" /> {t}
+                        </li>
+                      ),
+                    )}
                   </ul>
                 </div>
                 <p className="mt-5 text-xs text-muted-foreground">
@@ -556,7 +586,8 @@ function Landing() {
                 Why founders pick me
               </div>
               <h2 className="mt-3 font-display text-3xl font-semibold sm:text-4xl">
-                Software development isn't my main offer. <span className="text-neon-gradient">Execution is.</span>
+                Software development isn't my main offer.{" "}
+                <span className="text-neon-gradient">Execution is.</span>
               </h2>
               <p className="mt-5 text-muted-foreground">
                 I move fast because I pair 10+ years of senior engineering with modern AI tools —
@@ -565,22 +596,34 @@ function Landing() {
               </p>
               <p className="mt-4 text-muted-foreground">
                 I'm a technical person — and quietly, a business one too. Years of hands-on
-                marketing experience, plus Google <span className="text-foreground/90 font-medium">My Business</span> and
-                <span className="text-foreground/90 font-medium"> Digital Garage</span> certifications, let
-                me think about your product the way your customers will. I help you go from
-                <span className="text-neon-gradient font-semibold"> zero to hero</span> — not just build software.
+                marketing experience, plus Google{" "}
+                <span className="text-foreground/90 font-medium">My Business</span> and
+                <span className="text-foreground/90 font-medium"> Digital Garage</span>{" "}
+                certifications, let me think about your product the way your customers will. I help
+                you go from
+                <span className="text-neon-gradient font-semibold"> zero to hero</span> — not just
+                build software.
               </p>
               <p className="mt-4 text-muted-foreground">
                 You'll also be working with an engineer who's been a{" "}
-                <span className="text-foreground/90 font-medium">core team member inside American startups</span> —
-                the pace, the product instincts, the bar for quality. That experience comes with me into your product.
+                <span className="text-foreground/90 font-medium">
+                  core team member inside American startups
+                </span>{" "}
+                — the pace, the product instincts, the bar for quality. That experience comes with
+                me into your product.
               </p>
               <div className="mt-5 space-y-2.5 text-sm">
                 {[
-                  { icon: Calendar, text: "Most engagements run monthly — some founders only need a focused week." },
+                  {
+                    icon: Calendar,
+                    text: "Most engagements run monthly — some founders only need a focused week.",
+                  },
                   { icon: Rocket, text: "Production-ready MVPs in weeks, not months." },
                   { icon: Sparkles, text: "AI-augmented delivery, senior-engineered decisions." },
-                  { icon: TrendingUp, text: "Engineer + marketer mindset — built to ship and built to sell." },
+                  {
+                    icon: TrendingUp,
+                    text: "Engineer + marketer mindset — built to ship and built to sell.",
+                  },
                 ].map(({ icon: Icon, text }) => (
                   <div key={text} className="flex items-start gap-2.5 text-foreground/85">
                     <Icon className="mt-0.5 h-4 w-4 shrink-0 text-neon" />
@@ -593,15 +636,33 @@ function Landing() {
               </div>
             </div>
 
-
             <div className="grid gap-4 sm:grid-cols-2 lg:col-span-7">
               {[
-                { icon: Zap, title: "Faster execution", body: "Direct communication. No coordination overhead between you and the code." },
-                { icon: ShieldCheck, title: "Lower risk", body: "10+ years building production systems — Clean Architecture, DDD, microservices." },
-                { icon: Code2, title: "Right tech choices", body: ".NET, Node, React, Postgres, AI/LLM — picked for your business, not my preferences." },
-                { icon: Globe, title: "Built to scale", body: "Architectures that survive growth — performance, security, cloud, deployment pipelines." },
+                {
+                  icon: Zap,
+                  title: "Faster execution",
+                  body: "Direct communication. No coordination overhead between you and the code.",
+                },
+                {
+                  icon: ShieldCheck,
+                  title: "Lower risk",
+                  body: "10+ years building production systems — Clean Architecture, DDD, microservices.",
+                },
+                {
+                  icon: Code2,
+                  title: "Right tech choices",
+                  body: ".NET, Node, React, Postgres, AI/LLM — picked for your business, not my preferences.",
+                },
+                {
+                  icon: Globe,
+                  title: "Built to scale",
+                  body: "Architectures that survive growth — performance, security, cloud, deployment pipelines.",
+                },
               ].map(({ icon: Icon, title, body }) => (
-                <div key={title} className="rounded-2xl border border-border bg-card p-5 shadow-card">
+                <div
+                  key={title}
+                  className="rounded-2xl border border-border bg-card p-5 shadow-card"
+                >
                   <div className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-background">
                     <Icon className="h-5 w-5 text-neon" />
                   </div>
@@ -627,12 +688,31 @@ function Landing() {
 
         <ol className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {[
-            { n: "01", title: "Discovery call", body: "Free 30-min call. We discuss your idea, constraints and goals." },
-            { n: "02", title: "Technical proposal", body: "Architecture, stack, timeline and a transparent scope you can act on." },
-            { n: "03", title: "Build", body: "Iterative delivery directly with me — demos, code reviews, async updates." },
-            { n: "04", title: "Launch & scale", body: "Production deploy, monitoring, hand-off — or continue as your technical partner." },
+            {
+              n: "01",
+              title: "Discovery call",
+              body: "Free 30-min call. We discuss your idea, constraints and goals.",
+            },
+            {
+              n: "02",
+              title: "Technical proposal",
+              body: "Architecture, stack, timeline and a transparent scope you can act on.",
+            },
+            {
+              n: "03",
+              title: "Build",
+              body: "Iterative delivery directly with me — demos, code reviews, async updates.",
+            },
+            {
+              n: "04",
+              title: "Launch & scale",
+              body: "Production deploy, monitoring, hand-off — or continue as your technical partner.",
+            },
           ].map(({ n, title, body }) => (
-            <li key={n} className="relative rounded-2xl border border-border bg-card p-6 shadow-card">
+            <li
+              key={n}
+              className="relative rounded-2xl border border-border bg-card p-6 shadow-card"
+            >
               <div className="font-mono text-xs text-neon-gradient">{n}</div>
               <div className="mt-2 text-lg font-semibold">{title}</div>
               <p className="mt-2 text-sm text-muted-foreground">{body}</p>
@@ -652,38 +732,59 @@ function Landing() {
           </h2>
           <p className="mt-4 text-muted-foreground">
             Pricing is always a conversation — every project is a little different. Instead of
-            locking you into rigid monthly overheads, we tie pricing directly to deliverables
-            so you only pay for actual working results.
+            locking you into rigid monthly overheads, we tie pricing directly to deliverables so you
+            only pay for actual working results.
           </p>
         </div>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
           {/* Main price card */}
           <div className="lg:col-span-2 rounded-3xl border border-border bg-card p-8 shadow-card relative overflow-hidden">
-            <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-neon opacity-10 blur-3xl" aria-hidden />
+            <div
+              className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-neon opacity-10 blur-3xl"
+              aria-hidden
+            />
             <div className="relative">
               <div className="flex flex-wrap items-end gap-3">
-                <div className="text-xs font-semibold uppercase tracking-widest text-neon">Pricing model</div>
+                <div className="text-xs font-semibold uppercase tracking-widest text-neon">
+                  Pricing model
+                </div>
               </div>
               <div className="mt-2 flex items-baseline gap-2">
                 <span className="font-display text-4xl font-semibold">Milestone-Based</span>
                 <span className="text-muted-foreground">/ deliverables</span>
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
-                Zero hourly billing. We define clear delivery phases, and you only settle payments as milestones are met.
+                Zero hourly billing. We define clear delivery phases, and you only settle payments
+                as milestones are met.
               </p>
 
               <div className="mt-7 grid gap-4 sm:grid-cols-3">
-                <PayStep n="1" title="Advance" body="One third up-front to kick things off and lock the slot." highlight />
-                <PayStep n="2" title="Progress" body="Work happens with full visibility — demos, docs, repo access." />
-                <PayStep n="3" title="Final" body="Remaining two thirds settled at the end, once you're happy." />
+                <PayStep
+                  n="1"
+                  title="Advance"
+                  body="One third up-front to kick things off and lock the slot."
+                  highlight
+                />
+                <PayStep
+                  n="2"
+                  title="Progress"
+                  body="Work happens with full visibility — demos, docs, repo access."
+                />
+                <PayStep
+                  n="3"
+                  title="Final"
+                  body="Remaining two thirds settled at the end, once you're happy."
+                />
               </div>
 
               <div className="mt-7 rounded-2xl border border-border bg-background/60 p-5">
                 <div className="flex items-start gap-3">
                   <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-neon" />
                   <div className="text-sm text-foreground/85">
-                    <span className="font-semibold text-foreground">Full transparency, every step.</span>{" "}
+                    <span className="font-semibold text-foreground">
+                      Full transparency, every step.
+                    </span>{" "}
                     You receive documented updates and visible results on a regular cadence — so you
                     always know exactly where your money is going and what's been built.
                   </div>
@@ -697,7 +798,9 @@ function Landing() {
             <div className="grid h-11 w-11 place-items-center rounded-xl bg-neon shadow-neon">
               <Cpu className="h-5 w-5 text-primary-foreground" />
             </div>
-            <h3 className="mt-4 font-display text-xl font-semibold">Development infrastructure on me.</h3>
+            <h3 className="mt-4 font-display text-xl font-semibold">
+              Development infrastructure on me.
+            </h3>
             <p className="mt-2 text-sm text-muted-foreground">
               During the build, you don't pay for any of the moving parts behind the scenes.
             </p>
@@ -714,9 +817,12 @@ function Landing() {
               ))}
             </ul>
             <div className="mt-5 rounded-xl border border-border bg-background/60 p-4 text-sm">
-              <span className="font-semibold text-foreground">Free for you during development.</span>{" "}
+              <span className="font-semibold text-foreground">
+                Free for you during development.
+              </span>{" "}
               <span className="text-muted-foreground">
-                At the end, everything migrates cleanly to your own accounts — code, cloud, data, all yours.
+                At the end, everything migrates cleanly to your own accounts — code, cloud, data,
+                all yours.
               </span>
             </div>
           </div>
@@ -733,11 +839,13 @@ function Landing() {
         </div>
       </section>
 
-
       {/* AVAILABILITY — soft response-time band */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-hero opacity-70" aria-hidden />
-        <div className="absolute left-1/2 top-1/2 h-72 w-[60%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-neon opacity-10 blur-3xl" aria-hidden />
+        <div
+          className="absolute left-1/2 top-1/2 h-72 w-[60%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-neon opacity-10 blur-3xl"
+          aria-hidden
+        />
         <div className="relative mx-auto max-w-6xl px-5 py-20 sm:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
@@ -753,13 +861,17 @@ function Landing() {
               No bots. No queues. No "we'll get back to you."
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Real answers from the same engineer who'll build your product — usually within minutes.
+              Real answers from the same engineer who'll build your product — usually within
+              minutes.
             </p>
           </div>
 
           <div className="mx-auto mt-12 grid max-w-4xl gap-5 sm:grid-cols-2">
             <div className="group relative overflow-hidden rounded-2xl border border-border bg-card/70 p-7 shadow-card backdrop-blur transition hover:border-[color:var(--neon)]/40">
-              <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-neon opacity-10 blur-2xl transition group-hover:opacity-20" aria-hidden />
+              <div
+                className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-neon opacity-10 blur-2xl transition group-hover:opacity-20"
+                aria-hidden
+              />
               <div className="relative flex items-start gap-4">
                 <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/30">
                   <MessageCircle className="h-5 w-5" />
@@ -768,7 +880,9 @@ function Landing() {
                   <div className="flex items-baseline gap-2">
                     <div className="font-display text-2xl font-semibold">Under 10 minutes</div>
                   </div>
-                  <div className="mt-1 text-sm text-muted-foreground">WhatsApp · typical reply time</div>
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    WhatsApp · typical reply time
+                  </div>
                   <p className="mt-3 text-sm text-foreground/85">
                     Send a voice note, a screenshot, a half-formed idea — I'll read it and reply
                     myself.
@@ -778,7 +892,10 @@ function Landing() {
             </div>
 
             <div className="group relative overflow-hidden rounded-2xl border border-border bg-card/70 p-7 shadow-card backdrop-blur transition hover:border-[color:var(--neon)]/40">
-              <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-neon opacity-10 blur-2xl transition group-hover:opacity-20" aria-hidden />
+              <div
+                className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-neon opacity-10 blur-2xl transition group-hover:opacity-20"
+                aria-hidden
+              />
               <div className="relative flex items-start gap-4">
                 <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[color:var(--neon)]/10 text-neon ring-1 ring-[color:var(--neon)]/30">
                   <Mail className="h-5 w-5" />
@@ -787,7 +904,9 @@ function Landing() {
                   <div className="flex items-baseline gap-2">
                     <div className="font-display text-2xl font-semibold">Under 1 hour</div>
                   </div>
-                  <div className="mt-1 text-sm text-muted-foreground">Email · typical reply time</div>
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    Email · typical reply time
+                  </div>
                   <p className="mt-3 text-sm text-foreground/85">
                     Long brief, scope, proposal — a thoughtful response from me, not a templated
                     auto-reply.
@@ -822,8 +941,14 @@ function Landing() {
       {/* PROMISE */}
       <section className="mx-auto max-w-5xl px-5 pb-10 sm:px-8">
         <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-10 shadow-card sm:p-12">
-          <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-neon opacity-10 blur-3xl" aria-hidden />
-          <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-neon opacity-10 blur-3xl" aria-hidden />
+          <div
+            className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-neon opacity-10 blur-3xl"
+            aria-hidden
+          />
+          <div
+            className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-neon opacity-10 blur-3xl"
+            aria-hidden
+          />
           <div className="relative grid items-center gap-8 sm:grid-cols-[auto,1fr]">
             <div className="grid h-16 w-16 place-items-center rounded-2xl bg-neon shadow-neon">
               <Heart className="h-7 w-7 text-primary-foreground" />
@@ -836,7 +961,10 @@ function Landing() {
                 You'll have the best time working together — that's a promise.
               </h2>
               <p className="mt-3 text-muted-foreground leading-relaxed">
-                I genuinely love what I do, and I love helping ideas grow — in <span className="text-foreground font-medium">any industry</span>, at any stage. Expect calm communication, real ownership, and someone who treats your product like it's their own.
+                I genuinely love what I do, and I love helping ideas grow — in{" "}
+                <span className="text-foreground font-medium">any industry</span>, at any stage.
+                Expect calm communication, real ownership, and someone who treats your product like
+                it's their own.
               </p>
             </div>
           </div>
@@ -845,9 +973,11 @@ function Landing() {
 
       {/* CTA */}
       <section className="mx-auto max-w-5xl px-5 pb-24 sm:px-8">
-
         <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-10 text-center shadow-card sm:p-14">
-          <div className="absolute -top-20 left-1/2 h-60 w-[80%] -translate-x-1/2 rounded-full bg-neon opacity-20 blur-3xl" aria-hidden />
+          <div
+            className="absolute -top-20 left-1/2 h-60 w-[80%] -translate-x-1/2 rounded-full bg-neon opacity-20 blur-3xl"
+            aria-hidden
+          />
           <h2 className="relative font-display text-3xl font-semibold sm:text-4xl">
             Ready to build your product — with the engineer, not around them?
           </h2>
@@ -871,9 +1001,21 @@ function Landing() {
   );
 }
 
-function PayStep({ n, title, body, highlight }: { n: string; title: string; body: string; highlight?: boolean }) {
+function PayStep({
+  n,
+  title,
+  body,
+  highlight,
+}: {
+  n: string;
+  title: string;
+  body: string;
+  highlight?: boolean;
+}) {
   return (
-    <div className={`rounded-2xl border p-4 ${highlight ? "border-neon/50 bg-neon/5" : "border-border bg-background/60"}`}>
+    <div
+      className={`rounded-2xl border p-4 ${highlight ? "border-neon/50 bg-neon/5" : "border-border bg-background/60"}`}
+    >
       <div className="font-mono text-xs text-neon-gradient">Step {n}</div>
       <div className="mt-1 font-semibold">{title}</div>
       <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{body}</p>

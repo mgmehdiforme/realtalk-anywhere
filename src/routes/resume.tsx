@@ -6,23 +6,112 @@ export const Route = createFileRoute("/resume")({
   head: () => ({
     meta: [
       { title: "Mehdi Golzari — Senior .NET Core & C# Engineer" },
-      { name: "description", content: "10+ years architecting high-performance .NET microservices. Clean Architecture, DDD, OpenAI integrations, RabbitMQ, Kubernetes." },
+      {
+        name: "description",
+        content:
+          "10+ years architecting high-performance .NET microservices. Clean Architecture, DDD, OpenAI integrations, RabbitMQ, Kubernetes.",
+      },
       { property: "og:title", content: "Mehdi Golzari — Senior Software Engineer" },
-      { property: "og:description", content: "Senior .NET Core / C# engineer specializing in microservices, DDD and AI integrations." },
+      {
+        property: "og:description",
+        content:
+          "Senior .NET Core / C# engineer specializing in microservices, DDD and AI integrations.",
+      },
     ],
   }),
   component: ResumePage,
 });
 
 const competencies: Record<string, string[]> = {
-  "Languages & Frameworks": ["C#", "ASP.NET Core", ".NET Framework", "Razor Pages", "Python", "FastAPI", "Node.js", "TypeScript", "T-SQL", "PL-SQL", "JavaScript", "React", "Next.js"],
-  "Architecture & Patterns": ["Microservices", "DDD", "EDD", "CQRS", "Clean Architecture", "Event-Driven", "Cloud-Native", "SaaS Multi-tenant", "Serverless"],
-  "Cloud & DevOps": ["Docker", "Kubernetes", "GitHub Actions", "CI/CD", "Redis", "RabbitMQ", "AWS", "Azure", "Cloudflare Workers", "Nginx", "Linux"],
-  "Databases & Data": ["SQL Server", "PostgreSQL", "Oracle", "MongoDB", "Redis", "EF Core", "Dapper", "Vector DBs (pgvector, Pinecone, Qdrant)"],
-  "AI & LLM Engineering": ["OpenAI API (GPT-4/4o)", "Anthropic Claude", "LangChain", "LlamaIndex", "RAG Pipelines", "AI Agents", "Function Calling", "Prompt Engineering", "Embeddings", "Fine-tuning", "Whisper / TTS"],
-  "Integrations & Realtime": ["SignalR", "WebSockets", "REST APIs", "GraphQL", "SOAP / WCF", "Stripe", "Twilio", "Webhooks"],
-  "Product & Delivery": ["MVP Architecture", "Technical Discovery", "Fractional CTO", "Product Engineering", "Code Audits"],
-  "Tools & Methods": ["Git", "GitHub", "Jira", "Agile / Scrum", "OWASP Top 10", "ISO 27001", "xUnit", "PyTest"],
+  "Languages & Frameworks": [
+    "C#",
+    "ASP.NET Core",
+    ".NET Framework",
+    "Razor Pages",
+    "Python",
+    "FastAPI",
+    "Node.js",
+    "TypeScript",
+    "T-SQL",
+    "PL-SQL",
+    "JavaScript",
+    "React",
+    "Next.js",
+  ],
+  "Architecture & Patterns": [
+    "Microservices",
+    "DDD",
+    "EDD",
+    "CQRS",
+    "Clean Architecture",
+    "Event-Driven",
+    "Cloud-Native",
+    "SaaS Multi-tenant",
+    "Serverless",
+  ],
+  "Cloud & DevOps": [
+    "Docker",
+    "Kubernetes",
+    "GitHub Actions",
+    "CI/CD",
+    "Redis",
+    "RabbitMQ",
+    "AWS",
+    "Azure",
+    "Cloudflare Workers",
+    "Nginx",
+    "Linux",
+  ],
+  "Databases & Data": [
+    "SQL Server",
+    "PostgreSQL",
+    "Oracle",
+    "MongoDB",
+    "Redis",
+    "EF Core",
+    "Dapper",
+    "Vector DBs (pgvector, Pinecone, Qdrant)",
+  ],
+  "AI & LLM Engineering": [
+    "OpenAI API (GPT-4/4o)",
+    "Anthropic Claude",
+    "LangChain",
+    "LlamaIndex",
+    "RAG Pipelines",
+    "AI Agents",
+    "Function Calling",
+    "Prompt Engineering",
+    "Embeddings",
+    "Fine-tuning",
+    "Whisper / TTS",
+  ],
+  "Integrations & Realtime": [
+    "SignalR",
+    "WebSockets",
+    "REST APIs",
+    "GraphQL",
+    "SOAP / WCF",
+    "Stripe",
+    "Twilio",
+    "Webhooks",
+  ],
+  "Product & Delivery": [
+    "MVP Architecture",
+    "Technical Discovery",
+    "Fractional CTO",
+    "Product Engineering",
+    "Code Audits",
+  ],
+  "Tools & Methods": [
+    "Git",
+    "GitHub",
+    "Jira",
+    "Agile / Scrum",
+    "OWASP Top 10",
+    "ISO 27001",
+    "xUnit",
+    "PyTest",
+  ],
 };
 
 const roles = [
@@ -38,7 +127,16 @@ const roles = [
       "Define the AI strategy and system architecture for business-setup automation and investment-risk scoring.",
       "Provide executive technical leadership across product, engineering, infrastructure and AI workflows.",
     ],
-    stack: ["AI Strategy", "System Architecture", "Executive Tech Leadership", "LLMs / RAG", ".NET Core", "Python", "Azure", "PostgreSQL"],
+    stack: [
+      "AI Strategy",
+      "System Architecture",
+      "Executive Tech Leadership",
+      "LLMs / RAG",
+      ".NET Core",
+      "Python",
+      "Azure",
+      "PostgreSQL",
+    ],
   },
   {
     company: "Vendoroo.Ai",
@@ -53,7 +151,19 @@ const roles = [
       "Built a resilient microservice to scrape, fetch and evaluate external platform data, optimized via RabbitMQ.",
       "Engineered a script integration platform with ASP.NET Core + OpenAI APIs and real-time SignalR streaming.",
     ],
-    stack: ["C#", "ASP.NET Core", "OpenAI API", "RabbitMQ", "SignalR", "xUnit", "PostgreSQL", "Redis", "EF Core", "Docker", "Kubernetes"],
+    stack: [
+      "C#",
+      "ASP.NET Core",
+      "OpenAI API",
+      "RabbitMQ",
+      "SignalR",
+      "xUnit",
+      "PostgreSQL",
+      "Redis",
+      "EF Core",
+      "Docker",
+      "Kubernetes",
+    ],
   },
   {
     company: "ITShams",
@@ -80,7 +190,17 @@ const roles = [
       "Designed, built and deployed an Enterprise Portal CMS — official OWASP Top 10 certification.",
       "Optimized a high-volume billing engine, eliminating concurrency bottlenecks and heavy ORM overhead.",
     ],
-    stack: ["T-SQL", "PostgreSQL", "Oracle (PL-SQL)", "Redis", "Dapper", "Docker", "Kubernetes", "ASP.NET Core", "Razor"],
+    stack: [
+      "T-SQL",
+      "PostgreSQL",
+      "Oracle (PL-SQL)",
+      "Redis",
+      "Dapper",
+      "Docker",
+      "Kubernetes",
+      "ASP.NET Core",
+      "Razor",
+    ],
   },
   {
     company: "RoyanAfzar",
@@ -104,7 +224,10 @@ function ResumePage() {
       <div className="mx-auto max-w-5xl px-5 py-16 sm:px-8 sm:py-20">
         {/* Header */}
         <header className="relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-card sm:p-10">
-          <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-neon opacity-20 blur-3xl" aria-hidden />
+          <div
+            className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-neon opacity-20 blur-3xl"
+            aria-hidden
+          />
           <div className="relative flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background/50 px-3 py-1 text-xs font-medium text-muted-foreground">
@@ -118,10 +241,31 @@ function ResumePage() {
                 Senior Software Engineer · .NET Core & C# Developer
               </p>
               <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4" /> Istanbul, Turkey</span>
-                <a className="inline-flex items-center gap-1.5 hover:text-foreground" href="mailto:MehdiGolzari.official@gmail.com"><Mail className="h-4 w-4" /> MehdiGolzari.official@gmail.com</a>
-                <a className="inline-flex items-center gap-1.5 hover:text-foreground" href="https://wa.me/905019390465" target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4" /> +90 501 939 0465</a>
-                <a className="inline-flex items-center gap-1.5 hover:text-foreground" href="https://linkedin.com/in/mehdigolzariofficial" target="_blank" rel="noreferrer"><Linkedin className="h-4 w-4" /> linkedin.com/in/mehdigolzariofficial</a>
+                <span className="inline-flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4" /> Istanbul, Turkey
+                </span>
+                <a
+                  className="inline-flex items-center gap-1.5 hover:text-foreground"
+                  href="mailto:MehdiGolzari.official@gmail.com"
+                >
+                  <Mail className="h-4 w-4" /> MehdiGolzari.official@gmail.com
+                </a>
+                <a
+                  className="inline-flex items-center gap-1.5 hover:text-foreground"
+                  href="https://wa.me/905019390465"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <MessageCircle className="h-4 w-4" /> +90 501 939 0465
+                </a>
+                <a
+                  className="inline-flex items-center gap-1.5 hover:text-foreground"
+                  href="https://linkedin.com/in/mehdigolzariofficial"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Linkedin className="h-4 w-4" /> linkedin.com/in/mehdigolzariofficial
+                </a>
               </div>
             </div>
             <a
@@ -134,11 +278,12 @@ function ResumePage() {
           </div>
 
           <p className="relative mt-7 max-w-3xl text-[0.97rem] leading-relaxed text-foreground/90">
-            Strategic Senior C# / .NET Core engineer with <strong>10+ years</strong> architecting and delivering
-            high-performance backend systems. Expert in microservices, Clean Architecture and Domain-Driven Design,
-            with a proven track record across full-lifecycle development and CI/CD. Known for driving engineering
-            excellence through cloud-native solutions, <strong>AI integrations</strong>, and optimization of
-            large-scale MSSQL & PostgreSQL databases.
+            Strategic Senior C# / .NET Core engineer with <strong>10+ years</strong> architecting
+            and delivering high-performance backend systems. Expert in microservices, Clean
+            Architecture and Domain-Driven Design, with a proven track record across full-lifecycle
+            development and CI/CD. Known for driving engineering excellence through cloud-native
+            solutions, <strong>AI integrations</strong>, and optimization of large-scale MSSQL &
+            PostgreSQL databases.
           </p>
         </header>
 
@@ -148,10 +293,15 @@ function ResumePage() {
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             {Object.entries(competencies).map(([cat, items]) => (
               <div key={cat} className="rounded-2xl border border-border bg-card p-5 shadow-card">
-                <div className="text-xs font-medium uppercase tracking-widest text-neon-gradient">{cat}</div>
+                <div className="text-xs font-medium uppercase tracking-widest text-neon-gradient">
+                  {cat}
+                </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {items.map((it) => (
-                    <span key={it} className="rounded-md border border-border bg-background/60 px-2.5 py-1 text-xs font-medium text-foreground/90">
+                    <span
+                      key={it}
+                      className="rounded-md border border-border bg-background/60 px-2.5 py-1 text-xs font-medium text-foreground/90"
+                    >
                       {it}
                     </span>
                   ))}
@@ -165,14 +315,24 @@ function ResumePage() {
         <section className="mt-12">
           <h2 className="font-display text-2xl font-semibold">Professional Experience</h2>
           <div className="relative mt-6 space-y-5 sm:pl-8">
-            <span className="absolute left-3 top-2 bottom-2 hidden w-px bg-border sm:block" aria-hidden />
+            <span
+              className="absolute left-3 top-2 bottom-2 hidden w-px bg-border sm:block"
+              aria-hidden
+            />
             {roles.map((r) => (
-              <article key={r.company} className="relative rounded-2xl border border-border bg-card p-6 shadow-card sm:p-7">
-                <span className="absolute -left-[1.4rem] top-7 hidden h-3 w-3 rounded-full bg-neon shadow-neon sm:block" aria-hidden />
+              <article
+                key={r.company}
+                className="relative rounded-2xl border border-border bg-card p-6 shadow-card sm:p-7"
+              >
+                <span
+                  className="absolute -left-[1.4rem] top-7 hidden h-3 w-3 rounded-full bg-neon shadow-neon sm:block"
+                  aria-hidden
+                />
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <div>
                     <h3 className="font-display text-lg font-semibold">
-                      {r.company} <span className="font-normal text-muted-foreground">· {r.location}</span>
+                      {r.company}{" "}
+                      <span className="font-normal text-muted-foreground">· {r.location}</span>
                     </h3>
                     <div className="text-sm text-foreground/90">{r.title}</div>
                   </div>
@@ -189,7 +349,10 @@ function ResumePage() {
                 </ul>
                 <div className="mt-5 flex flex-wrap gap-1.5">
                   {r.stack.map((s) => (
-                    <span key={s} className="rounded-md border border-border bg-background/60 px-2 py-0.5 font-mono text-[11px] text-muted-foreground">
+                    <span
+                      key={s}
+                      className="rounded-md border border-border bg-background/60 px-2 py-0.5 font-mono text-[11px] text-muted-foreground"
+                    >
                       {s}
                     </span>
                   ))}
@@ -217,9 +380,16 @@ function ResumePage() {
           <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
             <h2 className="font-display text-lg font-semibold">Certifications & Languages</h2>
             <ul className="mt-4 space-y-3 text-sm">
-              <li><span className="font-medium">Digital Marketing Fundamentals</span> · Google Digital Garage</li>
-              <li><span className="font-medium">Google My Business</span> · Google</li>
-              <li><span className="font-medium">C# Development Assessment</span> · LinkedIn</li>
+              <li>
+                <span className="font-medium">Digital Marketing Fundamentals</span> · Google Digital
+                Garage
+              </li>
+              <li>
+                <span className="font-medium">Google My Business</span> · Google
+              </li>
+              <li>
+                <span className="font-medium">C# Development Assessment</span> · LinkedIn
+              </li>
               <li className="pt-2 text-muted-foreground">Languages: English · Turkish</li>
             </ul>
           </div>

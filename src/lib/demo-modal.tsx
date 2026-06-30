@@ -60,7 +60,9 @@ export function DemoModalProvider({ children }: { children: ReactNode }) {
                 Build Your Execution Blueprint First
               </h3>
               <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
-                Create your personalized Go-to-Launch Blueprint™ before our session. Building your blueprint first clarifies your MVP scope and highlights technical risks so we can spend our time designing execution strategies.
+                Create your personalized Go-to-Launch Blueprint™ before our session. Building your
+                blueprint first clarifies your MVP scope and highlights technical risks so we can
+                spend our time designing execution strategies.
               </p>
               <div className="mt-4">
                 <Link
@@ -76,7 +78,9 @@ export function DemoModalProvider({ children }: { children: ReactNode }) {
             {/* Separator */}
             <div className="relative flex py-4 items-center">
               <div className="flex-grow border-t border-border" />
-              <span className="flex-shrink mx-4 text-[9px] text-muted-foreground uppercase tracking-widest font-semibold">Or contact directly</span>
+              <span className="flex-shrink mx-4 text-[9px] text-muted-foreground uppercase tracking-widest font-semibold">
+                Or contact directly
+              </span>
               <div className="flex-grow border-t border-border" />
             </div>
 
@@ -120,11 +124,18 @@ export function DemoButton({
   className = "",
   children = "Book Discovery Call",
   onClick,
-}: { className?: string; children?: ReactNode; onClick?: () => void }) {
+}: {
+  className?: string;
+  children?: ReactNode;
+  onClick?: () => void;
+}) {
   const { open } = useDemoModal();
   return (
     <button
-      onClick={() => { onClick?.(); open(); }}
+      onClick={() => {
+        onClick?.();
+        open();
+      }}
       className={
         "inline-flex items-center justify-center rounded-xl bg-neon px-5 py-3 text-sm font-semibold text-primary-foreground shadow-neon transition hover:brightness-110 " +
         className

@@ -117,7 +117,11 @@ export function LanguageSelect() {
   return (
     <div ref={ref} className="relative">
       {/* Hidden Google widget container */}
-      <div id="google_translate_element" className="absolute -left-[9999px] top-0 h-0 w-0 overflow-hidden" aria-hidden />
+      <div
+        id="google_translate_element"
+        className="absolute -left-[9999px] top-0 h-0 w-0 overflow-hidden"
+        aria-hidden
+      />
 
       <button
         onClick={() => setOpen((o) => !o)}

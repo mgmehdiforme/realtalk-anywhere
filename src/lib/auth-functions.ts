@@ -4,11 +4,13 @@ import { createServerFn } from "@tanstack/react-start";
  * Server Function to handle Google OAuth and Mock logins
  */
 export const authWithGoogle = createServerFn()
-  .validator((d: { code?: string; mockUser?: { email: string; name: string; picture: string } }) => d)
+  .validator(
+    (d: { code?: string; mockUser?: { email: string; name: string; picture: string } }) => d,
+  )
   .handler(async ({ data }) => {
     const { saveUser } = await import("./db");
     const { createSessionToken } = await import("./auth");
-    
+
     // Check if it's a mock login
     if (data.mockUser) {
       console.log("Mock login triggered for:", data.mockUser.email);
@@ -32,9 +34,9 @@ export const authWithGoogle = createServerFn()
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
-      return { 
-        success: false, 
-        error: "Google client credentials are not configured on the server." 
+      return {
+        success: false,
+        error: "Google client credentials are not configured on the server.",
       };
     }
 
@@ -63,7 +65,7 @@ export const authWithGoogle = createServerFn()
       }
 
       const tokens = await tokenResponse.json();
-      
+
       // Fetch user profile info
       const profileResponse = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
@@ -74,7 +76,7 @@ export const authWithGoogle = createServerFn()
       }
 
       const profile = await profileResponse.json();
-      
+
       const user = await saveUser({
         email: profile.email,
         name: profile.name || profile.email.split("@")[0],

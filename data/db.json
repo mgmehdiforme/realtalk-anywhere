@@ -68,11 +68,7 @@
         "founderName": "kjnkjn",
         "founderRole": "Solo Founder",
         "startupName": "kllkm",
-        "industryNiche": [
-          "HealthTech",
-          "FinTech",
-          "Marketplace"
-        ],
+        "industryNiche": ["HealthTech", "FinTech", "Marketplace"],
         "targetAudience": "Other",
         "fundingStage": "Other",
         "problemDescription": ",mknkj",
@@ -120,11 +116,7 @@
         "linkedinUrl": "linkedin/parissa",
         "founderRole": "Solo Founder",
         "startupName": "Vendoroo.AI",
-        "industryNiche": [
-          "AI / Machine Learning",
-          "Marketplace",
-          "Creator Economy"
-        ],
+        "industryNiche": ["AI / Machine Learning", "Marketplace", "Creator Economy"],
         "targetAudience": "B2B (Enterprise)",
         "fundingStage": "Bootstrapped",
         "problemDescription": "Early-stage SaaS founders waste months building complex features before validating whether customers actually want them. They lack a structured framework to prioritize MVP scope and reduce engineering risk before committing budget.\n",

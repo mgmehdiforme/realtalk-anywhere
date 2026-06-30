@@ -26,7 +26,9 @@ function AboutPage() {
     <div>
       <section className="bg-hero">
         <div className="mx-auto max-w-4xl px-5 py-16 sm:px-8 sm:py-24">
-          <div className="text-xs font-medium uppercase tracking-widest text-neon-gradient">About</div>
+          <div className="text-xs font-medium uppercase tracking-widest text-neon-gradient">
+            About
+          </div>
           <h1 className="mt-3 font-display text-4xl font-semibold sm:text-5xl">
             Hi, I'm <span className="text-neon-gradient">Mehdi Golzari</span>.
           </h1>
@@ -36,11 +38,13 @@ function AboutPage() {
             product end-to-end.
           </p>
           <p className="mt-4 text-lg text-muted-foreground">
-            I don't run an agency. There is no sales team, no project manager, no outsourcing.
-            You email me, you talk to me, you get me building.
+            I don't run an agency. There is no sales team, no project manager, no outsourcing. You
+            email me, you talk to me, you get me building.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <DemoButton>Book a Discovery Call <ArrowRight className="ml-2 h-4 w-4" /></DemoButton>
+            <DemoButton>
+              Book a Discovery Call <ArrowRight className="ml-2 h-4 w-4" />
+            </DemoButton>
             <Link
               to="/resume"
               className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-5 py-3 text-sm font-semibold transition hover:bg-muted"
@@ -128,7 +132,8 @@ function AboutPage() {
 
         <div className="mt-10 rounded-3xl border border-border bg-card p-10 text-center shadow-card">
           <h2 className="font-display text-2xl font-semibold sm:text-3xl">
-            Building startup products <span className="text-neon-gradient">with</span> founders — not for them.
+            Building startup products <span className="text-neon-gradient">with</span> founders —
+            not for them.
           </h2>
           <div className="mt-6 flex justify-center">
             <DemoButton>Book Discovery Call</DemoButton>

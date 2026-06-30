@@ -40,37 +40,36 @@ import {
 /**
  * Fetch the current user state, blueprint progress/submission, and env configs
  */
-export const getBlueprintState = createServerFn()
-  .handler(async () => {
-    const request = getRequest();
-    const { getSessionFromRequest } = await import("@/lib/auth");
-    const { getUser, getBlueprint } = await import("@/lib/db");
+export const getBlueprintState = createServerFn().handler(async () => {
+  const request = getRequest();
+  const { getSessionFromRequest } = await import("@/lib/auth");
+  const { getUser, getBlueprint } = await import("@/lib/db");
 
-    const session = getSessionFromRequest(request);
-    const googleClientId = process.env.GOOGLE_CLIENT_ID || "";
-    const showMockLogin = !googleClientId || !process.env.GOOGLE_CLIENT_SECRET;
+  const session = getSessionFromRequest(request);
+  const googleClientId = process.env.GOOGLE_CLIENT_ID || "";
+  const showMockLogin = !googleClientId || !process.env.GOOGLE_CLIENT_SECRET;
 
-    if (!session) {
-      return { 
-        authenticated: false, 
-        user: null, 
-        assessment: null, 
-        showMockLogin,
-        googleClientId
-      };
-    }
-
-    const dbUser = await getUser(session.email);
-    const assessment = await getBlueprint(session.email);
-
+  if (!session) {
     return {
-      authenticated: true,
-      user: dbUser,
-      assessment,
+      authenticated: false,
+      user: null,
+      assessment: null,
       showMockLogin,
-      googleClientId
+      googleClientId,
     };
-  });
+  }
+
+  const dbUser = await getUser(session.email);
+  const assessment = await getBlueprint(session.email);
+
+  return {
+    authenticated: true,
+    user: dbUser,
+    assessment,
+    showMockLogin,
+    googleClientId,
+  };
+});
 
 /**
  * Save current builder answers as a draft
@@ -94,88 +93,88 @@ export const saveBlueprintDraft = createServerFn()
 /**
  * Finalize blueprint builder, trigger Qwen analysis, and compile PDF
  */
-export const submitBlueprintAction = createServerFn()
-  .handler(async () => {
-    const request = getRequest();
-    const { getSessionFromRequest } = await import("@/lib/auth");
-    const { getBlueprint, submitBlueprint } = await import("@/lib/db");
-    const { analyzeBlueprintAnswers } = await import("@/lib/qwen");
-    const { generateBlueprintPdf } = await import("@/lib/pdf");
+export const submitBlueprintAction = createServerFn().handler(async () => {
+  const request = getRequest();
+  const { getSessionFromRequest } = await import("@/lib/auth");
+  const { getBlueprint, submitBlueprint } = await import("@/lib/db");
+  const { analyzeBlueprintAnswers } = await import("@/lib/qwen");
+  const { generateBlueprintPdf } = await import("@/lib/pdf");
 
-    try {
-      console.log("submitBlueprintAction: Invoked");
-      const session = getSessionFromRequest(request);
-      if (!session) {
-        console.error("submitBlueprintAction: Unauthorized session");
-        throw new Error("Unauthorized");
-      }
-
-      console.log(`submitBlueprintAction: Retrieving blueprint for ${session.email}...`);
-      const existing = await getBlueprint(session.email);
-      if (!existing) {
-        console.error(`submitBlueprintAction: No blueprint found for ${session.email}`);
-        throw new Error("No blueprint answers found");
-      }
-
-      if (existing.submittedAt) {
-        console.error(`submitBlueprintAction: Blueprint already submitted for ${session.email}`);
-        throw new Error("Blueprint already submitted");
-      }
-
-      // 1. Call Qwen for report insights
-      console.log(`submitBlueprintAction: Starting Qwen analysis for ${session.email}...`);
-      const analysis = await analyzeBlueprintAnswers(existing.answers, session.email);
-      console.log(`submitBlueprintAction: Qwen analysis complete. Recommended phase: ${analysis.recommendedPhase}`);
-
-      // 2. Generate PDF using pdfkit
-      console.log(`submitBlueprintAction: Generating PDF blueprint for ${session.email}...`);
-      const pdfPath = await generateBlueprintPdf(session.email, existing.answers, analysis);
-      console.log(`submitBlueprintAction: PDF generation complete: ${pdfPath}`);
-
-      // 3. Mark in DB as submitted
-      console.log(`submitBlueprintAction: Submitting blueprint in DB for ${session.email}...`);
-      const updated = await submitBlueprint(session.email, pdfPath, analysis);
-      console.log(`submitBlueprintAction: DB submission complete`);
-
-      return { success: true, assessment: updated };
-    } catch (error: any) {
-      console.error("submitBlueprintAction ERROR:", error);
-      throw error;
+  try {
+    console.log("submitBlueprintAction: Invoked");
+    const session = getSessionFromRequest(request);
+    if (!session) {
+      console.error("submitBlueprintAction: Unauthorized session");
+      throw new Error("Unauthorized");
     }
-  });
+
+    console.log(`submitBlueprintAction: Retrieving blueprint for ${session.email}...`);
+    const existing = await getBlueprint(session.email);
+    if (!existing) {
+      console.error(`submitBlueprintAction: No blueprint found for ${session.email}`);
+      throw new Error("No blueprint answers found");
+    }
+
+    if (existing.submittedAt) {
+      console.error(`submitBlueprintAction: Blueprint already submitted for ${session.email}`);
+      throw new Error("Blueprint already submitted");
+    }
+
+    // 1. Call Qwen for report insights
+    console.log(`submitBlueprintAction: Starting Qwen analysis for ${session.email}...`);
+    const analysis = await analyzeBlueprintAnswers(existing.answers, session.email);
+    console.log(
+      `submitBlueprintAction: Qwen analysis complete. Recommended phase: ${analysis.recommendedPhase}`,
+    );
+
+    // 2. Generate PDF using pdfkit
+    console.log(`submitBlueprintAction: Generating PDF blueprint for ${session.email}...`);
+    const pdfPath = await generateBlueprintPdf(session.email, existing.answers, analysis);
+    console.log(`submitBlueprintAction: PDF generation complete: ${pdfPath}`);
+
+    // 3. Mark in DB as submitted
+    console.log(`submitBlueprintAction: Submitting blueprint in DB for ${session.email}...`);
+    const updated = await submitBlueprint(session.email, pdfPath, analysis);
+    console.log(`submitBlueprintAction: DB submission complete`);
+
+    return { success: true, assessment: updated };
+  } catch (error: any) {
+    console.error("submitBlueprintAction ERROR:", error);
+    throw error;
+  }
+});
 
 /**
  * Download the generated PDF blueprint as base64
  */
-export const downloadPdfBlueprint = createServerFn()
-  .handler(async () => {
-    const request = getRequest();
-    const { getSessionFromRequest } = await import("@/lib/auth");
-    const { getBlueprint } = await import("@/lib/db");
+export const downloadPdfBlueprint = createServerFn().handler(async () => {
+  const request = getRequest();
+  const { getSessionFromRequest } = await import("@/lib/auth");
+  const { getBlueprint } = await import("@/lib/db");
 
-    const session = getSessionFromRequest(request);
-    if (!session) {
-      throw new Error("Unauthorized");
-    }
+  const session = getSessionFromRequest(request);
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
 
-    const assessment = await getBlueprint(session.email);
-    if (!assessment || !assessment.reportPdfPath) {
-      throw new Error("Blueprint not generated yet");
-    }
+  const assessment = await getBlueprint(session.email);
+  if (!assessment || !assessment.reportPdfPath) {
+    throw new Error("Blueprint not generated yet");
+  }
 
-    try {
-      const fs = await import("fs/promises");
-      const pdfBuffer = await fs.readFile(assessment.reportPdfPath);
-      return { 
-        success: true, 
-        base64: pdfBuffer.toString("base64"),
-        fileName: `MehdiGolzari_GoToLaunch_Blueprint_${session.email.split("@")[0]}.pdf`
-      };
-    } catch (error) {
-      console.error("PDF read error:", error);
-      throw new Error("Failed to read blueprint file on server");
-    }
-  });
+  try {
+    const fs = await import("fs/promises");
+    const pdfBuffer = await fs.readFile(assessment.reportPdfPath);
+    return {
+      success: true,
+      base64: pdfBuffer.toString("base64"),
+      fileName: `MehdiGolzari_GoToLaunch_Blueprint_${session.email.split("@")[0]}.pdf`,
+    };
+  } catch (error) {
+    console.error("PDF read error:", error);
+    throw new Error("Failed to read blueprint file on server");
+  }
+});
 
 /**
  * Request edit unlock by sharing on LinkedIn
@@ -199,10 +198,9 @@ export const requestBlueprintUnlockAction = createServerFn()
 /**
  * Log the user out by clearing the session cookie
  */
-export const logoutAction = createServerFn()
-  .handler(async () => {
-    return { success: true };
-  });
+export const logoutAction = createServerFn().handler(async () => {
+  return { success: true };
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ROUTE REGISTRATION
@@ -214,7 +212,8 @@ export const Route = createFileRoute("/blueprint")({
       { title: "Build Your Go-to-Launch Blueprint™ — SaaS Scoping | MehdiGolzari.dev" },
       {
         name: "description",
-        content: "Create a personalized execution blueprint before writing code. Get immediate AI insights and a downloadable PDF roadmap.",
+        content:
+          "Create a personalized execution blueprint before writing code. Get immediate AI insights and a downloadable PDF roadmap.",
       },
     ],
   }),
@@ -242,11 +241,11 @@ function BlueprintFlowPage() {
       alert("Google Client ID is not configured on the server.");
       return;
     }
-    
+
     const host = window.location.host;
     const protocol = window.location.protocol;
     const redirectUri = `${protocol}//${host}/auth/callback`;
-    
+
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${state.googleClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20profile%20email`;
   };
 
@@ -308,30 +307,30 @@ function BlueprintFlowPage() {
 
   if (!state?.authenticated) {
     return (
-      <LandingPage 
-        showMockLogin={state?.showMockLogin ?? true} 
-        onGoogleLogin={handleGoogleLogin} 
-        onMockLogin={handleMockLogin} 
+      <LandingPage
+        showMockLogin={state?.showMockLogin ?? true}
+        onGoogleLogin={handleGoogleLogin}
+        onMockLogin={handleMockLogin}
       />
     );
   }
 
   if (state.assessment?.submittedAt) {
     return (
-      <DashboardView 
-        user={state.user} 
-        assessment={state.assessment} 
-        onLogout={handleLogout} 
+      <DashboardView
+        user={state.user}
+        assessment={state.assessment}
+        onLogout={handleLogout}
         onRefresh={refreshState}
       />
     );
   }
 
   return (
-    <WizardForm 
-      user={state.user} 
-      initialAnswers={state.assessment?.answers || {}} 
-      onComplete={refreshState} 
+    <WizardForm
+      user={state.user}
+      initialAnswers={state.assessment?.answers || {}}
+      onComplete={refreshState}
       onLogout={handleLogout}
     />
   );
@@ -341,14 +340,14 @@ function BlueprintFlowPage() {
 // 1. LANDING PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 
-function LandingPage({ 
-  showMockLogin, 
-  onGoogleLogin, 
-  onMockLogin 
-}: { 
-  showMockLogin: boolean; 
-  onGoogleLogin: () => void; 
-  onMockLogin: (email: string) => void; 
+function LandingPage({
+  showMockLogin,
+  onGoogleLogin,
+  onMockLogin,
+}: {
+  showMockLogin: boolean;
+  onGoogleLogin: () => void;
+  onMockLogin: (email: string) => void;
 }) {
   const [mockEmail, setMockEmail] = useState("testfounder@example.com");
 
@@ -365,14 +364,22 @@ function LandingPage({
             Build Your <span className="text-neon-gradient">Go-to-Launch Blueprint™</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Create a personalized execution blueprint before writing code. Answer a few strategic questions and receive a personalized blueprint highlighting opportunities, technical risks, and the fastest path to launch.
+            Create a personalized execution blueprint before writing code. Answer a few strategic
+            questions and receive a personalized blueprint highlighting opportunities, technical
+            risks, and the fastest path to launch.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-neon" /> 10-15 mins completion</span>
+            <span className="flex items-center gap-1.5">
+              <Check className="h-4 w-4 text-neon" /> 10-15 mins completion
+            </span>
             <span className="opacity-50">·</span>
-            <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-neon" /> Structured PDF Output</span>
+            <span className="flex items-center gap-1.5">
+              <Check className="h-4 w-4 text-neon" /> Structured PDF Output
+            </span>
             <span className="opacity-50">·</span>
-            <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-neon" /> Google Sign-In only</span>
+            <span className="flex items-center gap-1.5">
+              <Check className="h-4 w-4 text-neon" /> Google Sign-In only
+            </span>
           </div>
         </div>
       </section>
@@ -389,11 +396,14 @@ function LandingPage({
             </div>
 
             <h3 className="font-display text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-              Get started Building Your Blueprint Report free <Sparkles className="h-5 w-5 text-neon animate-pulse" />
+              Get started Building Your Blueprint Report free{" "}
+              <Sparkles className="h-5 w-5 text-neon animate-pulse" />
             </h3>
 
             <p className="mt-2.5 text-xs text-muted-foreground leading-relaxed">
-              Login with Google is <strong className="text-foreground font-semibold">required</strong> to secure your progress, enable real-time auto-saving, and generate your blueprint.
+              Login with Google is{" "}
+              <strong className="text-foreground font-semibold">required</strong> to secure your
+              progress, enable real-time auto-saving, and generate your blueprint.
             </p>
 
             <div className="mt-6 space-y-4">
@@ -403,7 +413,8 @@ function LandingPage({
                     <CloudLightning className="h-4 w-4" /> Local Testing Mode Enabled
                   </div>
                   <p className="text-[10px] text-muted-foreground leading-relaxed">
-                    Google Client credentials are not configured in your environment. Use this mock field to simulate authentication.
+                    Google Client credentials are not configured in your environment. Use this mock
+                    field to simulate authentication.
                   </p>
                   <input
                     type="email"
@@ -421,15 +432,27 @@ function LandingPage({
                 </div>
               ) : (
                 <button
-                   onClick={onGoogleLogin}
-                   className="w-full flex items-center justify-center gap-3 rounded-xl border border-neon/30 bg-neon text-primary-foreground shadow-neon hover:brightness-110 py-3.5 px-4 text-sm font-bold transition duration-200 transform hover:scale-[1.01]"
+                  onClick={onGoogleLogin}
+                  className="w-full flex items-center justify-center gap-3 rounded-xl border border-neon/30 bg-neon text-primary-foreground shadow-neon hover:brightness-110 py-3.5 px-4 text-sm font-bold transition duration-200 transform hover:scale-[1.01]"
                 >
                   <div className="rounded-full bg-white p-1 flex items-center justify-center shrink-0">
                     <svg className="h-4 w-4" viewBox="0 0 24 24">
-                      <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.54 14.98 1 12 1 7.35 1 3.37 3.68 1.42 7.57l3.8 2.95C6.18 7.37 8.87 5.04 12 5.04z" />
-                      <path fill="#4285F4" d="M23.45 12.27c0-.82-.07-1.61-.21-2.38H12v4.51h6.43c-.28 1.48-1.12 2.73-2.38 3.58l3.7 2.87c2.16-1.99 3.7-4.91 3.7-8.58z" />
-                      <path fill="#FBBC05" d="M5.22 14.77c-.24-.73-.38-1.51-.38-2.32s.14-1.59.38-2.32L1.42 7.18C.51 9 .01 11 .01 13.1c0 2.1.5 4.1 1.41 5.92l3.8-3.25z" />
-                      <path fill="#34A853" d="M12 23.01c3.24 0 5.97-1.07 7.96-2.91l-3.7-2.87c-1.03.69-2.35 1.1-3.95 1.1-3.13 0-5.82-2.33-6.77-5.48l-3.8 2.95c1.95 3.89 5.93 6.57 10.59 6.57z" />
+                      <path
+                        fill="#EA4335"
+                        d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.54 14.98 1 12 1 7.35 1 3.37 3.68 1.42 7.57l3.8 2.95C6.18 7.37 8.87 5.04 12 5.04z"
+                      />
+                      <path
+                        fill="#4285F4"
+                        d="M23.45 12.27c0-.82-.07-1.61-.21-2.38H12v4.51h6.43c-.28 1.48-1.12 2.73-2.38 3.58l3.7 2.87c2.16-1.99 3.7-4.91 3.7-8.58z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M5.22 14.77c-.24-.73-.38-1.51-.38-2.32s.14-1.59.38-2.32L1.42 7.18C.51 9 .01 11 .01 13.1c0 2.1.5 4.1 1.41 5.92l3.8-3.25z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M12 23.01c3.24 0 5.97-1.07 7.96-2.91l-3.7-2.87c-1.03.69-2.35 1.1-3.95 1.1-3.13 0-5.82-2.33-6.77-5.48l-3.8 2.95c1.95 3.89 5.93 6.57 10.59 6.57z"
+                      />
                     </svg>
                   </div>
                   Continue with Google
@@ -445,23 +468,31 @@ function LandingPage({
         <div className="grid gap-12 lg:grid-cols-1 items-start">
           <div className="space-y-8">
             <div>
-              <h2 className="font-display text-2xl font-semibold sm:text-3xl">Why build a Go-to-Launch Blueprint™?</h2>
+              <h2 className="font-display text-2xl font-semibold sm:text-3xl">
+                Why build a Go-to-Launch Blueprint™?
+              </h2>
               <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
-                Before booking a discovery session, building this blueprint structures your startup requirements.
-                It helps lock features, map technology expectations, and isolate technical complexity early.
+                Before booking a discovery session, building this blueprint structures your startup
+                requirements. It helps lock features, map technology expectations, and isolate
+                technical complexity early.
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 { title: "Step 1", desc: "Answer a few questions about your startup." },
-                { title: "Step 2", desc: "Our AI analyzes your product, execution strategy, and business priorities." },
+                {
+                  title: "Step 2",
+                  desc: "Our AI analyzes your product, execution strategy, and business priorities.",
+                },
                 { title: "Step 3", desc: "Receive your personalized Go-to-Launch Blueprint™." },
-                { title: "Step 4", desc: "Review it together during a Discovery Session." }
+                { title: "Step 4", desc: "Review it together during a Discovery Session." },
               ].map((item) => (
                 <div key={item.title} className="rounded-2xl border border-border bg-card/40 p-5">
                   <h3 className="font-display text-sm font-semibold text-neon">{item.title}</h3>
-                  <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                  <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
+                    {item.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -469,11 +500,12 @@ function LandingPage({
         </div>
       </section>
 
-
       {/* FAQ Section */}
       <section className="bg-card/20 border-t border-border">
         <div className="mx-auto max-w-4xl px-5 py-16 sm:px-8">
-          <h2 className="font-display text-2xl font-semibold text-center">Frequently Asked Questions</h2>
+          <h2 className="font-display text-2xl font-semibold text-center">
+            Frequently Asked Questions
+          </h2>
           <div className="mt-8 space-y-4">
             {[
               {
@@ -506,8 +538,12 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
         onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between p-5 text-left font-semibold text-sm transition hover:bg-card"
       >
-        <span className="flex items-center gap-2"><HelpCircle className="h-4 w-4 text-neon shrink-0" /> {question}</span>
-        <ChevronDown className={`h-4 w-4 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+        <span className="flex items-center gap-2">
+          <HelpCircle className="h-4 w-4 text-neon shrink-0" /> {question}
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
       </button>
       {open && (
         <div className="border-t border-border p-5 text-xs text-muted-foreground leading-relaxed bg-background/30">
@@ -522,16 +558,16 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
 // 2. BLUEPRINT BUILDER WIZARD FORM
 // ─────────────────────────────────────────────────────────────────────────────
 
-function WizardForm({ 
-  user, 
-  initialAnswers, 
-  onComplete, 
-  onLogout 
-}: { 
-  user: any; 
-  initialAnswers: Record<string, any>; 
-  onComplete: () => void; 
-  onLogout: () => void; 
+function WizardForm({
+  user,
+  initialAnswers,
+  onComplete,
+  onLogout,
+}: {
+  user: any;
+  initialAnswers: Record<string, any>;
+  onComplete: () => void;
+  onLogout: () => void;
 }) {
   const [step, setStep] = useState(1);
   const [answers, setAnswers] = useState<Record<string, any>>(initialAnswers);
@@ -601,7 +637,10 @@ function WizardForm({
     return Array.isArray(answers.industryNiche)
       ? answers.industryNiche
       : typeof answers.industryNiche === "string"
-        ? answers.industryNiche.split(",").map(i => i.trim()).filter(Boolean)
+        ? answers.industryNiche
+            .split(",")
+            .map((i) => i.trim())
+            .filter(Boolean)
         : [];
   };
 
@@ -626,14 +665,16 @@ function WizardForm({
       const industryOk = currentInd.includes("Other")
         ? currentInd.length > 1 && !!answers.industryNicheOther?.trim()
         : currentInd.length > 0;
-      
-      const targetAudienceOk = answers.targetAudience === "Other"
-        ? !!answers.targetAudienceOther?.trim()
-        : !!answers.targetAudience;
 
-      const fundingStageOk = answers.fundingStage === "Other"
-        ? !!answers.fundingStageOther?.trim()
-        : !!answers.fundingStage;
+      const targetAudienceOk =
+        answers.targetAudience === "Other"
+          ? !!answers.targetAudienceOther?.trim()
+          : !!answers.targetAudience;
+
+      const fundingStageOk =
+        answers.fundingStage === "Other"
+          ? !!answers.fundingStageOther?.trim()
+          : !!answers.fundingStage;
 
       return !!answers.startupName?.trim() && industryOk && targetAudienceOk && fundingStageOk;
     }
@@ -721,7 +762,7 @@ function WizardForm({
               </>
             )}
           </div>
-          <button 
+          <button
             onClick={onLogout}
             className="flex items-center gap-1 text-muted-foreground hover:text-foreground text-[10px] font-semibold"
           >
@@ -733,12 +774,14 @@ function WizardForm({
       {/* Progress Indicator */}
       <div className="mb-8">
         <div className="flex justify-between text-xs text-muted-foreground mb-2">
-          <span className="font-mono uppercase tracking-wider text-[10px] text-neon">Building Your Blueprint: Section {step} of {totalSteps}</span>
+          <span className="font-mono uppercase tracking-wider text-[10px] text-neon">
+            Building Your Blueprint: Section {step} of {totalSteps}
+          </span>
           <span>{progressPercent}% Complete</span>
         </div>
         <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-          <div 
-            className="h-full bg-neon transition-all duration-300 ease-out" 
+          <div
+            className="h-full bg-neon transition-all duration-300 ease-out"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -746,13 +789,15 @@ function WizardForm({
 
       {/* Form Content */}
       <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-card min-h-[40vh] transition-all">
-        
         {/* ── PREMIUM LOADING OVERLAY ── */}
         {submitting ? (
           <div className="flex flex-col items-center justify-center py-12 sm:py-20 animate-in fade-in duration-500">
             {/* Glowing Brain Icon */}
             <div className="relative mb-8">
-              <div className="absolute inset-0 rounded-full bg-neon/20 blur-2xl animate-pulse" style={{ width: 96, height: 96, top: -8, left: -8 }} />
+              <div
+                className="absolute inset-0 rounded-full bg-neon/20 blur-2xl animate-pulse"
+                style={{ width: 96, height: 96, top: -8, left: -8 }}
+              />
               <div className="relative grid h-20 w-20 place-items-center rounded-full bg-gradient-to-br from-neon/30 to-primary/20 border border-neon/30 shadow-lg">
                 <Brain className="h-10 w-10 text-neon animate-pulse" />
               </div>
@@ -763,30 +808,37 @@ function WizardForm({
               Building Your Blueprint
             </h2>
             <p className="text-xs text-muted-foreground mb-8 text-center max-w-md">
-              Our AI is reviewing your answers and building your personalized Go-to-Launch Blueprint™. This typically takes 30–60 seconds.
+              Our AI is reviewing your answers and building your personalized Go-to-Launch
+              Blueprint™. This typically takes 30–60 seconds.
             </p>
 
             {/* Progress Bar */}
             <div className="w-full max-w-sm mb-8">
               <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-gradient-to-r from-neon to-primary rounded-full transition-all duration-[4500ms] ease-out"
-                  style={{ width: `${Math.min(((loadingStep + 1) / LOADING_STEPS.length) * 100, 98)}%` }}
+                  style={{
+                    width: `${Math.min(((loadingStep + 1) / LOADING_STEPS.length) * 100, 98)}%`,
+                  }}
                 />
               </div>
               <div className="flex justify-between text-[10px] text-muted-foreground mt-1.5">
-                <span>{Math.min(Math.round(((loadingStep + 1) / LOADING_STEPS.length) * 100), 98)}%</span>
-                <span>Step {loadingStep + 1} of {LOADING_STEPS.length}</span>
+                <span>
+                  {Math.min(Math.round(((loadingStep + 1) / LOADING_STEPS.length) * 100), 98)}%
+                </span>
+                <span>
+                  Step {loadingStep + 1} of {LOADING_STEPS.length}
+                </span>
               </div>
             </div>
 
             {/* Step-by-step status list */}
             <div className="w-full max-w-sm space-y-2.5">
               {LOADING_STEPS.map((ls, idx) => (
-                <div 
+                <div
                   key={idx}
                   className={`flex items-center gap-3 rounded-lg px-4 py-2.5 text-xs transition-all duration-500 ${
-                    idx < loadingStep 
+                    idx < loadingStep
                       ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                       : idx === loadingStep
                         ? "bg-neon/10 text-neon border border-neon/30 shadow-sm"
@@ -811,496 +863,554 @@ function WizardForm({
             </p>
           </div>
         ) : (
-        <>
-        {/* STEP 1: FOUNDER PROFILE */}
-        {step === 1 && (
-          <div className="space-y-5">
-            <h2 className="font-display text-xl font-semibold text-neon-gradient">Founder Profile</h2>
-            <p className="text-xs text-muted-foreground">Tell me a bit about yourself and your role in this project.</p>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
-                  Founder Full Name <span className="text-destructive">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={answers.founderName || ""}
-                  onChange={(e) => handleInputChange("founderName", e.target.value)}
-                  onBlur={handleBlur}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                  placeholder="e.g. Jane Doe"
-                />
-              </div>
+          <>
+            {/* STEP 1: FOUNDER PROFILE */}
+            {step === 1 && (
+              <div className="space-y-5">
+                <h2 className="font-display text-xl font-semibold text-neon-gradient">
+                  Founder Profile
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Tell me a bit about yourself and your role in this project.
+                </p>
 
-              <div>
-                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">LinkedIn Profile URL</label>
-                <input
-                  type="url"
-                  value={answers.linkedinUrl || ""}
-                  onChange={(e) => handleInputChange("linkedinUrl", e.target.value)}
-                  onBlur={handleBlur}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                  placeholder="https://linkedin.com/in/username"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
-                  Founder Role <span className="text-destructive">*</span>
-                </label>
-                <select
-                  value={answers.founderRole || ""}
-                  onChange={(e) => handleInputChange("founderRole", e.target.value)}
-                  onBlur={handleBlur}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                >
-                  <option value="">Select your profile...</option>
-                  <option value="Solo Founder">Solo Founder (Non-Technical)</option>
-                  <option value="Solo Founder (Technical)">Solo Founder (Technical)</option>
-                  <option value="Co-Founder (Technical)">Co-Founder & CTO / Lead Developer</option>
-                  <option value="Co-Founder (Non-Technical)">Co-Founder & CEO / Business Lead</option>
-                  <option value="Product Manager/Other">Product Owner / Director / PM</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 2: STARTUP SUMMARY */}
-        {step === 2 && (
-          <div className="space-y-5">
-            <h2 className="font-display text-xl font-semibold text-neon-gradient">Startup Summary</h2>
-            <p className="text-xs text-muted-foreground">General context regarding the startup company and market target.</p>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
-                  Startup or Project Name <span className="text-destructive">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={answers.startupName || ""}
-                  onChange={(e) => handleInputChange("startupName", e.target.value)}
-                  onBlur={handleBlur}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                  placeholder="e.g. Vendoroo.Ai"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
-                  Industry or Niche <span className="text-destructive">*</span>
-                </label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {[
-                    "B2B SaaS",
-                    "AI / Machine Learning",
-                    "FinTech",
-                    "HealthTech",
-                    "EdTech",
-                    "E-commerce",
-                    "Creator Economy",
-                    "Marketplace",
-                    "PropTech",
-                    "Other"
-                  ].map((ind) => {
-                    const isSelected = getSelectedIndustries().includes(ind);
-                    return (
-                      <button
-                        key={ind}
-                        type="button"
-                        onClick={() => toggleIndustry(ind)}
-                        className={`rounded-lg px-3 py-1.5 text-xs font-medium border transition-colors ${
-                          isSelected
-                            ? "bg-neon border-neon text-primary-foreground"
-                            : "bg-background border-border text-foreground hover:bg-muted"
-                        }`}
-                      >
-                        {ind}
-                      </button>
-                    );
-                  })}
-                </div>
-                {getSelectedIndustries().includes("Other") && (
-                  <div className="mt-2">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                      Founder Full Name <span className="text-destructive">*</span>
+                    </label>
                     <input
                       type="text"
-                      value={answers.industryNicheOther || ""}
-                      onChange={(e) => handleInputChange("industryNicheOther", e.target.value)}
+                      value={answers.founderName || ""}
+                      onChange={(e) => handleInputChange("founderName", e.target.value)}
                       onBlur={handleBlur}
                       className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                      placeholder="Please specify other industry/niche..."
+                      placeholder="e.g. Jane Doe"
                     />
                   </div>
-                )}
-              </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
-                  Target Audience <span className="text-destructive">*</span>
-                </label>
-                <select
-                  value={answers.targetAudience || ""}
-                  onChange={(e) => handleInputChange("targetAudience", e.target.value)}
-                  onBlur={handleBlur}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                >
-                  <option value="">Select target...</option>
-                  <option value="B2B (Enterprise)">B2B (Enterprise clients)</option>
-                  <option value="B2B (SMEs)">B2B (Small/Medium Businesses)</option>
-                  <option value="B2C (Consumers)">B2C (General consumer mass market)</option>
-                  <option value="B2B2C">B2B2C (Partner distribution)</option>
-                  <option value="Marketplace">Two-sided Marketplace / Platform</option>
-                  <option value="Other">Other</option>
-                </select>
-                {answers.targetAudience === "Other" && (
-                  <div className="mt-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                      LinkedIn Profile URL
+                    </label>
+                    <input
+                      type="url"
+                      value={answers.linkedinUrl || ""}
+                      onChange={(e) => handleInputChange("linkedinUrl", e.target.value)}
+                      onBlur={handleBlur}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                      placeholder="https://linkedin.com/in/username"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                      Founder Role <span className="text-destructive">*</span>
+                    </label>
+                    <select
+                      value={answers.founderRole || ""}
+                      onChange={(e) => handleInputChange("founderRole", e.target.value)}
+                      onBlur={handleBlur}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                    >
+                      <option value="">Select your profile...</option>
+                      <option value="Solo Founder">Solo Founder (Non-Technical)</option>
+                      <option value="Solo Founder (Technical)">Solo Founder (Technical)</option>
+                      <option value="Co-Founder (Technical)">
+                        Co-Founder & CTO / Lead Developer
+                      </option>
+                      <option value="Co-Founder (Non-Technical)">
+                        Co-Founder & CEO / Business Lead
+                      </option>
+                      <option value="Product Manager/Other">Product Owner / Director / PM</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: STARTUP SUMMARY */}
+            {step === 2 && (
+              <div className="space-y-5">
+                <h2 className="font-display text-xl font-semibold text-neon-gradient">
+                  Startup Summary
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  General context regarding the startup company and market target.
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                      Startup or Project Name <span className="text-destructive">*</span>
+                    </label>
                     <input
                       type="text"
-                      value={answers.targetAudienceOther || ""}
-                      onChange={(e) => handleInputChange("targetAudienceOther", e.target.value)}
+                      value={answers.startupName || ""}
+                      onChange={(e) => handleInputChange("startupName", e.target.value)}
                       onBlur={handleBlur}
                       className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                      placeholder="Please specify other target audience..."
+                      placeholder="e.g. Vendoroo.Ai"
                     />
                   </div>
-                )}
-              </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
-                  Current Funding Stage <span className="text-destructive">*</span>
-                </label>
-                <select
-                  value={answers.fundingStage || ""}
-                  onChange={(e) => handleInputChange("fundingStage", e.target.value)}
-                  onBlur={handleBlur}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                >
-                  <option value="">Select funding stage...</option>
-                  <option value="Bootstrapped">Bootstrapped / Self-Funded</option>
-                  <option value="Pre-seed (Friends & Family)">Pre-seed (Friends & Family / Angels)</option>
-                  <option value="Seed Funded">Seed Funded (Institutional VCs)</option>
-                  <option value="Series A+">Series A or beyond</option>
-                  <option value="Other">Other</option>
-                </select>
-                {answers.fundingStage === "Other" && (
-                  <div className="mt-2">
-                    <input
-                      type="text"
-                      value={answers.fundingStageOther || ""}
-                      onChange={(e) => handleInputChange("fundingStageOther", e.target.value)}
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                      Industry or Niche <span className="text-destructive">*</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {[
+                        "B2B SaaS",
+                        "AI / Machine Learning",
+                        "FinTech",
+                        "HealthTech",
+                        "EdTech",
+                        "E-commerce",
+                        "Creator Economy",
+                        "Marketplace",
+                        "PropTech",
+                        "Other",
+                      ].map((ind) => {
+                        const isSelected = getSelectedIndustries().includes(ind);
+                        return (
+                          <button
+                            key={ind}
+                            type="button"
+                            onClick={() => toggleIndustry(ind)}
+                            className={`rounded-lg px-3 py-1.5 text-xs font-medium border transition-colors ${
+                              isSelected
+                                ? "bg-neon border-neon text-primary-foreground"
+                                : "bg-background border-border text-foreground hover:bg-muted"
+                            }`}
+                          >
+                            {ind}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {getSelectedIndustries().includes("Other") && (
+                      <div className="mt-2">
+                        <input
+                          type="text"
+                          value={answers.industryNicheOther || ""}
+                          onChange={(e) => handleInputChange("industryNicheOther", e.target.value)}
+                          onBlur={handleBlur}
+                          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                          placeholder="Please specify other industry/niche..."
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                      Target Audience <span className="text-destructive">*</span>
+                    </label>
+                    <select
+                      value={answers.targetAudience || ""}
+                      onChange={(e) => handleInputChange("targetAudience", e.target.value)}
                       onBlur={handleBlur}
                       className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                      placeholder="Please specify other funding stage..."
+                    >
+                      <option value="">Select target...</option>
+                      <option value="B2B (Enterprise)">B2B (Enterprise clients)</option>
+                      <option value="B2B (SMEs)">B2B (Small/Medium Businesses)</option>
+                      <option value="B2C (Consumers)">B2C (General consumer mass market)</option>
+                      <option value="B2B2C">B2B2C (Partner distribution)</option>
+                      <option value="Marketplace">Two-sided Marketplace / Platform</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    {answers.targetAudience === "Other" && (
+                      <div className="mt-2">
+                        <input
+                          type="text"
+                          value={answers.targetAudienceOther || ""}
+                          onChange={(e) => handleInputChange("targetAudienceOther", e.target.value)}
+                          onBlur={handleBlur}
+                          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                          placeholder="Please specify other target audience..."
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                      Current Funding Stage <span className="text-destructive">*</span>
+                    </label>
+                    <select
+                      value={answers.fundingStage || ""}
+                      onChange={(e) => handleInputChange("fundingStage", e.target.value)}
+                      onBlur={handleBlur}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                    >
+                      <option value="">Select funding stage...</option>
+                      <option value="Bootstrapped">Bootstrapped / Self-Funded</option>
+                      <option value="Pre-seed (Friends & Family)">
+                        Pre-seed (Friends & Family / Angels)
+                      </option>
+                      <option value="Seed Funded">Seed Funded (Institutional VCs)</option>
+                      <option value="Series A+">Series A or beyond</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    {answers.fundingStage === "Other" && (
+                      <div className="mt-2">
+                        <input
+                          type="text"
+                          value={answers.fundingStageOther || ""}
+                          onChange={(e) => handleInputChange("fundingStageOther", e.target.value)}
+                          onBlur={handleBlur}
+                          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                          placeholder="Please specify other funding stage..."
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: PROBLEM DEFINITION */}
+            {step === 3 && (
+              <div className="space-y-5">
+                <h2 className="font-display text-xl font-semibold text-neon-gradient">
+                  Problem Definition
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Describe the market pain point you are solving.
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                      What primary problem does your product solve?{" "}
+                      <span className="text-destructive">*</span>
+                    </label>
+                    <textarea
+                      value={answers.problemDescription || ""}
+                      onChange={(e) => handleInputChange("problemDescription", e.target.value)}
+                      onBlur={handleBlur}
+                      rows={3}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                      placeholder="Explain the specific frustration or inefficiencies your audience deals with daily."
                     />
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* STEP 3: PROBLEM DEFINITION */}
-        {step === 3 && (
-          <div className="space-y-5">
-            <h2 className="font-display text-xl font-semibold text-neon-gradient">Problem Definition</h2>
-            <p className="text-xs text-muted-foreground">Describe the market pain point you are solving.</p>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
-                  What primary problem does your product solve? <span className="text-destructive">*</span>
-                </label>
-                <textarea
-                  value={answers.problemDescription || ""}
-                  onChange={(e) => handleInputChange("problemDescription", e.target.value)}
-                  onBlur={handleBlur}
-                  rows={3}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                  placeholder="Explain the specific frustration or inefficiencies your audience deals with daily."
-                />
-              </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                      Why now? What makes this problem urgent today?{" "}
+                      <span className="text-destructive">*</span>
+                    </label>
+                    <textarea
+                      value={answers.urgencyDescription || ""}
+                      onChange={(e) => handleInputChange("urgencyDescription", e.target.value)}
+                      onBlur={handleBlur}
+                      rows={2}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                      placeholder="Are there new regulations, AI technologies, or market shifts triggering this?"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
-                  Why now? What makes this problem urgent today? <span className="text-destructive">*</span>
-                </label>
-                <textarea
-                  value={answers.urgencyDescription || ""}
-                  onChange={(e) => handleInputChange("urgencyDescription", e.target.value)}
-                  onBlur={handleBlur}
-                  rows={2}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                  placeholder="Are there new regulations, AI technologies, or market shifts triggering this?"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
-                  How do your users solve this problem today? <span className="text-destructive">*</span>
-                </label>
-                <textarea
-                  value={answers.alternativesDescription || ""}
-                  onChange={(e) => handleInputChange("alternativesDescription", e.target.value)}
-                  onBlur={handleBlur}
-                  rows={2}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                  placeholder="Are they using spreadsheets, manual labor, or legacy competitors?"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 4: PRODUCT DETAILS */}
-        {step === 4 && (
-          <div className="space-y-5">
-            <h2 className="font-display text-xl font-semibold text-neon-gradient">Product & Solution</h2>
-            <p className="text-xs text-muted-foreground">Outline your product's architecture scope.</p>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
-                  Product Description (Elevator Pitch) <span className="text-destructive">*</span>
-                </label>
-                <textarea
-                  value={answers.productDescription || ""}
-                  onChange={(e) => handleInputChange("productDescription", e.target.value)}
-                  onBlur={handleBlur}
-                  rows={3}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                  placeholder="Describe your solution in 2-3 sentences. How does it fix the problem described?"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
-                  What are the core 2-3 MVP features? <span className="text-destructive">*</span>
-                </label>
-                <textarea
-                  value={answers.mvpFeatures || ""}
-                  onChange={(e) => handleInputChange("mvpFeatures", e.target.value)}
-                  onBlur={handleBlur}
-                  rows={3}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                  placeholder="e.g. 1. Google sign-in & team workspace. 2. PDF parsing using LLMs. 3. Excel exporting."
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
-                  Do you have wireframes, designs, or prototypes? <span className="text-destructive">*</span>
-                </label>
-                <select
-                  value={answers.designStatus || ""}
-                  onChange={(e) => handleInputChange("designStatus", e.target.value)}
-                  onBlur={handleBlur}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                >
-                  <option value="">Select status...</option>
-                  <option value="no">No designs (just text/ideas)</option>
-                  <option value="in_progress">In progress (basic sketches / mockups)</option>
-                  <option value="yes_figma">Yes, completed Figma wireframes/mockups</option>
-                  <option value="yes_prototype">Yes, clickable interactive prototype</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 5: BUSINESS GOALS */}
-        {step === 5 && (
-          <div className="space-y-5">
-            <h2 className="font-display text-xl font-semibold text-neon-gradient">Business Goals</h2>
-            <p className="text-xs text-muted-foreground">Aligning technology with commercial objectives.</p>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
-                  Primary Goal for the Next 6 Months <span className="text-destructive">*</span>
-                </label>
-                <select
-                  value={answers.sixMonthGoal || ""}
-                  onChange={(e) => handleInputChange("sixMonthGoal", e.target.value)}
-                  onBlur={handleBlur}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                >
-                  <option value="">Select goal...</option>
-                  <option value="Launch MVP">Launch MVP to get initial user feedback</option>
-                  <option value="First 10 Customers">Acquire first 10 paying customers</option>
-                  <option value="Raise Funding">Build prototype to raise Seed/Angel funding</option>
-                  <option value="Scale & Stabilize">Optimize scaling and system stability</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
-                  Monetization Strategy <span className="text-destructive">*</span>
-                </label>
-                <select
-                  value={answers.monetization || ""}
-                  onChange={(e) => handleInputChange("monetization", e.target.value)}
-                  onBlur={handleBlur}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                >
-                  <option value="">Select monetization...</option>
-                  <option value="Subscription">Monthly/Annual SaaS Subscription</option>
-                  <option value="Transaction Fee">Commission / Transaction Fee</option>
-                  <option value="Usage-based">Usage-based / API Credits</option>
-                  <option value="Freemium">Freemium model (features behind paywall)</option>
-                  <option value="Other">Other / Licensing / Services</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
-                  What does success look like for this launch? <span className="text-muted-foreground">(Optional)</span>
-                </label>
-                <textarea
-                  value={answers.successCriteria || ""}
-                  onChange={(e) => handleInputChange("successCriteria", e.target.value)}
-                  onBlur={handleBlur}
-                  rows={2}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
-                  placeholder="e.g. 50 active pilot companies, 5% conversion to paid plans, or securing angel backing."
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 6: REVIEW & SUBMIT */}
-        {step === 6 && (
-          <div className="space-y-6">
-            <h2 className="font-display text-xl font-semibold text-neon-gradient">Review & Confirm</h2>
-            <p className="text-xs text-muted-foreground">Please double check your inputs. Once generated, your blueprint will lock.</p>
-            
-            <div className="rounded-xl border border-border bg-background/50 p-5 space-y-4 max-h-[30vh] overflow-y-auto text-xs text-foreground/90 leading-relaxed">
-              <div>
-                <span className="font-semibold text-neon">Founder:</span> {answers.founderName || "N/A"} ({answers.founderRole || "N/A"})
-              </div>
-              {answers.linkedinUrl && (
-                <div>
-                  <span className="font-semibold text-neon">LinkedIn:</span> {answers.linkedinUrl}
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                      How do your users solve this problem today?{" "}
+                      <span className="text-destructive">*</span>
+                    </label>
+                    <textarea
+                      value={answers.alternativesDescription || ""}
+                      onChange={(e) => handleInputChange("alternativesDescription", e.target.value)}
+                      onBlur={handleBlur}
+                      rows={2}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                      placeholder="Are they using spreadsheets, manual labor, or legacy competitors?"
+                    />
+                  </div>
                 </div>
-              )}
-              <div>
-                <span className="font-semibold text-neon">Startup Name:</span> {answers.startupName || "N/A"}
               </div>
-              <div>
-                <span className="font-semibold text-neon">Industry/Niche:</span> {
-                  (() => {
-                    const currentInd = getSelectedIndustries();
-                    return currentInd.map(i => i === "Other" ? `Other (${answers.industryNicheOther || ""})` : i).join(", ") || "N/A";
-                  })()
-                }
-              </div>
-              <div>
-                <span className="font-semibold text-neon">Target Audience:</span> {
-                  answers.targetAudience === "Other"
-                    ? `Other (${answers.targetAudienceOther || ""})`
-                    : answers.targetAudience || "N/A"
-                }
-              </div>
-              <div>
-                <span className="font-semibold text-neon">Funding Stage:</span> {
-                  answers.fundingStage === "Other"
-                    ? `Other (${answers.fundingStageOther || ""})`
-                    : answers.fundingStage || "N/A"
-                }
-              </div>
-              <div>
-                <span className="font-semibold text-neon">Problem Description:</span> {answers.problemDescription || "N/A"}
-              </div>
-              <div>
-                <span className="font-semibold text-neon">Product Summary:</span> {answers.productDescription || "N/A"}
-              </div>
-              <div>
-                <span className="font-semibold text-neon">Core MVP Features:</span> {answers.mvpFeatures || "N/A"}
-              </div>
-              <div>
-                <span className="font-semibold text-neon">Six Month Goal:</span> {answers.sixMonthGoal || "N/A"}
-              </div>
-              <div>
-                <span className="font-semibold text-neon">Monetization:</span> {answers.monetization || "N/A"}
-              </div>
-              {answers.successCriteria && (
-                <div>
-                  <span className="font-semibold text-neon">Success Criteria:</span> {answers.successCriteria}
+            )}
+
+            {/* STEP 4: PRODUCT DETAILS */}
+            {step === 4 && (
+              <div className="space-y-5">
+                <h2 className="font-display text-xl font-semibold text-neon-gradient">
+                  Product & Solution
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Outline your product's architecture scope.
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                      Product Description (Elevator Pitch){" "}
+                      <span className="text-destructive">*</span>
+                    </label>
+                    <textarea
+                      value={answers.productDescription || ""}
+                      onChange={(e) => handleInputChange("productDescription", e.target.value)}
+                      onBlur={handleBlur}
+                      rows={3}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                      placeholder="Describe your solution in 2-3 sentences. How does it fix the problem described?"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                      What are the core 2-3 MVP features?{" "}
+                      <span className="text-destructive">*</span>
+                    </label>
+                    <textarea
+                      value={answers.mvpFeatures || ""}
+                      onChange={(e) => handleInputChange("mvpFeatures", e.target.value)}
+                      onBlur={handleBlur}
+                      rows={3}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                      placeholder="e.g. 1. Google sign-in & team workspace. 2. PDF parsing using LLMs. 3. Excel exporting."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                      Do you have wireframes, designs, or prototypes?{" "}
+                      <span className="text-destructive">*</span>
+                    </label>
+                    <select
+                      value={answers.designStatus || ""}
+                      onChange={(e) => handleInputChange("designStatus", e.target.value)}
+                      onBlur={handleBlur}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                    >
+                      <option value="">Select status...</option>
+                      <option value="no">No designs (just text/ideas)</option>
+                      <option value="in_progress">In progress (basic sketches / mockups)</option>
+                      <option value="yes_figma">Yes, completed Figma wireframes/mockups</option>
+                      <option value="yes_prototype">Yes, clickable interactive prototype</option>
+                    </select>
+                  </div>
                 </div>
-              )}
-            </div>
-
-            {/* Read-only Warning Alert */}
-            <div className="rounded-xl border border-amber-500/30 bg-amber-50 dark:bg-amber-950/20 p-4 flex gap-3 text-amber-800 dark:text-amber-200">
-              <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-              <div className="text-xs leading-relaxed">
-                <span className="font-semibold text-amber-900 dark:text-amber-300">Generation is final.</span> Once generated:
-                <ul className="list-disc pl-4 mt-1 space-y-1 text-amber-700 dark:text-amber-300/90">
-                  <li>Your blueprint inputs become strictly read-only. No edits are allowed.</li>
-                  <li>Our AI will analyze your scope and validate technical requirements.</li>
-                  <li>Your PDF blueprint will compile immediately.</li>
-                </ul>
               </div>
-            </div>
+            )}
 
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-neon py-3.5 text-sm font-semibold text-primary-foreground shadow-neon transition hover:brightness-110 disabled:opacity-50"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  Generating Blueprint with AI...
-                </>
+            {/* STEP 5: BUSINESS GOALS */}
+            {step === 5 && (
+              <div className="space-y-5">
+                <h2 className="font-display text-xl font-semibold text-neon-gradient">
+                  Business Goals
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Aligning technology with commercial objectives.
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                      Primary Goal for the Next 6 Months <span className="text-destructive">*</span>
+                    </label>
+                    <select
+                      value={answers.sixMonthGoal || ""}
+                      onChange={(e) => handleInputChange("sixMonthGoal", e.target.value)}
+                      onBlur={handleBlur}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                    >
+                      <option value="">Select goal...</option>
+                      <option value="Launch MVP">Launch MVP to get initial user feedback</option>
+                      <option value="First 10 Customers">Acquire first 10 paying customers</option>
+                      <option value="Raise Funding">
+                        Build prototype to raise Seed/Angel funding
+                      </option>
+                      <option value="Scale & Stabilize">
+                        Optimize scaling and system stability
+                      </option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                      Monetization Strategy <span className="text-destructive">*</span>
+                    </label>
+                    <select
+                      value={answers.monetization || ""}
+                      onChange={(e) => handleInputChange("monetization", e.target.value)}
+                      onBlur={handleBlur}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                    >
+                      <option value="">Select monetization...</option>
+                      <option value="Subscription">Monthly/Annual SaaS Subscription</option>
+                      <option value="Transaction Fee">Commission / Transaction Fee</option>
+                      <option value="Usage-based">Usage-based / API Credits</option>
+                      <option value="Freemium">Freemium model (features behind paywall)</option>
+                      <option value="Other">Other / Licensing / Services</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
+                      What does success look like for this launch?{" "}
+                      <span className="text-muted-foreground">(Optional)</span>
+                    </label>
+                    <textarea
+                      value={answers.successCriteria || ""}
+                      onChange={(e) => handleInputChange("successCriteria", e.target.value)}
+                      onBlur={handleBlur}
+                      rows={2}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-neon focus:outline-none"
+                      placeholder="e.g. 50 active pilot companies, 5% conversion to paid plans, or securing angel backing."
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 6: REVIEW & SUBMIT */}
+            {step === 6 && (
+              <div className="space-y-6">
+                <h2 className="font-display text-xl font-semibold text-neon-gradient">
+                  Review & Confirm
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Please double check your inputs. Once generated, your blueprint will lock.
+                </p>
+
+                <div className="rounded-xl border border-border bg-background/50 p-5 space-y-4 max-h-[30vh] overflow-y-auto text-xs text-foreground/90 leading-relaxed">
+                  <div>
+                    <span className="font-semibold text-neon">Founder:</span>{" "}
+                    {answers.founderName || "N/A"} ({answers.founderRole || "N/A"})
+                  </div>
+                  {answers.linkedinUrl && (
+                    <div>
+                      <span className="font-semibold text-neon">LinkedIn:</span>{" "}
+                      {answers.linkedinUrl}
+                    </div>
+                  )}
+                  <div>
+                    <span className="font-semibold text-neon">Startup Name:</span>{" "}
+                    {answers.startupName || "N/A"}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neon">Industry/Niche:</span>{" "}
+                    {(() => {
+                      const currentInd = getSelectedIndustries();
+                      return (
+                        currentInd
+                          .map((i) =>
+                            i === "Other" ? `Other (${answers.industryNicheOther || ""})` : i,
+                          )
+                          .join(", ") || "N/A"
+                      );
+                    })()}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neon">Target Audience:</span>{" "}
+                    {answers.targetAudience === "Other"
+                      ? `Other (${answers.targetAudienceOther || ""})`
+                      : answers.targetAudience || "N/A"}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neon">Funding Stage:</span>{" "}
+                    {answers.fundingStage === "Other"
+                      ? `Other (${answers.fundingStageOther || ""})`
+                      : answers.fundingStage || "N/A"}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neon">Problem Description:</span>{" "}
+                    {answers.problemDescription || "N/A"}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neon">Product Summary:</span>{" "}
+                    {answers.productDescription || "N/A"}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neon">Core MVP Features:</span>{" "}
+                    {answers.mvpFeatures || "N/A"}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neon">Six Month Goal:</span>{" "}
+                    {answers.sixMonthGoal || "N/A"}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neon">Monetization:</span>{" "}
+                    {answers.monetization || "N/A"}
+                  </div>
+                  {answers.successCriteria && (
+                    <div>
+                      <span className="font-semibold text-neon">Success Criteria:</span>{" "}
+                      {answers.successCriteria}
+                    </div>
+                  )}
+                </div>
+
+                {/* Read-only Warning Alert */}
+                <div className="rounded-xl border border-amber-500/30 bg-amber-50 dark:bg-amber-950/20 p-4 flex gap-3 text-amber-800 dark:text-amber-200">
+                  <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <div className="text-xs leading-relaxed">
+                    <span className="font-semibold text-amber-900 dark:text-amber-300">
+                      Generation is final.
+                    </span>{" "}
+                    Once generated:
+                    <ul className="list-disc pl-4 mt-1 space-y-1 text-amber-700 dark:text-amber-300/90">
+                      <li>
+                        Your blueprint inputs become strictly read-only. No edits are allowed.
+                      </li>
+                      <li>Our AI will analyze your scope and validate technical requirements.</li>
+                      <li>Your PDF blueprint will compile immediately.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-neon py-3.5 text-sm font-semibold text-primary-foreground shadow-neon transition hover:brightness-110 disabled:opacity-50"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Generating Blueprint with AI...
+                    </>
+                  ) : (
+                    <>
+                      Generate My Blueprint <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Validation Error Message */}
+            {validationError && (
+              <div className="mt-4 rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive font-semibold">
+                {validationError}
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="mt-8 flex justify-between border-t border-border pt-5">
+              {step > 1 ? (
+                <button
+                  onClick={prevStep}
+                  disabled={submitting}
+                  className="flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-xs font-semibold hover:bg-muted transition disabled:opacity-50"
+                >
+                  <ArrowLeft className="h-4 w-4" /> Back
+                </button>
               ) : (
-                <>
-                  Generate My Blueprint <ArrowRight className="h-4 w-4" />
-                </>
+                <div />
               )}
-            </button>
-          </div>
+
+              {step < 6 ? (
+                <button
+                  onClick={nextStep}
+                  className="flex items-center gap-2 rounded-xl bg-neon px-5 py-2.5 text-xs font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
+                >
+                  Continue Building <ArrowRight className="h-4 w-4" />
+                </button>
+              ) : (
+                <div />
+              )}
+            </div>
+          </>
         )}
-
-        {/* Validation Error Message */}
-        {validationError && (
-          <div className="mt-4 rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive font-semibold">
-            {validationError}
-          </div>
-        )}
-
-        {/* Navigation Buttons */}
-        <div className="mt-8 flex justify-between border-t border-border pt-5">
-          {step > 1 ? (
-            <button
-              onClick={prevStep}
-              disabled={submitting}
-              className="flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-xs font-semibold hover:bg-muted transition disabled:opacity-50"
-            >
-              <ArrowLeft className="h-4 w-4" /> Back
-            </button>
-          ) : (
-            <div />
-          )}
-
-          {step < 6 ? (
-            <button
-              onClick={nextStep}
-              className="flex items-center gap-2 rounded-xl bg-neon px-5 py-2.5 text-xs font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
-            >
-              Continue Building <ArrowRight className="h-4 w-4" />
-            </button>
-          ) : (
-            <div />
-          )}
-        </div>
-
-        </>
-        )}
-
       </div>
     </div>
   );
@@ -1310,15 +1420,15 @@ function WizardForm({
 // 3. DASHBOARD VIEW (COMPLETED STATE) — Version 2.0
 // ─────────────────────────────────────────────────────────────────────────────
 
-function DashboardView({ 
-  user, 
-  assessment, 
+function DashboardView({
+  user,
+  assessment,
   onLogout,
-  onRefresh
-}: { 
-  user: any; 
-  assessment: any; 
-  onLogout: () => void; 
+  onRefresh,
+}: {
+  user: any;
+  assessment: any;
+  onLogout: () => void;
   onRefresh: () => void;
 }) {
   const [downloading, setDownloading] = useState(false);
@@ -1337,7 +1447,7 @@ function DashboardView({
     setUnlockSubmitting(true);
     try {
       const res = await requestBlueprintUnlockAction({
-        data: { linkedinUrl: linkedinPostUrl }
+        data: { linkedinUrl: linkedinPostUrl },
       });
       if (res.success) {
         setUnlockSuccess(true);
@@ -1363,9 +1473,11 @@ function DashboardView({
           <Lock className="h-5 w-5 animate-pulse" />
         </div>
         <div>
-          <h4 className="text-sm font-bold text-foreground">Made a typo or want to edit your answers?</h4>
+          <h4 className="text-sm font-bold text-foreground">
+            Made a typo or want to edit your answers?
+          </h4>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {hasRequestedUnlock 
+            {hasRequestedUnlock
               ? "Your request is pending review. We will verify your post and unlock editing within the next 6 hours."
               : "Share your experience working with this tool on LinkedIn to unlock editing capabilities."}
           </p>
@@ -1575,7 +1687,11 @@ If you're an early-stage founder building SaaS or AI, I highly recommend buildin
             disabled={downloading}
             className="flex items-center gap-1.5 rounded-lg bg-neon px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-neon transition hover:brightness-110 disabled:opacity-50"
           >
-            {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+            {downloading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <FileDown className="h-4 w-4" />
+            )}
             {downloading ? "Generating..." : "Download Blueprint"}
           </button>
           <button
@@ -1603,7 +1719,9 @@ If you're an early-stage founder building SaaS or AI, I highly recommend buildin
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-mono text-[10px] uppercase text-muted-foreground tracking-wider">Founder-to-Launch Framework™</span>
+                  <span className="font-mono text-[10px] uppercase text-muted-foreground tracking-wider">
+                    Founder-to-Launch Framework™
+                  </span>
                 </div>
                 <div className="flex items-center gap-2.5 mb-2">
                   <span className="rounded-lg bg-neon/15 border border-neon/30 px-3 py-1 font-mono text-sm font-bold text-neon">
@@ -1611,7 +1729,9 @@ If you're an early-stage founder building SaaS or AI, I highly recommend buildin
                   </span>
                   <span className="text-xs text-muted-foreground">({analysis.currentStage})</span>
                 </div>
-                <p className="text-xs text-foreground/80 leading-relaxed">{analysis.recommendedPhaseReasoning}</p>
+                <p className="text-xs text-foreground/80 leading-relaxed">
+                  {analysis.recommendedPhaseReasoning}
+                </p>
               </div>
             </div>
           </div>
@@ -1642,7 +1762,9 @@ If you're an early-stage founder building SaaS or AI, I highly recommend buildin
                 <h2 className="flex items-center gap-2 font-display text-lg font-semibold mb-4">
                   <Brain className="h-5 w-5 text-neon" /> Executive Summary
                 </h2>
-                <p className="text-sm text-foreground/90 leading-relaxed">{analysis.executiveSummary}</p>
+                <p className="text-sm text-foreground/90 leading-relaxed">
+                  {analysis.executiveSummary}
+                </p>
               </section>
 
               {/* Founder Strengths */}
@@ -1652,7 +1774,10 @@ If you're an early-stage founder building SaaS or AI, I highly recommend buildin
                 </h2>
                 <div className="space-y-2.5">
                   {analysis.founderStrengths.map((strength, idx) => (
-                    <div key={idx} className="flex items-start gap-3 rounded-lg bg-emerald-500/10 border border-emerald-500/15 p-3">
+                    <div
+                      key={idx}
+                      className="flex items-start gap-3 rounded-lg bg-emerald-500/10 border border-emerald-500/15 p-3"
+                    >
                       <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
                       <span className="text-sm text-foreground/90">{strength}</span>
                     </div>
@@ -1667,9 +1792,14 @@ If you're an early-stage founder building SaaS or AI, I highly recommend buildin
                 </h2>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {analysis.biggestOpportunities.map((opp, idx) => (
-                    <div key={idx} className="rounded-xl border border-neon/15 bg-neon/5 p-5 hover:border-neon/30 transition-colors">
+                    <div
+                      key={idx}
+                      className="rounded-xl border border-neon/15 bg-neon/5 p-5 hover:border-neon/30 transition-colors"
+                    >
                       <h3 className="text-sm font-semibold text-neon mb-2">{opp.title}</h3>
-                      <p className="text-xs text-foreground/80 leading-relaxed">{opp.description}</p>
+                      <p className="text-xs text-foreground/80 leading-relaxed">
+                        {opp.description}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -1682,15 +1812,24 @@ If you're an early-stage founder building SaaS or AI, I highly recommend buildin
                 </h2>
                 <div className="space-y-4">
                   {analysis.whatCouldSlowYouDown.map((item, idx) => (
-                    <div key={idx} className="rounded-xl border border-amber-500/15 bg-background/50 p-5">
-                      <h3 className="text-sm font-semibold text-amber-600 dark:text-amber-400 mb-2">{item.risk}</h3>
+                    <div
+                      key={idx}
+                      className="rounded-xl border border-amber-500/15 bg-background/50 p-5"
+                    >
+                      <h3 className="text-sm font-semibold text-amber-600 dark:text-amber-400 mb-2">
+                        {item.risk}
+                      </h3>
                       <div className="grid gap-3 sm:grid-cols-2 text-xs text-foreground/80">
                         <div className="rounded-lg bg-amber-500/5 p-3 border border-amber-500/10">
-                          <span className="font-semibold text-amber-600 dark:text-amber-400">Business Impact</span>
+                          <span className="font-semibold text-amber-600 dark:text-amber-400">
+                            Business Impact
+                          </span>
                           <p className="mt-1 leading-relaxed">{item.businessImpact}</p>
                         </div>
                         <div className="rounded-lg bg-amber-500/5 p-3 border border-amber-500/10">
-                          <span className="font-semibold text-amber-600 dark:text-amber-400">Technical Impact</span>
+                          <span className="font-semibold text-amber-600 dark:text-amber-400">
+                            Technical Impact
+                          </span>
                           <p className="mt-1 leading-relaxed">{item.technicalImpact}</p>
                         </div>
                       </div>
@@ -1709,11 +1848,18 @@ If you're an early-stage founder building SaaS or AI, I highly recommend buildin
                 <h2 className="flex items-center gap-2 font-display text-lg font-semibold mb-1">
                   <Lightbulb className="h-5 w-5 text-neon" /> Technical Partnership Insights
                 </h2>
-                <p className="text-xs text-muted-foreground mb-5">Mehdi's direct priorities as your Independent Technical Partner</p>
+                <p className="text-xs text-muted-foreground mb-5">
+                  Mehdi's direct priorities as your Independent Technical Partner
+                </p>
                 <div className="space-y-3">
                   {analysis.ifThisWereMyStartup.map((point, idx) => (
-                    <div key={idx} className="flex items-start gap-3 rounded-xl bg-card border border-border p-4 shadow-sm">
-                      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-neon/15 text-neon text-xs font-bold">{idx + 1}</span>
+                    <div
+                      key={idx}
+                      className="flex items-start gap-3 rounded-xl bg-card border border-border p-4 shadow-sm"
+                    >
+                      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-neon/15 text-neon text-xs font-bold">
+                        {idx + 1}
+                      </span>
                       <p className="text-sm text-foreground/90 leading-relaxed pt-0.5">{point}</p>
                     </div>
                   ))}
@@ -1735,7 +1881,9 @@ If you're an early-stage founder building SaaS or AI, I highly recommend buildin
                       <div className="grid gap-3 sm:grid-cols-2 text-xs">
                         <div className="rounded-lg bg-neon/5 p-3 border border-neon/10">
                           <span className="font-semibold text-neon block mb-1">Recommendation</span>
-                          <p className="text-foreground/80 leading-relaxed">{strat.recommendation}</p>
+                          <p className="text-foreground/80 leading-relaxed">
+                            {strat.recommendation}
+                          </p>
                         </div>
                         <div className="rounded-lg bg-primary/5 p-3 border border-primary/10">
                           <span className="font-semibold text-primary block mb-1">Why</span>
@@ -1759,23 +1907,31 @@ If you're an early-stage founder building SaaS or AI, I highly recommend buildin
                 </h2>
                 <div className="space-y-3">
                   {analysis.fastestPathToLaunch.map((point, idx) => (
-                    <div key={idx} className="flex items-start gap-3 rounded-lg border border-border bg-background/50 p-4 hover:border-neon/20 transition-colors">
+                    <div
+                      key={idx}
+                      className="flex items-start gap-3 rounded-lg border border-border bg-background/50 p-4 hover:border-neon/20 transition-colors"
+                    >
                       <Zap className="h-4 w-4 text-neon shrink-0 mt-0.5" />
                       <p className="text-sm text-foreground/90 leading-relaxed">{point}</p>
                     </div>
                   ))}
                 </div>
               </section>
-
             </div>
           )}
 
           {/* Discovery Session CTA (Always Visible) */}
           <section className="rounded-2xl border border-neon/20 bg-gradient-to-br from-card to-neon/5 p-6 sm:p-8 relative overflow-hidden mt-8">
             <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-neon opacity-5 blur-3xl" />
-            <h2 className="font-display text-lg font-semibold mb-2">Continue Your Go-to-Launch Journey</h2>
+            <h2 className="font-display text-lg font-semibold mb-2">
+              Continue Your Go-to-Launch Journey
+            </h2>
             <p className="text-xs text-muted-foreground leading-relaxed mb-5 max-w-2xl">
-              Your Blueprint is the beginning—not the final answer. During a Discovery Session, we will review it together, challenge key assumptions, refine your MVP scope, prioritize highest-value features, reduce execution risk, and build a practical launch plan. The objective is not to sell development services. The objective is to help you launch with greater confidence—in weeks, not months.
+              Your Blueprint is the beginning—not the final answer. During a Discovery Session, we
+              will review it together, challenge key assumptions, refine your MVP scope, prioritize
+              highest-value features, reduce execution risk, and build a practical launch plan. The
+              objective is not to sell development services. The objective is to help you launch
+              with greater confidence—in weeks, not months.
             </p>
             <div className="flex flex-wrap gap-3 mb-6 text-xs text-foreground/80">
               {[
@@ -1785,7 +1941,10 @@ If you're an early-stage founder building SaaS or AI, I highly recommend buildin
                 "Identify technical risks early",
                 "Design the fastest path to launch",
               ].map((item) => (
-                <span key={item} className="flex items-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/15 px-3 py-1.5">
+                <span
+                  key={item}
+                  className="flex items-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/15 px-3 py-1.5"
+                >
                   <CheckCircle className="h-3 w-3 text-emerald-500" /> {item}
                 </span>
               ))}
@@ -1802,7 +1961,11 @@ If you're an early-stage founder building SaaS or AI, I highly recommend buildin
                 disabled={downloading}
                 className="flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 py-3 text-sm font-semibold hover:bg-muted transition disabled:opacity-50"
               >
-                {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+                {downloading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileDown className="h-4 w-4" />
+                )}
                 Download Blueprint
               </button>
             </div>
@@ -1815,7 +1978,9 @@ If you're an early-stage founder building SaaS or AI, I highly recommend buildin
         </>
       ) : (
         <div className="rounded-2xl border border-border bg-card p-8 text-center">
-          <p className="text-sm text-muted-foreground">Blueprint data is being processed. Please refresh in a few moments.</p>
+          <p className="text-sm text-muted-foreground">
+            Blueprint data is being processed. Please refresh in a few moments.
+          </p>
         </div>
       )}
 
@@ -1835,13 +2000,11 @@ If you're an early-stage founder building SaaS or AI, I highly recommend buildin
                 <div className="flex items-center gap-2 text-emerald-500 font-semibold text-sm">
                   <CheckCircle className="h-5 w-5 shrink-0" /> Request Submitted Successfully!
                 </div>
-                
+
                 {/* Amber-styled message block */}
                 <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 flex gap-3 text-xs text-amber-700 dark:text-amber-300 leading-relaxed font-medium">
                   <Info className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                  <p>
-                    We will review your post and unlock editing for you in the next 6 hours.
-                  </p>
+                  <p>We will review your post and unlock editing for you in the next 6 hours.</p>
                 </div>
 
                 <div className="flex justify-end pt-2">
@@ -1860,7 +2023,8 @@ If you're an early-stage founder building SaaS or AI, I highly recommend buildin
                     Unlock Blueprint Editing 🔓
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Share your blueprint result on LinkedIn to request editing permissions. We've prepared everything for you:
+                    Share your blueprint result on LinkedIn to request editing permissions. We've
+                    prepared everything for you:
                   </p>
                 </div>
 

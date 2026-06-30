@@ -89,7 +89,8 @@ const SERVICES: Service[] = [
     ],
     idealFor: "Founders building AI-native SaaS or adding AI to an existing product.",
     timeline: "3–8 weeks for a focused AI MVP.",
-    outcome: "An AI feature or product that's accurate, observable, and safe to put in front of users.",
+    outcome:
+      "An AI feature or product that's accurate, observable, and safe to put in front of users.",
     frameworkPhases: ["Discover", "Validate", "Blueprint", "Build", "Launch"],
   },
   {
@@ -190,9 +191,8 @@ function ServicesPage() {
             Ways to <span className="text-neon-gradient">work together</span>.
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Six focused offers — from launching an MVP to acting as your fractional CTO. Every
-            one of them means you work directly with me. No sales team. No project manager in
-            between.
+            Six focused offers — from launching an MVP to acting as your fractional CTO. Every one
+            of them means you work directly with me. No sales team. No project manager in between.
           </p>
           <div className="mt-7 flex justify-center">
             <DemoButton className="px-6 py-3.5 text-base">
@@ -205,7 +205,18 @@ function ServicesPage() {
       <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-20">
         <div className="grid gap-6 md:grid-cols-2">
           {SERVICES.map(
-            ({ icon: Icon, tag, title, pitch, overview, deliverables, idealFor, timeline, outcome, frameworkPhases }) => (
+            ({
+              icon: Icon,
+              tag,
+              title,
+              pitch,
+              overview,
+              deliverables,
+              idealFor,
+              timeline,
+              outcome,
+              frameworkPhases,
+            }) => (
               <article
                 key={title}
                 className="flex flex-col rounded-2xl border border-border bg-card p-7 shadow-card"
@@ -244,12 +255,13 @@ function ServicesPage() {
                     Framework Delivery
                   </div>
                   <div className="mt-1 text-xs text-foreground/80 leading-normal">
-                    This service is delivered through the <span className="text-neon font-semibold">Founder-to-Launch Framework™</span>.
+                    This service is delivered through the{" "}
+                    <span className="text-neon font-semibold">Founder-to-Launch Framework™</span>.
                   </div>
                   <div className="mt-2.5 flex flex-wrap gap-1">
                     {frameworkPhases.map((phase) => (
-                      <span 
-                        key={phase} 
+                      <span
+                        key={phase}
                         className="rounded border border-neon/20 bg-neon/5 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-neon"
                       >
                         {phase}
@@ -279,35 +291,56 @@ function ServicesPage() {
             </h2>
             <p className="mt-4 text-muted-foreground">
               Pricing is always a conversation — every offer is shaped to your scope and pace.
-              Instead of locking you into rigid monthly overheads, we tie pricing directly to deliverables
-              so you only pay for actual working results.
+              Instead of locking you into rigid monthly overheads, we tie pricing directly to
+              deliverables so you only pay for actual working results.
             </p>
           </div>
 
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2 rounded-3xl border border-border bg-card p-8 shadow-card relative overflow-hidden">
-              <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-neon opacity-10 blur-3xl" aria-hidden />
+              <div
+                className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-neon opacity-10 blur-3xl"
+                aria-hidden
+              />
               <div className="relative">
-                <div className="text-xs font-semibold uppercase tracking-widest text-neon">Pricing model</div>
+                <div className="text-xs font-semibold uppercase tracking-widest text-neon">
+                  Pricing model
+                </div>
                 <div className="mt-2 flex items-baseline gap-2">
                   <span className="font-display text-4xl font-semibold">Milestone-Based</span>
                   <span className="text-muted-foreground">/ deliverables</span>
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Zero hourly billing. We define clear delivery phases, and you only settle payments as milestones are met.
+                  Zero hourly billing. We define clear delivery phases, and you only settle payments
+                  as milestones are met.
                 </p>
 
                 <div className="mt-7 grid gap-4 sm:grid-cols-3">
-                  <PayStep n="1" title="Advance" body="One third up-front to kick things off and lock the slot." highlight />
-                  <PayStep n="2" title="Progress" body="Work happens with full visibility — demos, docs, repo access." />
-                  <PayStep n="3" title="Final" body="Remaining two thirds settled at the end, once you're happy." />
+                  <PayStep
+                    n="1"
+                    title="Advance"
+                    body="One third up-front to kick things off and lock the slot."
+                    highlight
+                  />
+                  <PayStep
+                    n="2"
+                    title="Progress"
+                    body="Work happens with full visibility — demos, docs, repo access."
+                  />
+                  <PayStep
+                    n="3"
+                    title="Final"
+                    body="Remaining two thirds settled at the end, once you're happy."
+                  />
                 </div>
 
                 <div className="mt-7 rounded-2xl border border-border bg-background/60 p-5">
                   <div className="flex items-start gap-3">
                     <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-neon" />
                     <div className="text-sm text-foreground/85">
-                      <span className="font-semibold text-foreground">Full transparency, every step.</span>{" "}
+                      <span className="font-semibold text-foreground">
+                        Full transparency, every step.
+                      </span>{" "}
                       You receive documented updates and visible results on a regular cadence — so
                       you always know exactly where your money is going and what's been built.
                     </div>
@@ -320,7 +353,9 @@ function ServicesPage() {
               <div className="grid h-11 w-11 place-items-center rounded-xl bg-neon shadow-neon">
                 <Cpu className="h-5 w-5 text-primary-foreground" />
               </div>
-              <h3 className="mt-4 font-display text-xl font-semibold">Development infrastructure on me.</h3>
+              <h3 className="mt-4 font-display text-xl font-semibold">
+                Development infrastructure on me.
+              </h3>
               <p className="mt-2 text-sm text-muted-foreground">
                 During the build, you don't pay for any of the moving parts behind the scenes.
               </p>
@@ -337,15 +372,17 @@ function ServicesPage() {
                 ))}
               </ul>
               <div className="mt-5 rounded-xl border border-border bg-background/60 p-4 text-sm">
-                <span className="font-semibold text-foreground">Free for you during development.</span>{" "}
+                <span className="font-semibold text-foreground">
+                  Free for you during development.
+                </span>{" "}
                 <span className="text-muted-foreground">
-                  At the end, everything migrates cleanly to your own accounts — code, cloud, data, all yours.
+                  At the end, everything migrates cleanly to your own accounts — code, cloud, data,
+                  all yours.
                 </span>
               </div>
             </div>
           </div>
         </div>
-
 
         <div className="mt-14 rounded-3xl border border-border bg-card p-10 text-center shadow-card">
           <h2 className="font-display text-2xl font-semibold sm:text-3xl">
@@ -370,15 +407,7 @@ function ServicesPage() {
   );
 }
 
-function Meta({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof Clock;
-  label: string;
-  value: string;
-}) {
+function Meta({ icon: Icon, label, value }: { icon: typeof Clock; label: string; value: string }) {
   return (
     <div className="flex items-start gap-2">
       <Icon className="mt-0.5 h-4 w-4 shrink-0 text-neon" />
@@ -392,9 +421,21 @@ function Meta({
   );
 }
 
-function PayStep({ n, title, body, highlight }: { n: string; title: string; body: string; highlight?: boolean }) {
+function PayStep({
+  n,
+  title,
+  body,
+  highlight,
+}: {
+  n: string;
+  title: string;
+  body: string;
+  highlight?: boolean;
+}) {
   return (
-    <div className={`rounded-2xl border p-4 ${highlight ? "border-neon/50 bg-neon/5" : "border-border bg-background/60"}`}>
+    <div
+      className={`rounded-2xl border p-4 ${highlight ? "border-neon/50 bg-neon/5" : "border-border bg-background/60"}`}
+    >
       <div className="font-mono text-xs text-neon-gradient">Step {n}</div>
       <div className="mt-1 font-semibold">{title}</div>
       <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{body}</p>

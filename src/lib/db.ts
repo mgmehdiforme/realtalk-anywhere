@@ -34,7 +34,7 @@ let writeQueue: Promise<void> = Promise.resolve();
 
 async function initDb() {
   if (isInitialized) return;
-  
+
   try {
     await fs.mkdir(DB_DIR, { recursive: true });
     try {
@@ -78,13 +78,13 @@ export async function saveUser(user: Omit<User, "createdAt">): Promise<User> {
   await initDb();
   const emailKey = user.email.toLowerCase();
   const existingUser = dbCache.users[emailKey];
-  
+
   const updatedUser: User = {
     ...user,
     email: emailKey,
     createdAt: existingUser ? existingUser.createdAt : Date.now(),
   };
-  
+
   dbCache.users[emailKey] = updatedUser;
   await saveToDisk();
   return updatedUser;
@@ -95,20 +95,23 @@ export async function getBlueprint(email: string): Promise<Blueprint | null> {
   return dbCache.assessments[email.toLowerCase()] || null;
 }
 
-export async function saveBlueprint(email: string, answers: Record<string, any>): Promise<Blueprint> {
+export async function saveBlueprint(
+  email: string,
+  answers: Record<string, any>,
+): Promise<Blueprint> {
   await initDb();
   const emailKey = email.toLowerCase();
   const existing = dbCache.assessments[emailKey];
-  
+
   if (existing && existing.submittedAt) {
     throw new Error("Blueprint has already been submitted and cannot be modified.");
   }
-  
+
   const updated: Blueprint = {
     email: emailKey,
     answers: {
       ...(existing?.answers || {}),
-      ...answers
+      ...answers,
     },
     submittedAt: existing ? existing.submittedAt : null,
     reportPdfPath: existing ? existing.reportPdfPath : null,
@@ -116,36 +119,36 @@ export async function saveBlueprint(email: string, answers: Record<string, any>)
     unlockRequestedAt: existing ? existing.unlockRequestedAt : null,
     unlockLinkedInUrl: existing ? existing.unlockLinkedInUrl : null,
   };
-  
+
   dbCache.assessments[emailKey] = updated;
   await saveToDisk();
   return updated;
 }
 
 export async function submitBlueprint(
-  email: string, 
-  reportPdfPath: string, 
-  reportData: any
+  email: string,
+  reportPdfPath: string,
+  reportData: any,
 ): Promise<Blueprint> {
   await initDb();
   const emailKey = email.toLowerCase();
   const existing = dbCache.assessments[emailKey];
-  
+
   if (!existing) {
     throw new Error("No blueprint answers found to submit.");
   }
-  
+
   if (existing.submittedAt) {
     throw new Error("Blueprint has already been submitted.");
   }
-  
+
   const updated: Blueprint = {
     ...existing,
     submittedAt: new Date().toISOString(),
     reportPdfPath,
     reportData,
   };
-  
+
   dbCache.assessments[emailKey] = updated;
   await saveToDisk();
   return updated;
@@ -158,13 +161,13 @@ export async function requestUnlock(email: string, linkedinUrl: string): Promise
   if (!existing) {
     throw new Error("No blueprint found to unlock.");
   }
-  
+
   const updated: Blueprint = {
     ...existing,
     unlockRequestedAt: new Date().toISOString(),
     unlockLinkedInUrl: linkedinUrl,
   };
-  
+
   dbCache.assessments[emailKey] = updated;
   await saveToDisk();
   return updated;

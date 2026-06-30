@@ -18,7 +18,7 @@ const REPORTS_DIR = path.resolve(process.cwd(), "data/reports");
 export function generateBlueprintPdf(
   email: string,
   answers: Record<string, any>,
-  analysis: QwenAnalysisResult
+  analysis: QwenAnalysisResult,
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     try {
@@ -29,7 +29,7 @@ export function generateBlueprintPdf(
 
       const fileName = `${encodeURIComponent(email.toLowerCase().replace(/[^a-z0-9]/g, "_"))}.pdf`;
       const filePath = path.join(REPORTS_DIR, fileName);
-      
+
       const doc = new PDFDocument({
         size: "A4",
         margins: { top: 50, bottom: 50, left: 50, right: 50 },
@@ -82,11 +82,7 @@ export function generateBlueprintPdf(
 
       // Metadata block
       const metaY = 480;
-      doc
-        .rect(70, metaY, 455, 140)
-        .fill(lightBgColor)
-        .strokeColor(borderCardColor)
-        .stroke();
+      doc.rect(70, metaY, 455, 140).fill(lightBgColor).strokeColor(borderCardColor).stroke();
 
       doc
         .fillColor(darkColor)
@@ -109,7 +105,9 @@ export function generateBlueprintPdf(
         .font("Helvetica-Bold")
         .text("Generation Date: ", 90, metaY + 85, { continued: true })
         .font("Helvetica")
-        .text(`${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`);
+        .text(
+          `${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`,
+        );
 
       // Confidential label
       doc
@@ -178,17 +176,15 @@ export function generateBlueprintPdf(
       ensureSpace(110);
       drawHeader("Recommended Founder-to-Launch Phase");
       const recY = doc.y;
-      doc
-        .rect(50, recY, 495, 75)
-        .fill("#e0e7ff")
-        .strokeColor("#a5b4fc")
-        .stroke();
+      doc.rect(50, recY, 495, 75).fill("#e0e7ff").strokeColor("#a5b4fc").stroke();
 
       doc
         .font("Helvetica-Bold")
         .fontSize(11)
         .fillColor(primaryColor)
-        .text(`${analysis.recommendedPhase.toUpperCase()}™ Phase`, 65, recY + 12, { continued: true })
+        .text(`${analysis.recommendedPhase.toUpperCase()}™ Phase`, 65, recY + 12, {
+          continued: true,
+        })
         .fillColor(textColor)
         .font("Helvetica")
         .fontSize(9)
@@ -361,11 +357,7 @@ export function generateBlueprintPdf(
       ensureSpace(70);
       drawHeader("Potential Time Savings");
       const savingsY = doc.y;
-      doc
-        .rect(50, savingsY, 495, 55)
-        .fill("#fafaf9")
-        .strokeColor("#e7e5e4")
-        .stroke();
+      doc.rect(50, savingsY, 495, 55).fill("#fafaf9").strokeColor("#e7e5e4").stroke();
 
       doc
         .font("Helvetica-Oblique")
@@ -375,7 +367,7 @@ export function generateBlueprintPdf(
           "Resolving the recommendations in this blueprint before development begins could reduce unnecessary engineering effort by several weeks. Validating assumptions early is significantly less expensive than rebuilding after launch. Founders using this blueprint typically save 30-40% of standard MVP timelines.",
           65,
           savingsY + 12,
-          { width: 465, align: "center", lineGap: 2 }
+          { width: 465, align: "center", lineGap: 2 },
         );
 
       doc.y = savingsY + 70;
@@ -387,10 +379,7 @@ export function generateBlueprintPdf(
       ensureSpace(150);
       drawHeader("Recommended Next Actions");
       const drawCtaY = doc.y;
-      doc
-        .rect(50, drawCtaY, 495, 125)
-        .fill(darkColor)
-        .stroke();
+      doc.rect(50, drawCtaY, 495, 125).fill(darkColor).stroke();
 
       doc
         .font("Helvetica-Bold")
@@ -402,13 +391,22 @@ export function generateBlueprintPdf(
         .font("Helvetica")
         .fontSize(8.5)
         .fillColor("#e2e8f0")
-        .text("Your Blueprint is the beginning—not the final answer. During a Discovery Session, we will review it together, challenge key assumptions, refine your MVP scope, and build a practical launch plan. The objective is to help you launch with greater confidence—in weeks, not months.", 65, drawCtaY + 28, { width: 465, lineGap: 1.5 });
+        .text(
+          "Your Blueprint is the beginning—not the final answer. During a Discovery Session, we will review it together, challenge key assumptions, refine your MVP scope, and build a practical launch plan. The objective is to help you launch with greater confidence—in weeks, not months.",
+          65,
+          drawCtaY + 28,
+          { width: 465, lineGap: 1.5 },
+        );
 
       doc
         .font("Helvetica-Bold")
         .fontSize(9)
         .fillColor("#34d399")
-        .text("✓ Refine MVP Scope   ✓ Challenge Key Assumptions   ✓ Reduce Execution Risk   ✓ Build Practical Plan", 65, drawCtaY + 80);
+        .text(
+          "✓ Refine MVP Scope   ✓ Challenge Key Assumptions   ✓ Reduce Execution Risk   ✓ Build Practical Plan",
+          65,
+          drawCtaY + 80,
+        );
 
       doc
         .font("Helvetica-Bold")
@@ -427,12 +425,10 @@ export function generateBlueprintPdf(
           .fillColor("#94a3b8")
           .font("Helvetica")
           .fontSize(8)
-          .text(
-            `Page ${i + 1} of ${range.count}`,
-            50,
-            doc.page.height - 40,
-            { align: "center", width: doc.page.width - 100 }
-          );
+          .text(`Page ${i + 1} of ${range.count}`, 50, doc.page.height - 40, {
+            align: "center",
+            width: doc.page.width - 100,
+          });
       }
 
       doc.end();
