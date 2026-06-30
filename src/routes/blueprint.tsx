@@ -377,21 +377,82 @@ function LandingPage({
         </div>
       </section>
 
-      {/* Login & Core Value Grid */}
+      {/* Login / Get Started Card — moved directly after hero */}
+      <section className="mx-auto max-w-3xl px-5 pt-12 sm:px-8">
+        <div className="rounded-3xl border-2 border-neon/40 bg-gradient-to-b from-card via-card/95 to-neon/10 p-8 shadow-[0_0_30px_rgba(var(--neon-color-rgb),0.15)] overflow-hidden relative">
+          <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-neon opacity-10 blur-2xl" />
+          <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-primary opacity-10 blur-2xl" />
+
+          <div className="relative">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-neon/15 px-2.5 py-1 text-[10px] font-bold text-neon uppercase tracking-wider mb-4 border border-neon/20">
+              <Lock className="h-3.5 w-3.5" /> Secure Access
+            </div>
+
+            <h3 className="font-display text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+              Get started Building Your Blueprint Report free <Sparkles className="h-5 w-5 text-neon animate-pulse" />
+            </h3>
+
+            <p className="mt-2.5 text-xs text-muted-foreground leading-relaxed">
+              Login with Google is <strong className="text-foreground font-semibold">required</strong> to secure your progress, enable real-time auto-saving, and generate your blueprint.
+            </p>
+
+            <div className="mt-6 space-y-4">
+              {showMockLogin ? (
+                <div className="rounded-2xl border border-neon/30 bg-neon/5 p-4 space-y-3">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-neon">
+                    <CloudLightning className="h-4 w-4" /> Local Testing Mode Enabled
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    Google Client credentials are not configured in your environment. Use this mock field to simulate authentication.
+                  </p>
+                  <input
+                    type="email"
+                    value={mockEmail}
+                    onChange={(e) => setMockEmail(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-neon focus:outline-none"
+                    placeholder="Enter mock email address"
+                  />
+                  <button
+                    onClick={() => onMockLogin(mockEmail)}
+                    className="w-full rounded-lg bg-neon py-2.5 text-xs font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
+                  >
+                    Build My Blueprint
+                  </button>
+                </div>
+              ) : (
+                <button
+                   onClick={onGoogleLogin}
+                   className="w-full flex items-center justify-center gap-3 rounded-xl border border-neon/30 bg-neon text-primary-foreground shadow-neon hover:brightness-110 py-3.5 px-4 text-sm font-bold transition duration-200 transform hover:scale-[1.01]"
+                >
+                  <div className="rounded-full bg-white p-1 flex items-center justify-center shrink-0">
+                    <svg className="h-4 w-4" viewBox="0 0 24 24">
+                      <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.54 14.98 1 12 1 7.35 1 3.37 3.68 1.42 7.57l3.8 2.95C6.18 7.37 8.87 5.04 12 5.04z" />
+                      <path fill="#4285F4" d="M23.45 12.27c0-.82-.07-1.61-.21-2.38H12v4.51h6.43c-.28 1.48-1.12 2.73-2.38 3.58l3.7 2.87c2.16-1.99 3.7-4.91 3.7-8.58z" />
+                      <path fill="#FBBC05" d="M5.22 14.77c-.24-.73-.38-1.51-.38-2.32s.14-1.59.38-2.32L1.42 7.18C.51 9 .01 11 .01 13.1c0 2.1.5 4.1 1.41 5.92l3.8-3.25z" />
+                      <path fill="#34A853" d="M12 23.01c3.24 0 5.97-1.07 7.96-2.91l-3.7-2.87c-1.03.69-2.35 1.1-3.95 1.1-3.13 0-5.82-2.33-6.77-5.48l-3.8 2.95c1.95 3.89 5.93 6.57 10.59 6.57z" />
+                    </svg>
+                  </div>
+                  Continue with Google
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Core Value Grid */}
       <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8">
-        <div className="grid gap-12 lg:grid-cols-12 items-start">
-          
-          {/* Why Complete Card & Receivables */}
-          <div className="lg:col-span-7 space-y-8">
+        <div className="grid gap-12 lg:grid-cols-1 items-start">
+          <div className="space-y-8">
             <div>
               <h2 className="font-display text-2xl font-semibold sm:text-3xl">Why build a Go-to-Launch Blueprint™?</h2>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-                Before booking a discovery session, building this blueprint structures your startup requirements. 
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
+                Before booking a discovery session, building this blueprint structures your startup requirements.
                 It helps lock features, map technology expectations, and isolate technical complexity early.
               </p>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 { title: "Step 1", desc: "Answer a few questions about your startup." },
                 { title: "Step 2", desc: "Our AI analyzes your product, execution strategy, and business priorities." },
@@ -404,139 +465,10 @@ function LandingPage({
                 </div>
               ))}
             </div>
-
-            {/* Redesigned Premium PDF Preview Mockup */}
-            <div className="rounded-2xl border border-border/80 bg-gradient-to-b from-card/30 to-background/20 p-5 relative overflow-hidden shadow-sm">
-              <div className="flex items-center justify-between border-b border-border/50 pb-3 mb-4">
-                <div className="flex items-center gap-1.5">
-                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="font-mono text-[9px] tracking-wider uppercase text-muted-foreground font-semibold">Blueprint Preview (Sample Layout)</span>
-                </div>
-                <span className="rounded bg-neon/10 border border-neon/30 px-2 py-0.5 font-mono text-[8px] font-bold text-neon uppercase">A4 PDF Blueprint</span>
-              </div>
-              
-              <div className="space-y-3.5 opacity-70 text-left">
-                {/* Simulated Header */}
-                <div className="flex justify-between items-start gap-4">
-                  <div>
-                    <h4 className="text-[11px] font-bold text-foreground">Go-to-Launch Blueprint™</h4>
-                    <p className="text-[9px] text-muted-foreground font-mono mt-0.5">PROJECT: SAAS MVP SCOPE</p>
-                  </div>
-                  <span className="text-[9px] text-muted-foreground font-mono">Page 1 of 3</span>
-                </div>
-
-                {/* Simulated Recommendation Banner */}
-                <div className="rounded-lg border border-neon/20 bg-neon/5 p-2.5 flex items-center justify-between gap-3">
-                  <div className="space-y-0.5">
-                    <span className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wider block">Recommended Strategy Phase</span>
-                    <span className="text-[10px] font-bold text-neon">VALIDATE™ Phase</span>
-                  </div>
-                  <span className="rounded bg-neon/20 px-2 py-0.5 text-[8px] font-mono text-neon font-bold">PRE-PRODUCT VALIDATION</span>
-                </div>
-
-                {/* Simulated Core Sections */}
-                <div className="space-y-1.5">
-                  <div className="text-[9px] font-bold text-foreground uppercase tracking-wider">1. Executive Summary</div>
-                  <p className="text-[9px] text-muted-foreground leading-relaxed">
-                    The primary opportunity is to validate structural market demand using high-fidelity scoping templates before committing engineering runway. Focus on core user loops...
-                  </p>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="text-[9px] font-bold text-foreground uppercase tracking-wider">2. Engineering Strategy</div>
-                  <div className="grid grid-cols-2 gap-2 text-[8px]">
-                    <div className="rounded border border-border bg-card/40 p-2">
-                      <span className="font-bold text-neon block">AI Scoping</span>
-                      <span className="text-muted-foreground">Strict JSON output schemas via Qwen API.</span>
-                    </div>
-                    <div className="rounded border border-border bg-card/40 p-2">
-                      <span className="font-bold text-neon block">Frontend Tech</span>
-                      <span className="text-muted-foreground">Next.js + Zustand for wizard auto-saving.</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Fade out mask to look like a document preview */}
-              <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-            </div>
           </div>
-
-          {/* Login Card */}
-          <div className="lg:col-span-5 rounded-3xl border-2 border-neon/40 bg-gradient-to-b from-card via-card/95 to-neon/10 p-8 shadow-[0_0_30px_rgba(var(--neon-color-rgb),0.15)] sticky top-24 overflow-hidden">
-            <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-neon opacity-10 blur-2xl" />
-            <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-primary opacity-10 blur-2xl" />
-
-            <div className="relative">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-neon/15 px-2.5 py-1 text-[10px] font-bold text-neon uppercase tracking-wider mb-4 border border-neon/20">
-                <Lock className="h-3.5 w-3.5" /> Secure Access
-              </div>
-              
-              <h3 className="font-display text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                Get Started <Sparkles className="h-5 w-5 text-neon animate-pulse" />
-              </h3>
-              
-              <p className="mt-2.5 text-xs text-muted-foreground leading-relaxed">
-                Login with Google is <strong className="text-foreground font-semibold">required</strong> to secure your progress, enable real-time auto-saving, and generate your blueprint.
-              </p>
-
-              <div className="mt-6 space-y-4">
-                {showMockLogin ? (
-                  <div className="rounded-2xl border border-neon/30 bg-neon/5 p-4 space-y-3">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-neon">
-                      <CloudLightning className="h-4 w-4" /> Local Testing Mode Enabled
-                    </div>
-                    <p className="text-[10px] text-muted-foreground leading-relaxed">
-                      Google Client credentials are not configured in your environment. Use this mock field to simulate authentication.
-                    </p>
-                    <input
-                      type="email"
-                      value={mockEmail}
-                      onChange={(e) => setMockEmail(e.target.value)}
-                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-neon focus:outline-none"
-                      placeholder="Enter mock email address"
-                    />
-                    <button
-                      onClick={() => onMockLogin(mockEmail)}
-                      className="w-full rounded-lg bg-neon py-2.5 text-xs font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
-                    >
-                      Build My Blueprint
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                     onClick={onGoogleLogin}
-                     className="w-full flex items-center justify-center gap-3 rounded-xl border border-neon/30 bg-neon text-primary-foreground shadow-neon hover:brightness-110 py-3.5 px-4 text-sm font-bold transition duration-200 transform hover:scale-[1.01]"
-                  >
-                    <div className="rounded-full bg-white p-1 flex items-center justify-center shrink-0">
-                      <svg className="h-4 w-4" viewBox="0 0 24 24">
-                        <path
-                          fill="#EA4335"
-                          d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.54 14.98 1 12 1 7.35 1 3.37 3.68 1.42 7.57l3.8 2.95C6.18 7.37 8.87 5.04 12 5.04z"
-                        />
-                        <path
-                          fill="#4285F4"
-                          d="M23.45 12.27c0-.82-.07-1.61-.21-2.38H12v4.51h6.43c-.28 1.48-1.12 2.73-2.38 3.58l3.7 2.87c2.16-1.99 3.7-4.91 3.7-8.58z"
-                        />
-                        <path
-                          fill="#FBBC05"
-                          d="M5.22 14.77c-.24-.73-.38-1.51-.38-2.32s.14-1.59.38-2.32L1.42 7.18C.51 9 .01 11 .01 13.1c0 2.1.5 4.1 1.41 5.92l3.8-3.25z"
-                        />
-                        <path
-                          fill="#34A853"
-                          d="M12 23.01c3.24 0 5.97-1.07 7.96-2.91l-3.7-2.87c-1.03.69-2.35 1.1-3.95 1.1-3.13 0-5.82-2.33-6.77-5.48l-3.8 2.95c1.95 3.89 5.93 6.57 10.59 6.57z"
-                        />
-                      </svg>
-                    </div>
-                    Continue with Google
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
         </div>
       </section>
+
 
       {/* FAQ Section */}
       <section className="bg-card/20 border-t border-border">
