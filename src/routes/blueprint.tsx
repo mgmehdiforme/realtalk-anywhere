@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { useDemoModal } from "@/lib/demo-modal";
 import { authWithGoogle } from "@/lib/auth-functions";
 import type { QwenAnalysisResult } from "@/lib/qwen";
@@ -40,7 +41,8 @@ import {
  * Fetch the current user state, blueprint progress/submission, and env configs
  */
 export const getBlueprintState = createServerFn()
-  .handler(async ({ request }) => {
+  .handler(async () => {
+    const request = getRequest();
     const { getSessionFromRequest } = await import("@/lib/auth");
     const { getUser, getBlueprint } = await import("@/lib/db");
 
@@ -75,7 +77,8 @@ export const getBlueprintState = createServerFn()
  */
 export const saveBlueprintDraft = createServerFn()
   .validator((d: { answers: Record<string, any> }) => d)
-  .handler(async ({ data, request }) => {
+  .handler(async ({ data }) => {
+    const request = getRequest();
     const { getSessionFromRequest } = await import("@/lib/auth");
     const { saveBlueprint } = await import("@/lib/db");
 
@@ -92,7 +95,8 @@ export const saveBlueprintDraft = createServerFn()
  * Finalize blueprint builder, trigger Qwen analysis, and compile PDF
  */
 export const submitBlueprintAction = createServerFn()
-  .handler(async ({ request }) => {
+  .handler(async () => {
+    const request = getRequest();
     const { getSessionFromRequest } = await import("@/lib/auth");
     const { getBlueprint, submitBlueprint } = await import("@/lib/db");
     const { analyzeBlueprintAnswers } = await import("@/lib/qwen");
@@ -144,7 +148,8 @@ export const submitBlueprintAction = createServerFn()
  * Download the generated PDF blueprint as base64
  */
 export const downloadPdfBlueprint = createServerFn()
-  .handler(async ({ request }) => {
+  .handler(async () => {
+    const request = getRequest();
     const { getSessionFromRequest } = await import("@/lib/auth");
     const { getBlueprint } = await import("@/lib/db");
 
@@ -177,7 +182,8 @@ export const downloadPdfBlueprint = createServerFn()
  */
 export const requestBlueprintUnlockAction = createServerFn()
   .validator((d: { linkedinUrl: string }) => d)
-  .handler(async ({ data, request }) => {
+  .handler(async ({ data }) => {
+    const request = getRequest();
     const { getSessionFromRequest } = await import("@/lib/auth");
     const { requestUnlock } = await import("@/lib/db");
 
