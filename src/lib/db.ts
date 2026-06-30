@@ -11,7 +11,7 @@ export interface User {
   createdAt: number;
 }
 
-export interface Assessment {
+export interface Blueprint {
   email: string;
   answers: Record<string, any>;
   submittedAt: string | null;
@@ -23,7 +23,7 @@ export interface Assessment {
 
 export interface DatabaseSchema {
   users: Record<string, User>;
-  assessments: Record<string, Assessment>;
+  assessments: Record<string, Blueprint>;
 }
 
 let isInitialized = false;
@@ -90,21 +90,21 @@ export async function saveUser(user: Omit<User, "createdAt">): Promise<User> {
   return updatedUser;
 }
 
-export async function getAssessment(email: string): Promise<Assessment | null> {
+export async function getBlueprint(email: string): Promise<Blueprint | null> {
   await initDb();
   return dbCache.assessments[email.toLowerCase()] || null;
 }
 
-export async function saveAssessment(email: string, answers: Record<string, any>): Promise<Assessment> {
+export async function saveBlueprint(email: string, answers: Record<string, any>): Promise<Blueprint> {
   await initDb();
   const emailKey = email.toLowerCase();
   const existing = dbCache.assessments[emailKey];
   
   if (existing && existing.submittedAt) {
-    throw new Error("Assessment has already been submitted and cannot be modified.");
+    throw new Error("Blueprint has already been submitted and cannot be modified.");
   }
   
-  const updated: Assessment = {
+  const updated: Blueprint = {
     email: emailKey,
     answers: {
       ...(existing?.answers || {}),
@@ -122,24 +122,24 @@ export async function saveAssessment(email: string, answers: Record<string, any>
   return updated;
 }
 
-export async function submitAssessment(
+export async function submitBlueprint(
   email: string, 
   reportPdfPath: string, 
   reportData: any
-): Promise<Assessment> {
+): Promise<Blueprint> {
   await initDb();
   const emailKey = email.toLowerCase();
   const existing = dbCache.assessments[emailKey];
   
   if (!existing) {
-    throw new Error("No assessment answers found to submit.");
+    throw new Error("No blueprint answers found to submit.");
   }
   
   if (existing.submittedAt) {
-    throw new Error("Assessment has already been submitted.");
+    throw new Error("Blueprint has already been submitted.");
   }
   
-  const updated: Assessment = {
+  const updated: Blueprint = {
     ...existing,
     submittedAt: new Date().toISOString(),
     reportPdfPath,
@@ -151,15 +151,15 @@ export async function submitAssessment(
   return updated;
 }
 
-export async function requestUnlock(email: string, linkedinUrl: string): Promise<Assessment> {
+export async function requestUnlock(email: string, linkedinUrl: string): Promise<Blueprint> {
   await initDb();
   const emailKey = email.toLowerCase();
   const existing = dbCache.assessments[emailKey];
   if (!existing) {
-    throw new Error("No assessment found to unlock.");
+    throw new Error("No blueprint found to unlock.");
   }
   
-  const updated: Assessment = {
+  const updated: Blueprint = {
     ...existing,
     unlockRequestedAt: new Date().toISOString(),
     unlockLinkedInUrl: linkedinUrl,

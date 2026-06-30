@@ -116,7 +116,7 @@ function NavBar() {
     { to: "/about" as const, label: "About" },
     { to: "/resume" as const, label: "Resume" },
     { to: "/contact" as const, label: "Contact" },
-    { to: "/assessment" as const, label: "Founder Assessment" },
+    { to: "/blueprint" as const, label: "Go-to-Launch Blueprint™" },
   ];
 
   useEffect(() => {
@@ -237,7 +237,7 @@ function Footer() {
         </div>
         <div className="flex flex-col gap-2 text-left sm:items-end">
           <Link to="/founder-to-launch-framework" className="hover:text-foreground">Founder-to-Launch Framework™</Link>
-          <Link to="/assessment" className="hover:text-foreground">Founder Assessment</Link>
+          <Link to="/blueprint" className="hover:text-foreground">Go-to-Launch Blueprint™</Link>
           <button onClick={open} className="hover:text-foreground cursor-pointer bg-transparent border-0 p-0 text-muted-foreground font-sans text-sm text-left sm:text-right">Book Discovery Call</button>
         </div>
       </div>

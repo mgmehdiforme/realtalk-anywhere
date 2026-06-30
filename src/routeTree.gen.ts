@@ -13,7 +13,7 @@ import { Route as ServicesRouteImport } from './routes/services'
 import { Route as ResumeRouteImport } from './routes/resume'
 import { Route as FounderToLaunchFrameworkRouteImport } from './routes/founder-to-launch-framework'
 import { Route as ContactRouteImport } from './routes/contact'
-import { Route as AssessmentRouteImport } from './routes/assessment'
+import { Route as BlueprintRouteImport } from './routes/blueprint'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
@@ -39,9 +39,9 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AssessmentRoute = AssessmentRouteImport.update({
-  id: '/assessment',
-  path: '/assessment',
+const BlueprintRoute = BlueprintRouteImport.update({
+  id: '/blueprint',
+  path: '/blueprint',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -63,7 +63,7 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/assessment': typeof AssessmentRoute
+  '/blueprint': typeof BlueprintRoute
   '/contact': typeof ContactRoute
   '/founder-to-launch-framework': typeof FounderToLaunchFrameworkRoute
   '/resume': typeof ResumeRoute
@@ -73,7 +73,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/assessment': typeof AssessmentRoute
+  '/blueprint': typeof BlueprintRoute
   '/contact': typeof ContactRoute
   '/founder-to-launch-framework': typeof FounderToLaunchFrameworkRoute
   '/resume': typeof ResumeRoute
@@ -84,7 +84,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/assessment': typeof AssessmentRoute
+  '/blueprint': typeof BlueprintRoute
   '/contact': typeof ContactRoute
   '/founder-to-launch-framework': typeof FounderToLaunchFrameworkRoute
   '/resume': typeof ResumeRoute
@@ -96,7 +96,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
-    | '/assessment'
+    | '/blueprint'
     | '/contact'
     | '/founder-to-launch-framework'
     | '/resume'
@@ -106,7 +106,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
-    | '/assessment'
+    | '/blueprint'
     | '/contact'
     | '/founder-to-launch-framework'
     | '/resume'
@@ -116,7 +116,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
-    | '/assessment'
+    | '/blueprint'
     | '/contact'
     | '/founder-to-launch-framework'
     | '/resume'
@@ -127,7 +127,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  AssessmentRoute: typeof AssessmentRoute
+  BlueprintRoute: typeof BlueprintRoute
   ContactRoute: typeof ContactRoute
   FounderToLaunchFrameworkRoute: typeof FounderToLaunchFrameworkRoute
   ResumeRoute: typeof ResumeRoute
@@ -165,11 +165,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/assessment': {
-      id: '/assessment'
-      path: '/assessment'
-      fullPath: '/assessment'
-      preLoaderRoute: typeof AssessmentRouteImport
+    '/blueprint': {
+      id: '/blueprint'
+      path: '/blueprint'
+      fullPath: '/blueprint'
+      preLoaderRoute: typeof BlueprintRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -199,7 +199,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  AssessmentRoute: AssessmentRoute,
+  BlueprintRoute: BlueprintRoute,
   ContactRoute: ContactRoute,
   FounderToLaunchFrameworkRoute: FounderToLaunchFrameworkRoute,
   ResumeRoute: ResumeRoute,

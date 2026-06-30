@@ -96,22 +96,24 @@ function Landing() {
               <span className="opacity-50">·</span> Senior Engineer · AI & SaaS
             </div>
             <h1 className="mt-5 font-display text-4xl font-semibold leading-[1.05] sm:text-5xl lg:text-6xl">
-              Work directly with the engineer{" "}
-              <span className="text-neon-gradient">building your product.</span>
+              Before you invest months building your startup,{" "}
+              <span className="text-neon-gradient">build your Go-to-Launch Blueprint™ first.</span>
             </h1>
             <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
-              MehdiGolzari.dev is not a software agency. It's a senior engineer helping founders
-              design, build and scale SaaS and AI products — from idea to production launch.
+              Answer a few strategic questions and receive a personalized execution blueprint that highlights risks, opportunities, and the fastest path to launch.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <DemoButton className="px-6 py-3.5 text-base">
-                Book a Free Discovery Call <ArrowRight className="ml-2 h-4 w-4" />
-              </DemoButton>
               <Link
-                to="/assessment"
+                to="/blueprint"
+                className="inline-flex items-center justify-center rounded-xl bg-neon px-6 py-3.5 text-base font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
+              >
+                Build My Blueprint
+              </Link>
+              <Link
+                to="/founder-to-launch-framework"
                 className="inline-flex items-center justify-center rounded-xl border border-border bg-card/40 px-5 py-3.5 text-sm font-semibold text-foreground backdrop-blur transition hover:bg-card"
               >
-                Start Free Assessment
+                Learn About the Founder-to-Launch Framework™
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
@@ -288,10 +290,10 @@ function Landing() {
 
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link
-              to="/assessment"
+              to="/blueprint"
               className="inline-flex items-center justify-center rounded-xl bg-neon px-5 py-3 text-sm font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
             >
-              Start Free Assessment
+              Build My Blueprint
             </Link>
             <Link
               to="/founder-to-launch-framework"

@@ -16,7 +16,6 @@ import {
   ArrowLeft,
   CloudLightning,
   Sparkles,
-  Play,
   HelpCircle,
   Check,
   ChevronDown,
@@ -38,12 +37,12 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Fetch the current user state, assessment progress/submission, and env configs
+ * Fetch the current user state, blueprint progress/submission, and env configs
  */
-export const getAssessmentState = createServerFn()
+export const getBlueprintState = createServerFn()
   .handler(async ({ request }) => {
     const { getSessionFromRequest } = await import("@/lib/auth");
-    const { getUser, getAssessment } = await import("@/lib/db");
+    const { getUser, getBlueprint } = await import("@/lib/db");
 
     const session = getSessionFromRequest(request);
     const googleClientId = process.env.GOOGLE_CLIENT_ID || "";
@@ -60,7 +59,7 @@ export const getAssessmentState = createServerFn()
     }
 
     const dbUser = await getUser(session.email);
-    const assessment = await getAssessment(session.email);
+    const assessment = await getBlueprint(session.email);
 
     return {
       authenticated: true,
@@ -72,91 +71,91 @@ export const getAssessmentState = createServerFn()
   });
 
 /**
- * Save current wizard answers as a draft
+ * Save current builder answers as a draft
  */
-export const saveAssessmentDraft = createServerFn()
+export const saveBlueprintDraft = createServerFn()
   .validator((d: { answers: Record<string, any> }) => d)
   .handler(async ({ data, request }) => {
     const { getSessionFromRequest } = await import("@/lib/auth");
-    const { saveAssessment } = await import("@/lib/db");
+    const { saveBlueprint } = await import("@/lib/db");
 
     const session = getSessionFromRequest(request);
     if (!session) {
       throw new Error("Unauthorized");
     }
 
-    const assessment = await saveAssessment(session.email, data.answers);
+    const assessment = await saveBlueprint(session.email, data.answers);
     return { success: true, assessment };
   });
 
 /**
- * Finalize assessment, trigger Qwen analysis, and compile PDF
+ * Finalize blueprint builder, trigger Qwen analysis, and compile PDF
  */
-export const submitAssessmentAction = createServerFn()
+export const submitBlueprintAction = createServerFn()
   .handler(async ({ request }) => {
     const { getSessionFromRequest } = await import("@/lib/auth");
-    const { getAssessment, submitAssessment } = await import("@/lib/db");
-    const { analyzeAssessmentAnswers } = await import("@/lib/qwen");
-    const { generateAssessmentPdf } = await import("@/lib/pdf");
+    const { getBlueprint, submitBlueprint } = await import("@/lib/db");
+    const { analyzeBlueprintAnswers } = await import("@/lib/qwen");
+    const { generateBlueprintPdf } = await import("@/lib/pdf");
 
     try {
-      console.log("submitAssessmentAction: Invoked");
+      console.log("submitBlueprintAction: Invoked");
       const session = getSessionFromRequest(request);
       if (!session) {
-        console.error("submitAssessmentAction: Unauthorized session");
+        console.error("submitBlueprintAction: Unauthorized session");
         throw new Error("Unauthorized");
       }
 
-      console.log(`submitAssessmentAction: Retrieving assessment for ${session.email}...`);
-      const existing = await getAssessment(session.email);
+      console.log(`submitBlueprintAction: Retrieving blueprint for ${session.email}...`);
+      const existing = await getBlueprint(session.email);
       if (!existing) {
-        console.error(`submitAssessmentAction: No assessment found for ${session.email}`);
-        throw new Error("No assessment answers found");
+        console.error(`submitBlueprintAction: No blueprint found for ${session.email}`);
+        throw new Error("No blueprint answers found");
       }
 
       if (existing.submittedAt) {
-        console.error(`submitAssessmentAction: Assessment already submitted for ${session.email}`);
-        throw new Error("Assessment already submitted");
+        console.error(`submitBlueprintAction: Blueprint already submitted for ${session.email}`);
+        throw new Error("Blueprint already submitted");
       }
 
       // 1. Call Qwen for report insights
-      console.log(`submitAssessmentAction: Starting Qwen analysis for ${session.email}...`);
-      const analysis = await analyzeAssessmentAnswers(existing.answers, session.email);
-      console.log(`submitAssessmentAction: Qwen analysis complete. Recommended phase: ${analysis.recommendedPhase}`);
+      console.log(`submitBlueprintAction: Starting Qwen analysis for ${session.email}...`);
+      const analysis = await analyzeBlueprintAnswers(existing.answers, session.email);
+      console.log(`submitBlueprintAction: Qwen analysis complete. Recommended phase: ${analysis.recommendedPhase}`);
 
       // 2. Generate PDF using pdfkit
-      console.log(`submitAssessmentAction: Generating PDF report for ${session.email}...`);
-      const pdfPath = await generateAssessmentPdf(session.email, existing.answers, analysis);
-      console.log(`submitAssessmentAction: PDF generation complete: ${pdfPath}`);
+      console.log(`submitBlueprintAction: Generating PDF blueprint for ${session.email}...`);
+      const pdfPath = await generateBlueprintPdf(session.email, existing.answers, analysis);
+      console.log(`submitBlueprintAction: PDF generation complete: ${pdfPath}`);
 
       // 3. Mark in DB as submitted
-      console.log(`submitAssessmentAction: Submitting assessment in DB for ${session.email}...`);
-      const updated = await submitAssessment(session.email, pdfPath, analysis);
-      console.log(`submitAssessmentAction: DB submission complete`);
+      console.log(`submitBlueprintAction: Submitting blueprint in DB for ${session.email}...`);
+      const updated = await submitBlueprint(session.email, pdfPath, analysis);
+      console.log(`submitBlueprintAction: DB submission complete`);
 
       return { success: true, assessment: updated };
     } catch (error: any) {
-      console.error("submitAssessmentAction ERROR:", error);
+      console.error("submitBlueprintAction ERROR:", error);
       throw error;
     }
   });
 
 /**
- * Download the generated PDF as base64
+ * Download the generated PDF blueprint as base64
  */
-export const downloadPdfReport = createServerFn()
+export const downloadPdfBlueprint = createServerFn()
   .handler(async ({ request }) => {
     const { getSessionFromRequest } = await import("@/lib/auth");
-    const { getAssessment } = await import("@/lib/db");
+    const { getBlueprint } = await import("@/lib/db");
 
     const session = getSessionFromRequest(request);
     if (!session) {
       throw new Error("Unauthorized");
     }
 
-    const assessment = await getAssessment(session.email);
+    const assessment = await getBlueprint(session.email);
     if (!assessment || !assessment.reportPdfPath) {
-      throw new Error("Report not generated yet");
+      throw new Error("Blueprint not generated yet");
     }
 
     try {
@@ -165,18 +164,18 @@ export const downloadPdfReport = createServerFn()
       return { 
         success: true, 
         base64: pdfBuffer.toString("base64"),
-        fileName: `MehdiGolzari_Founder_Assessment_${session.email.split("@")[0]}.pdf`
+        fileName: `MehdiGolzari_GoToLaunch_Blueprint_${session.email.split("@")[0]}.pdf`
       };
     } catch (error) {
       console.error("PDF read error:", error);
-      throw new Error("Failed to read report file on server");
+      throw new Error("Failed to read blueprint file on server");
     }
   });
 
 /**
  * Request edit unlock by sharing on LinkedIn
  */
-export const requestAssessmentUnlockAction = createServerFn()
+export const requestBlueprintUnlockAction = createServerFn()
   .validator((d: { linkedinUrl: string }) => d)
   .handler(async ({ data, request }) => {
     const { getSessionFromRequest } = await import("@/lib/auth");
@@ -203,24 +202,24 @@ export const logoutAction = createServerFn()
 // ROUTE REGISTRATION
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const Route = createFileRoute("/assessment")({
+export const Route = createFileRoute("/blueprint")({
   head: () => ({
     meta: [
-      { title: "Founder Fit Assessment™ — SaaS Qualifications | MehdiGolzari.dev" },
+      { title: "Build Your Go-to-Launch Blueprint™ — SaaS Scoping | MehdiGolzari.dev" },
       {
         name: "description",
-        content: "Take the 10-minute SaaS & AI product assessment. Get immediate AI insights and a downloadable PDF roadmap.",
+        content: "Create a personalized execution blueprint before writing code. Get immediate AI insights and a downloadable PDF roadmap.",
       },
     ],
   }),
-  component: AssessmentFlowPage,
+  component: BlueprintFlowPage,
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COMPONENT IMPLEMENTATION
 // ─────────────────────────────────────────────────────────────────────────────
 
-function AssessmentFlowPage() {
+function BlueprintFlowPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [state, setState] = useState<{
@@ -228,6 +227,7 @@ function AssessmentFlowPage() {
     user: any;
     assessment: any;
     showMockLogin: boolean;
+    googleClientId?: string;
   } | null>(null);
 
   // Authentication trigger redirect helper
@@ -272,7 +272,7 @@ function AssessmentFlowPage() {
   const refreshState = async () => {
     setLoading(true);
     try {
-      const data = await getAssessmentState();
+      const data = await getBlueprintState();
       setState(data);
     } catch (e) {
       console.error(e);
@@ -353,21 +353,20 @@ function LandingPage({
         <div className="absolute inset-0 grid-bg opacity-30" />
         <div className="relative mx-auto max-w-5xl px-5 text-center sm:px-8">
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-semibold text-neon-gradient backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5" /> 100% Free Launch Qualification
+            <Sparkles className="h-3.5 w-3.5" /> 100% Free Execution Blueprint
           </div>
           <h1 className="mt-5 font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-            Free Founder Fit <span className="text-neon-gradient">Assessment™</span>
+            Build Your <span className="text-neon-gradient">Go-to-Launch Blueprint™</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Qualify your SaaS or AI product idea, identify technical bottleneck risks, and receive an 
-            AI-assisted architecture review report in 10 minutes — completely free.
+            Create a personalized execution blueprint before writing code. Answer a few strategic questions and receive a personalized blueprint highlighting opportunities, technical risks, and the fastest path to launch.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-neon" /> 10-15 mins completion</span>
             <span className="opacity-50">·</span>
             <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-neon" /> Structured PDF Output</span>
             <span className="opacity-50">·</span>
-            <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-neon" /> Google Account login</span>
+            <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-neon" /> Google Sign-In only</span>
           </div>
         </div>
       </section>
@@ -379,19 +378,19 @@ function LandingPage({
           {/* Why Complete Card & Receivables */}
           <div className="lg:col-span-7 space-y-8">
             <div>
-              <h2 className="font-display text-2xl font-semibold sm:text-3xl">Why complete the assessment?</h2>
+              <h2 className="font-display text-2xl font-semibold sm:text-3xl">Why build a Go-to-Launch Blueprint™?</h2>
               <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-                Before booking a discovery call, completing this assessment structures your startup requirements. 
+                Before booking a discovery session, building this blueprint structures your startup requirements. 
                 It helps lock features, map technology expectations, and isolate technical complexity early.
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               {[
-                { title: "AI Executive Summary", desc: "An AI-generated summary highlighting your product value and audience fit." },
-                { title: "Methodology Phase", desc: "Identify exactly where your project slots into the 7-phase Founder-to-Launch Framework™." },
-                { title: "Downloadable PDF", desc: "Get a beautifully typeset A4 PDF roadmap to share with team members or advisors." },
-                { title: "Discovery Accelerator", desc: "We use this report during our Discovery Call, eliminating 30 minutes of scoping trivia." }
+                { title: "Step 1", desc: "Answer a few questions about your startup." },
+                { title: "Step 2", desc: "Our AI analyzes your product, execution strategy, and business priorities." },
+                { title: "Step 3", desc: "Receive your personalized Go-to-Launch Blueprint™." },
+                { title: "Step 4", desc: "Review it together during a Discovery Session." }
               ].map((item) => (
                 <div key={item.title} className="rounded-2xl border border-border bg-card/40 p-5">
                   <h3 className="font-display text-sm font-semibold text-neon">{item.title}</h3>
@@ -405,16 +404,16 @@ function LandingPage({
               <div className="flex items-center justify-between border-b border-border/50 pb-3 mb-4">
                 <div className="flex items-center gap-1.5">
                   <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="font-mono text-[9px] tracking-wider uppercase text-muted-foreground font-semibold">Report Preview (Sample Layout)</span>
+                  <span className="font-mono text-[9px] tracking-wider uppercase text-muted-foreground font-semibold">Blueprint Preview (Sample Layout)</span>
                 </div>
-                <span className="rounded bg-neon/10 border border-neon/30 px-2 py-0.5 font-mono text-[8px] font-bold text-neon uppercase">A4 PDF ROADMAP</span>
+                <span className="rounded bg-neon/10 border border-neon/30 px-2 py-0.5 font-mono text-[8px] font-bold text-neon uppercase">A4 PDF Blueprint</span>
               </div>
               
               <div className="space-y-3.5 opacity-70 text-left">
                 {/* Simulated Header */}
                 <div className="flex justify-between items-start gap-4">
                   <div>
-                    <h4 className="text-[11px] font-bold text-foreground">Founder Fit Assessment™ Report</h4>
+                    <h4 className="text-[11px] font-bold text-foreground">Go-to-Launch Blueprint™</h4>
                     <p className="text-[9px] text-muted-foreground font-mono mt-0.5">PROJECT: SAAS MVP SCOPE</p>
                   </div>
                   <span className="text-[9px] text-muted-foreground font-mono">Page 1 of 3</span>
@@ -438,7 +437,7 @@ function LandingPage({
                 </div>
 
                 <div className="space-y-1.5">
-                  <div className="text-[9px] font-bold text-foreground uppercase tracking-wider">2. Technical & Architecture Recommendations</div>
+                  <div className="text-[9px] font-bold text-foreground uppercase tracking-wider">2. Engineering Strategy</div>
                   <div className="grid grid-cols-2 gap-2 text-[8px]">
                     <div className="rounded border border-border bg-card/40 p-2">
                       <span className="font-bold text-neon block">AI Scoping</span>
@@ -472,7 +471,7 @@ function LandingPage({
               </h3>
               
               <p className="mt-2.5 text-xs text-muted-foreground leading-relaxed">
-                Login is <strong className="text-foreground font-semibold">required</strong> to secure your progress, enable real-time auto-saving, and generate your report.
+                Login with Google is <strong className="text-foreground font-semibold">required</strong> to secure your progress, enable real-time auto-saving, and generate your blueprint.
               </p>
 
               <div className="mt-6 space-y-4">
@@ -495,15 +494,14 @@ function LandingPage({
                       onClick={() => onMockLogin(mockEmail)}
                       className="w-full rounded-lg bg-neon py-2.5 text-xs font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
                     >
-                      Launch Mock Assessment
+                      Build My Blueprint
                     </button>
                   </div>
                 ) : (
                   <button
-                    onClick={onGoogleLogin}
-                    className="w-full flex items-center justify-center gap-3 rounded-xl border border-neon/30 bg-neon text-primary-foreground shadow-neon hover:brightness-110 py-3.5 px-4 text-sm font-bold transition duration-200 transform hover:scale-[1.01]"
+                     onClick={onGoogleLogin}
+                     className="w-full flex items-center justify-center gap-3 rounded-xl border border-neon/30 bg-neon text-primary-foreground shadow-neon hover:brightness-110 py-3.5 px-4 text-sm font-bold transition duration-200 transform hover:scale-[1.01]"
                   >
-                    {/* Google SVG with white path background to look sharp on solid neon */}
                     <div className="rounded-full bg-white p-1 flex items-center justify-center shrink-0">
                       <svg className="h-4 w-4" viewBox="0 0 24 24">
                         <path
@@ -541,17 +539,16 @@ function LandingPage({
           <div className="mt-8 space-y-4">
             {[
               {
-                q: "Is there any cost for this report?",
-                a: "No. The assessment and PDF report generation are completely free. It helps me prepare for our call so that we spend the conversation solving core technical challenges rather than reviewing basic project details.",
+                q: "Is there any cost for this blueprint?",
+                a: "No. The blueprint builder and PDF generation are completely free. It helps me prepare for our session so that we spend the conversation solving core technical challenges rather than reviewing basic project details.",
               },
               {
                 q: "How does the auto-save feature work?",
                 a: "Once signed in, every answer you type is saved in real-time as you transition between pages or click away. You can close the tab and return later to finish without losing your data.",
               },
-
               {
-                q: "What happens after I submit?",
-                a: "Your assessment transitions to Read-Only mode. Your dashboard will immediately display your generated AI insights, a button to download the PDF report, and direct contact CTAs to schedule your review session.",
+                q: "What happens after I generate?",
+                a: "Your blueprint builder transitions to Read-Only mode. Your dashboard will immediately display your generated AI insights, a button to download the PDF blueprint, and direct contact CTAs to schedule your Discovery Session.",
               },
             ].map((faq) => (
               <FaqItem key={faq.q} question={faq.q} answer={faq.a} />
@@ -584,7 +581,7 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 2. ASSESSMENT WIZARD FORM
+// 2. BLUEPRINT BUILDER WIZARD FORM
 // ─────────────────────────────────────────────────────────────────────────────
 
 function WizardForm({ 
@@ -607,14 +604,14 @@ function WizardForm({
   const loadingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const LOADING_STEPS = [
-    { label: "Reading your assessment answers...", icon: "📋" },
+    { label: "Reading your blueprint answers...", icon: "📋" },
     { label: "Analyzing founder strengths...", icon: "💪" },
     { label: "Identifying biggest opportunities...", icon: "🚀" },
     { label: "Evaluating execution risks...", icon: "⚠️" },
     { label: "Formulating engineering strategy...", icon: "🔧" },
     { label: "Designing fastest path to launch...", icon: "⚡" },
-    { label: "Compiling your PDF roadmap report...", icon: "📄" },
-    { label: "Finalizing your Founder Fit Assessment™...", icon: "✨" },
+    { label: "Compiling your Go-to-Launch Blueprint™...", icon: "📄" },
+    { label: "Finalizing your Go-to-Launch Blueprint™...", icon: "✨" },
   ];
 
   useEffect(() => {
@@ -644,11 +641,10 @@ function WizardForm({
   const saveDraft = async (updatedAnswers: Record<string, any>) => {
     setSaving(true);
     try {
-      await saveAssessmentDraft({ data: { answers: updatedAnswers } });
+      await saveBlueprintDraft({ data: { answers: updatedAnswers } });
     } catch (e) {
       console.error("Auto-save failed", e);
     } finally {
-      // Small simulated delay for satisfying UI save animation
       setTimeout(() => setSaving(false), 400);
     }
   };
@@ -656,7 +652,7 @@ function WizardForm({
   const handleInputChange = (field: string, value: any) => {
     const updated = { ...answers, [field]: value };
     setAnswers(updated);
-    setValidationError(null); // Clear validation error on change
+    setValidationError(null);
   };
 
   const handleBlur = () => {
@@ -748,7 +744,7 @@ function WizardForm({
     }
     setSubmitting(true);
     try {
-      const res = await submitAssessmentAction();
+      const res = await submitBlueprintAction();
       if (res.success) {
         onComplete();
       }
@@ -778,7 +774,7 @@ function WizardForm({
             {saving ? (
               <>
                 <Loader2 className="h-3 w-3 animate-spin text-neon" />
-                Saving draft...
+                Saving blueprint draft...
               </>
             ) : (
               <>
@@ -799,7 +795,7 @@ function WizardForm({
       {/* Progress Indicator */}
       <div className="mb-8">
         <div className="flex justify-between text-xs text-muted-foreground mb-2">
-          <span className="font-mono uppercase tracking-wider text-[10px] text-neon">Section {step} of {totalSteps}</span>
+          <span className="font-mono uppercase tracking-wider text-[10px] text-neon">Building Your Blueprint: Section {step} of {totalSteps}</span>
           <span>{progressPercent}% Complete</span>
         </div>
         <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
@@ -826,10 +822,10 @@ function WizardForm({
 
             {/* Title */}
             <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground mb-2">
-              Analyzing Your Assessment
+              Building Your Blueprint
             </h2>
             <p className="text-xs text-muted-foreground mb-8 text-center max-w-md">
-              Our AI is reviewing your answers and building a personalized Founder Fit Report™. This typically takes 30–60 seconds.
+              Our AI is reviewing your answers and building your personalized Go-to-Launch Blueprint™. This typically takes 30–60 seconds.
             </p>
 
             {/* Progress Bar */}
@@ -873,7 +869,7 @@ function WizardForm({
 
             {/* Reassurance message */}
             <p className="mt-8 text-[10px] text-muted-foreground/60 text-center">
-              Please don't close this tab. Your report is being compiled in real-time.
+              Please don't close this tab. Your blueprint is being compiled in real-time.
             </p>
           </div>
         ) : (
@@ -1241,7 +1237,7 @@ function WizardForm({
         {step === 6 && (
           <div className="space-y-6">
             <h2 className="font-display text-xl font-semibold text-neon-gradient">Review & Confirm</h2>
-            <p className="text-xs text-muted-foreground">Please double check your inputs. Once submitted, your answers will lock.</p>
+            <p className="text-xs text-muted-foreground">Please double check your inputs. Once generated, your blueprint will lock.</p>
             
             <div className="rounded-xl border border-border bg-background/50 p-5 space-y-4 max-h-[30vh] overflow-y-auto text-xs text-foreground/90 leading-relaxed">
               <div>
@@ -1303,11 +1299,11 @@ function WizardForm({
             <div className="rounded-xl border border-amber-500/30 bg-amber-50 dark:bg-amber-950/20 p-4 flex gap-3 text-amber-800 dark:text-amber-200">
               <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div className="text-xs leading-relaxed">
-                <span className="font-semibold text-amber-900 dark:text-amber-300">Submission is final.</span> Once submitted:
+                <span className="font-semibold text-amber-900 dark:text-amber-300">Generation is final.</span> Once generated:
                 <ul className="list-disc pl-4 mt-1 space-y-1 text-amber-700 dark:text-amber-300/90">
-                  <li>Your answers become strictly read-only. No edits are allowed.</li>
+                  <li>Your blueprint inputs become strictly read-only. No edits are allowed.</li>
                   <li>Our AI will analyze your scope and validate technical requirements.</li>
-                  <li>Your PDF Roadmap report will compile immediately.</li>
+                  <li>Your PDF blueprint will compile immediately.</li>
                 </ul>
               </div>
             </div>
@@ -1320,11 +1316,11 @@ function WizardForm({
               {submitting ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  Generating Report with AI...
+                  Generating Blueprint with AI...
                 </>
               ) : (
                 <>
-                  Submit Assessment & Generate PDF Report <ArrowRight className="h-4 w-4" />
+                  Generate My Blueprint <ArrowRight className="h-4 w-4" />
                 </>
               )}
             </button>
@@ -1357,7 +1353,7 @@ function WizardForm({
               onClick={nextStep}
               className="flex items-center gap-2 rounded-xl bg-neon px-5 py-2.5 text-xs font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
             >
-              Continue <ArrowRight className="h-4 w-4" />
+              Continue Building <ArrowRight className="h-4 w-4" />
             </button>
           ) : (
             <div />
@@ -1402,7 +1398,7 @@ function DashboardView({
 
     setUnlockSubmitting(true);
     try {
-      const res = await requestAssessmentUnlockAction({
+      const res = await requestBlueprintUnlockAction({
         data: { linkedinUrl: linkedinPostUrl }
       });
       if (res.success) {
@@ -1461,13 +1457,13 @@ function DashboardView({
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      const res = await downloadPdfReport();
+      const res = await downloadPdfBlueprint();
       if (res.success && res.base64) {
         const blob = base64ToBlob(res.base64, "application/pdf");
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = res.fileName || "MehdiGolzari_Assessment_Report.pdf";
+        a.download = res.fileName || "MehdiGolzari_GoToLaunch_Blueprint.pdf";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1512,14 +1508,14 @@ function DashboardView({
   const currentStage = analysis?.currentStage || "Pre-product validation";
   const reasoning = analysis?.recommendedPhaseReasoning || "";
 
-  const postText = `🚀 Just completed the Founder Fit Assessment™ by Mehdi Golzari (mehdigolzari.dev) to map the execution strategy for my startup, ${startupName}.
+  const postText = `🚀 Just completed the Go-to-Launch Blueprint™ by Mehdi Golzari (mehdigolzari.dev) to map the execution strategy for my startup, ${startupName}.
 
 My project slot is: ${phaseName.toUpperCase()}™ (${currentStage})
 
 Here's the direct, independent technical recommendation I received:
 "${reasoning}"
 
-If you're an early-stage founder building SaaS or AI, I highly recommend qualifying your project here: https://mehdigolzari.dev
+If you're an early-stage founder building SaaS or AI, I highly recommend building your blueprint here: https://mehdigolzari.dev
 
 #startup #saas #buildinginpublic #technicalfounder`;
 
@@ -1572,10 +1568,10 @@ If you're an early-stage founder building SaaS or AI, I highly recommend qualify
     ctx.lineTo(1120, 130);
     ctx.stroke();
 
-    // 4. Assessment Title
+    // 4. Title
     ctx.font = "normal 20px monospace";
     ctx.fillStyle = "#38bdf8";
-    ctx.fillText("FOUNDER FIT ASSESSMENT™ REPORT", 80, 180);
+    ctx.fillText("GO-TO-LAUNCH BLUEPRINT™", 80, 180);
 
     // 5. Startup Name
     ctx.font = "bold 44px sans-serif";
@@ -1607,7 +1603,7 @@ If you're an early-stage founder building SaaS or AI, I highly recommend qualify
 
     ctx.font = "normal 18px sans-serif";
     ctx.fillStyle = "#64748b";
-    ctx.fillText("Get your personalized SaaS / AI architecture roadmap at MehdiGolzari.dev", 80, 580);
+    ctx.fillText("Get your Go-to-Launch Blueprint™ at MehdiGolzari.dev", 80, 580);
 
     // Trigger Download
     const link = document.createElement("a");
@@ -1630,10 +1626,10 @@ If you're an early-stage founder building SaaS or AI, I highly recommend qualify
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-border pb-6 mb-8 gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs text-neon font-semibold uppercase tracking-wider">
-            <Lock className="h-3.5 w-3.5" /> Founder Fit Assessment™ Report
+            <Lock className="h-3.5 w-3.5" /> Go-to-Launch Blueprint™
           </div>
-          <h1 className="font-display text-2xl font-bold mt-1">Your Founder Dashboard</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Submitted on {formattedDate}</p>
+          <h1 className="font-display text-2xl font-bold mt-1">Blueprint Dashboard</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">Generated on {formattedDate}</p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -1642,7 +1638,7 @@ If you're an early-stage founder building SaaS or AI, I highly recommend qualify
             className="flex items-center gap-1.5 rounded-lg bg-neon px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-neon transition hover:brightness-110 disabled:opacity-50"
           >
             {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-            {downloading ? "Generating..." : "Download PDF"}
+            {downloading ? "Generating..." : "Download Blueprint"}
           </button>
           <button
             onClick={onLogout}
@@ -1770,10 +1766,10 @@ If you're an early-stage founder building SaaS or AI, I highly recommend qualify
           {/* ─── TAB: TECHNICAL STRATEGY ─── */}
           {activeTab === "strategy" && (
             <div className="space-y-8">
-              {/* If This Were My Startup */}
+              {/* Technical Partnership Insights */}
               <section className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-neon/5 p-6 sm:p-8">
                 <h2 className="flex items-center gap-2 font-display text-lg font-semibold mb-1">
-                  <Lightbulb className="h-5 w-5 text-neon" /> If This Were My Startup
+                  <Lightbulb className="h-5 w-5 text-neon" /> Technical Partnership Insights
                 </h2>
                 <p className="text-xs text-muted-foreground mb-5">Mehdi's direct priorities as your Independent Technical Partner</p>
                 <div className="space-y-3">
@@ -1839,9 +1835,9 @@ If you're an early-stage founder building SaaS or AI, I highly recommend qualify
           {/* Discovery Session CTA (Always Visible) */}
           <section className="rounded-2xl border border-neon/20 bg-gradient-to-br from-card to-neon/5 p-6 sm:p-8 relative overflow-hidden mt-8">
             <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-neon opacity-5 blur-3xl" />
-            <h2 className="font-display text-lg font-semibold mb-2">Continue Your Founder-to-Launch Journey</h2>
+            <h2 className="font-display text-lg font-semibold mb-2">Continue Your Go-to-Launch Journey</h2>
             <p className="text-xs text-muted-foreground leading-relaxed mb-5 max-w-2xl">
-              This report is intentionally the beginning—not the conclusion. A Discovery Session builds on these findings instead of starting from scratch. Whether we decide to work together afterward or not, you will leave with greater clarity, a stronger execution strategy, and a practical roadmap.
+              Your Blueprint is the beginning—not the final answer. During a Discovery Session, we will review it together, challenge key assumptions, refine your MVP scope, prioritize highest-value features, reduce execution risk, and build a practical launch plan. The objective is not to sell development services. The objective is to help you launch with greater confidence—in weeks, not months.
             </p>
             <div className="flex flex-wrap gap-3 mb-6 text-xs text-foreground/80">
               {[
@@ -1861,7 +1857,7 @@ If you're an early-stage founder building SaaS or AI, I highly recommend qualify
                 onClick={openContactModal}
                 className="flex items-center justify-center gap-2 rounded-xl bg-neon px-6 py-3 text-sm font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
               >
-                <Calendar className="h-4 w-4" /> Book Your Discovery Session
+                <Calendar className="h-4 w-4" /> Review My Blueprint Together
               </button>
               <button
                 onClick={handleDownload}
@@ -1869,7 +1865,7 @@ If you're an early-stage founder building SaaS or AI, I highly recommend qualify
                 className="flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 py-3 text-sm font-semibold hover:bg-muted transition disabled:opacity-50"
               >
                 {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-                Download Full PDF Report
+                Download Blueprint
               </button>
             </div>
           </section>
@@ -1881,7 +1877,7 @@ If you're an early-stage founder building SaaS or AI, I highly recommend qualify
         </>
       ) : (
         <div className="rounded-2xl border border-border bg-card p-8 text-center">
-          <p className="text-sm text-muted-foreground">Report data is being processed. Please refresh in a few moments.</p>
+          <p className="text-sm text-muted-foreground">Blueprint data is being processed. Please refresh in a few moments.</p>
         </div>
       )}
 
@@ -1902,7 +1898,7 @@ If you're an early-stage founder building SaaS or AI, I highly recommend qualify
                   <CheckCircle className="h-5 w-5 shrink-0" /> Request Submitted Successfully!
                 </div>
                 
-                {/* Amber-styled message block from screenshot */}
+                {/* Amber-styled message block */}
                 <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 flex gap-3 text-xs text-amber-700 dark:text-amber-300 leading-relaxed font-medium">
                   <Info className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                   <p>
@@ -1923,10 +1919,10 @@ If you're an early-stage founder building SaaS or AI, I highly recommend qualify
               <form onSubmit={handleRequestUnlock} className="space-y-5">
                 <div className="space-y-2">
                   <h3 className="text-lg font-bold flex items-center gap-2">
-                    Unlock Assessment Editing 🔓
+                    Unlock Blueprint Editing 🔓
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Share your assessment result on LinkedIn to request editing permissions. We've prepared everything for you:
+                    Share your blueprint result on LinkedIn to request editing permissions. We've prepared everything for you:
                   </p>
                 </div>
 
@@ -2037,4 +2033,3 @@ If you're an early-stage founder building SaaS or AI, I highly recommend qualify
     </div>
   );
 }
-

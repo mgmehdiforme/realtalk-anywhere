@@ -111,10 +111,10 @@ function FrameworkPage() {
           </p>
           <div className="mt-8 flex justify-center">
             <Link
-              to="/assessment"
+              to="/blueprint"
               className="inline-flex items-center justify-center rounded-xl bg-neon px-6 py-3.5 text-base font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
             >
-              Start Your Free Founder Assessment <ArrowRight className="ml-2 h-4 w-4" />
+              Build Your Go-to-Launch Blueprint™ <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </div>
         </div>
@@ -270,18 +270,17 @@ function FrameworkPage() {
         <div className="relative overflow-hidden rounded-3xl border border-border bg-card px-8 py-12 text-center shadow-card">
           <div className="absolute -inset-4 rounded-3xl bg-neon opacity-5 blur-3xl pointer-events-none" aria-hidden />
           <h2 className="font-display text-3xl font-semibold sm:text-4xl">
-            Ready to find your <span className="text-neon-gradient">Founder Fit</span>?
+            Ready to Build Your <span className="text-neon-gradient">Go-to-Launch Blueprint™</span>?
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground leading-relaxed">
-            Take the 10-minute assessment to identify where your product currently sits on the framework 
-            and receive an AI-assisted architecture analysis report.
+            Answer a few strategic questions about your startup and receive a personalized execution blueprint highlighting opportunities, technical risks, and the fastest path to launch.
           </p>
           <div className="mt-8 flex justify-center">
             <Link
-              to="/assessment"
+              to="/blueprint"
               className="inline-flex items-center justify-center rounded-xl bg-neon px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
             >
-              Start Free Assessment <ArrowRight className="ml-2 h-4 w-4" />
+              Build My Blueprint <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </div>
         </div>

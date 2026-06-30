@@ -12,10 +12,10 @@ import { QwenAnalysisResult } from "./qwen";
 const REPORTS_DIR = path.resolve(process.cwd(), "data/reports");
 
 /**
- * Generates a beautiful PDF report based on assessment answers and Qwen analysis.
+ * Generates a beautiful PDF report based on blueprint answers and Qwen analysis.
  * Returns the absolute path to the generated PDF.
  */
-export function generateAssessmentPdf(
+export function generateBlueprintPdf(
   email: string,
   answers: Record<string, any>,
   analysis: QwenAnalysisResult
@@ -47,27 +47,43 @@ export function generateAssessmentPdf(
       const lightBgColor = "#f8fafc"; // Slate-50
       const borderCardColor = "#e2e8f0"; // Slate-200
 
-      // Title & Header Brand
+      // ==========================================
+      // 1. COVER PAGE
+      // ==========================================
+      // Blueprint border/sketches theme decoration
+      doc.rect(40, 40, 515, 762).strokeColor(primaryColor).lineWidth(1.5).stroke();
+      doc.rect(45, 45, 505, 752).strokeColor("#e0e7ff").lineWidth(0.5).stroke();
+
+      // Brand Logo
       doc
         .font("Helvetica-Bold")
-        .fontSize(22)
+        .fontSize(16)
         .fillColor(primaryColor)
-        .text("MehdiGolzari", { continued: true })
+        .text("MehdiGolzari", 70, 80, { continued: true })
         .fillColor(darkColor)
-        .text(".dev")
+        .text(".dev");
+
+      // Title
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(36)
+        .fillColor(darkColor)
+        .text("Go-to-Launch", 70, 240)
+        .fillColor(primaryColor)
+        .text("Blueprint™")
         .moveDown(0.2);
 
       doc
-        .font("Helvetica-Bold")
-        .fontSize(10)
-        .fillColor(secondaryColor)
-        .text("FOUNDER FIT ASSESSMENT™ REPORT", { characterSpacing: 1.5 })
-        .moveDown(1.5);
+        .font("Helvetica")
+        .fontSize(12)
+        .fillColor(textColor)
+        .text("Your personalized execution blueprint for launching faster,", { lineGap: 3 })
+        .text("with fewer risks and greater confidence.");
 
-      // Metadata Box
-      const metaY = doc.y;
+      // Metadata block
+      const metaY = 480;
       doc
-        .rect(50, metaY, 495, 75)
+        .rect(70, metaY, 455, 140)
         .fill(lightBgColor)
         .strokeColor(borderCardColor)
         .stroke();
@@ -75,28 +91,35 @@ export function generateAssessmentPdf(
       doc
         .fillColor(darkColor)
         .font("Helvetica-Bold")
-        .fontSize(10)
-        .text("FOUNDER PROFILE", 65, metaY + 12)
-        .font("Helvetica")
-        .fontSize(9)
-        .fillColor(textColor)
-        .text(`Founder Name: ${answers.founderName || "N/A"}`)
-        .text(`Role: ${answers.founderRole || "N/A"}`)
-        .text(`LinkedIn: ${answers.linkedinUrl || "N/A"}`);
+        .fontSize(11)
+        .text("PREPARED EXCLUSIVELY FOR:", 90, metaY + 20)
+        .moveDown(0.8);
 
       doc
-        .fillColor(darkColor)
+        .font("Helvetica-Bold")
+        .fontSize(11)
+        .fillColor(textColor)
+        .text("Founder: ", 90, metaY + 45, { continued: true })
+        .font("Helvetica")
+        .text(`${answers.founderName || "N/A"}`)
+        .font("Helvetica-Bold")
+        .text("Startup Name: ", 90, metaY + 65, { continued: true })
+        .font("Helvetica")
+        .text(`${answers.startupName || "N/A"}`)
+        .font("Helvetica-Bold")
+        .text("Generation Date: ", 90, metaY + 85, { continued: true })
+        .font("Helvetica")
+        .text(`${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`);
+
+      // Confidential label
+      doc
         .font("Helvetica-Bold")
         .fontSize(10)
-        .text("STARTUP INFO", 310, metaY + 12)
-        .font("Helvetica")
-        .fontSize(9)
-        .fillColor(textColor)
-        .text(`Startup Name: ${answers.startupName || "N/A"}`)
-        .text(`Target Audience: ${answers.targetAudience || "N/A"}`)
-        .text(`Stage: ${answers.fundingStage || "N/A"}`);
+        .fillColor("#ef4444")
+        .text("CONFIDENTIAL", 70, 710, { characterSpacing: 2 });
 
-      doc.y = metaY + 90; // reset cursor below metadata
+      // Start new page for the report details
+      doc.addPage();
 
       // Helper function to check page boundaries and add page if needed
       const ensureSpace = (heightNeeded: number) => {
@@ -105,24 +128,55 @@ export function generateAssessmentPdf(
         }
       };
 
-      // 1. Executive Summary
-      ensureSpace(120);
-      doc
-        .font("Helvetica-Bold")
-        .fontSize(13)
-        .fillColor(darkColor)
-        .text("Executive Summary")
-        .moveDown(0.3);
+      const drawHeader = (sectionTitle: string) => {
+        doc
+          .font("Helvetica-Bold")
+          .fontSize(14)
+          .fillColor(darkColor)
+          .text(sectionTitle)
+          .moveDown(0.3);
+      };
 
+      // Header on every content page
+      const pageHeader = () => {
+        doc
+          .font("Helvetica-Bold")
+          .fontSize(10)
+          .fillColor(primaryColor)
+          .text("Go-to-Launch Blueprint™", 50, 30, { continued: true })
+          .fillColor("#94a3b8")
+          .font("Helvetica")
+          .text(`  |  Prepared for ${answers.startupName || "N/A"}`, { align: "left" })
+          .moveDown(0.5);
+        doc.strokeColor("#e2e8f0").lineWidth(0.5).moveTo(50, 42).lineTo(545, 42).stroke();
+        doc.y = 55;
+      };
+
+      // Set pageHeader for subsequent pages
+      doc.on("pageAdded", () => {
+        pageHeader();
+      });
+
+      // Initialize first content page header
+      pageHeader();
+
+      // ==========================================
+      // SECTION 1: EXECUTIVE SUMMARY
+      // ==========================================
+      ensureSpace(120);
+      drawHeader("Executive Summary");
       doc
         .font("Helvetica")
         .fontSize(9.5)
         .fillColor(textColor)
         .text(analysis.executiveSummary, { align: "justify", lineGap: 2.5 })
-        .moveDown(1.2);
+        .moveDown(1.5);
 
-      // 2. Phase Recommendation Banner
-      ensureSpace(95);
+      // ==========================================
+      // SECTION 2: RECOMMENDED FOUNDER-TO-LAUNCH PHASE
+      // ==========================================
+      ensureSpace(110);
+      drawHeader("Recommended Founder-to-Launch Phase");
       const recY = doc.y;
       doc
         .rect(50, recY, 495, 75)
@@ -134,18 +188,23 @@ export function generateAssessmentPdf(
         .font("Helvetica-Bold")
         .fontSize(11)
         .fillColor(primaryColor)
-        .text(`Recommended Phase: ${analysis.recommendedPhase.toUpperCase()}™`, 65, recY + 12);
+        .text(`${analysis.recommendedPhase.toUpperCase()}™ Phase`, 65, recY + 12, { continued: true })
+        .fillColor(textColor)
+        .font("Helvetica")
+        .fontSize(9)
+        .text(`  (${analysis.currentStage})`);
 
       doc
         .font("Helvetica")
         .fontSize(9)
         .fillColor(textColor)
-        .text(analysis.recommendedPhaseReasoning, 65, recY + 30, { width: 465, lineGap: 1.5 });
+        .text(analysis.recommendedPhaseReasoning, 65, recY + 32, { width: 465, lineGap: 1.5 });
 
       doc.y = recY + 90;
 
-      // 3. Founder Strengths
-      // Measure total height first to draw the rect
+      // ==========================================
+      // SECTION 3: FOUNDER STRENGTHS
+      // ==========================================
       let strengthsHeight = 15;
       analysis.founderStrengths.forEach((strength) => {
         doc.font("Helvetica").fontSize(9.5);
@@ -153,17 +212,9 @@ export function generateAssessmentPdf(
         strengthsHeight += itemHeight + 10;
       });
 
-      ensureSpace(strengthsHeight + 45); // Check if heading + box fits on the current page
-
-      doc
-        .font("Helvetica-Bold")
-        .fontSize(13)
-        .fillColor(darkColor)
-        .text("Founder Strengths")
-        .moveDown(0.4);
-
+      ensureSpace(strengthsHeight + 45);
+      drawHeader("Founder Strengths");
       const strengthsY = doc.y;
-      
       doc
         .rect(50, strengthsY, 495, strengthsHeight)
         .fill("#f0fdf4")
@@ -174,36 +225,27 @@ export function generateAssessmentPdf(
       analysis.founderStrengths.forEach((strength) => {
         doc.font("Helvetica").fontSize(9.5);
         const itemHeight = doc.heightOfString(strength, { width: 440, lineGap: 2 });
-        
-        // Draw bullet checkmark
         doc
           .font("Helvetica-Bold")
           .fontSize(9.5)
           .fillColor("#16a34a")
           .text("✓ ", 65, currentStrengthY);
 
-        // Draw strength text
         doc
           .font("Helvetica")
           .fontSize(9.5)
           .fillColor(textColor)
           .text(strength, 80, currentStrengthY, { width: 440, lineGap: 2 });
 
-        // Advance to next strength position
         currentStrengthY += itemHeight + 10;
       });
-
       doc.y = strengthsY + strengthsHeight + 15;
 
-      // 4. Biggest Opportunities
+      // ==========================================
+      // SECTION 4: BIGGEST OPPORTUNITIES
+      // ==========================================
       ensureSpace(130);
-      doc
-        .font("Helvetica-Bold")
-        .fontSize(13)
-        .fillColor(darkColor)
-        .text("Biggest Opportunities")
-        .moveDown(0.4);
-
+      drawHeader("Biggest Opportunities");
       analysis.biggestOpportunities.forEach((opp) => {
         ensureSpace(45);
         doc
@@ -217,24 +259,19 @@ export function generateAssessmentPdf(
           .text(opp.description, { lineGap: 1.5 })
           .moveDown(0.6);
       });
-
       doc.moveDown(0.6);
 
-      // 5. What Could Slow You Down (Risks)
+      // ==========================================
+      // SECTION 5: WHAT COULD SLOW YOU DOWN
+      // ==========================================
       ensureSpace(130);
-      doc
-        .font("Helvetica-Bold")
-        .fontSize(13)
-        .fillColor(darkColor)
-        .text("What Could Slow You Down")
-        .moveDown(0.4);
-
+      drawHeader("What Could Slow You Down");
       analysis.whatCouldSlowYouDown.forEach((item) => {
         ensureSpace(65);
         doc
           .font("Helvetica-Bold")
           .fontSize(10)
-          .fillColor("#ea580c") // Orange text
+          .fillColor("#ea580c")
           .text(item.risk)
           .font("Helvetica-Oblique")
           .fontSize(9)
@@ -248,18 +285,13 @@ export function generateAssessmentPdf(
           .text(item.technicalImpact, { lineGap: 1.5 })
           .moveDown(0.8);
       });
-
       doc.moveDown(0.4);
 
-      // 6. If This Were My Startup
+      // ==========================================
+      // SECTION 6: TECHNICAL PARTNERSHIP INSIGHTS
+      // ==========================================
       ensureSpace(120);
-      doc
-        .font("Helvetica-Bold")
-        .fontSize(13)
-        .fillColor(darkColor)
-        .text("If This Were My Startup")
-        .moveDown(0.4);
-
+      drawHeader("Technical Partnership Insights");
       let stepNum = 1;
       analysis.ifThisWereMyStartup.forEach((point) => {
         ensureSpace(45);
@@ -275,18 +307,13 @@ export function generateAssessmentPdf(
           .moveDown(0.5);
         stepNum++;
       });
-
       doc.moveDown(0.6);
 
-      // 7. Engineering Strategy
+      // ==========================================
+      // SECTION 7: ENGINEERING STRATEGY
+      // ==========================================
       ensureSpace(120);
-      doc
-        .font("Helvetica-Bold")
-        .fontSize(13)
-        .fillColor(darkColor)
-        .text("Engineering Strategy")
-        .moveDown(0.4);
-
+      drawHeader("Engineering Strategy");
       analysis.engineeringStrategy.forEach((strat) => {
         ensureSpace(60);
         doc
@@ -307,18 +334,13 @@ export function generateAssessmentPdf(
           .text(strat.why, { lineGap: 1.5 })
           .moveDown(0.8);
       });
-
       doc.moveDown(0.4);
 
-      // 8. Fastest Path to Launch
+      // ==========================================
+      // SECTION 8: FASTEST PATH TO LAUNCH
+      // ==========================================
       ensureSpace(120);
-      doc
-        .font("Helvetica-Bold")
-        .fontSize(13)
-        .fillColor(darkColor)
-        .text("Fastest Path to Launch")
-        .moveDown(0.4);
-
+      drawHeader("Fastest Path to Launch");
       analysis.fastestPathToLaunch.forEach((point) => {
         ensureSpace(35);
         doc
@@ -331,11 +353,13 @@ export function generateAssessmentPdf(
           .text(point, { lineGap: 1.5 })
           .moveDown(0.5);
       });
-
       doc.moveDown(0.8);
 
-      // 9. Potential Time Savings Callout
+      // ==========================================
+      // SECTION 9: POTENTIAL TIME SAVINGS
+      // ==========================================
       ensureSpace(70);
+      drawHeader("Potential Time Savings");
       const savingsY = doc.y;
       doc
         .rect(50, savingsY, 495, 55)
@@ -348,16 +372,20 @@ export function generateAssessmentPdf(
         .fontSize(8.5)
         .fillColor("#57534e")
         .text(
-          "Resolving the recommendations in this report before development begins could reduce unnecessary engineering effort by several weeks. Validating assumptions early is significantly less expensive than rebuilding after launch.",
+          "Resolving the recommendations in this blueprint before development begins could reduce unnecessary engineering effort by several weeks. Validating assumptions early is significantly less expensive than rebuilding after launch. Founders using this blueprint typically save 30-40% of standard MVP timelines.",
           65,
           savingsY + 12,
           { width: 465, align: "center", lineGap: 2 }
         );
 
       doc.y = savingsY + 70;
+      doc.moveDown(1);
 
-      // 10. Book Discovery Call CTA Footer Banner
+      // ==========================================
+      // SECTION 10: RECOMMENDED NEXT ACTIONS
+      // ==========================================
       ensureSpace(150);
+      drawHeader("Recommended Next Actions");
       const drawCtaY = doc.y;
       doc
         .rect(50, drawCtaY, 495, 125)
@@ -368,32 +396,33 @@ export function generateAssessmentPdf(
         .font("Helvetica-Bold")
         .fontSize(11)
         .fillColor("#ffffff")
-        .text("Continue Your Founder-to-Launch Journey", 65, drawCtaY + 12);
+        .text("Continue Your Go-to-Launch Journey", 65, drawCtaY + 12);
 
       doc
         .font("Helvetica")
         .fontSize(8.5)
         .fillColor("#e2e8f0")
-        .text("This report is intentionally the beginning—not the conclusion. A Discovery Session builds on these findings to refine MVP scope, prioritize value, and design the fastest path to launch. Whether we decide to work together or not, you will leave with a practical roadmap.", 65, drawCtaY + 28, { width: 465, lineGap: 1.5 });
+        .text("Your Blueprint is the beginning—not the final answer. During a Discovery Session, we will review it together, challenge key assumptions, refine your MVP scope, and build a practical launch plan. The objective is to help you launch with greater confidence—in weeks, not months.", 65, drawCtaY + 28, { width: 465, lineGap: 1.5 });
 
       doc
         .font("Helvetica-Bold")
         .fontSize(9)
         .fillColor("#34d399")
-        .text("✓ Refine MVP Scope   ✓ Challenge Key Assumptions   ✓ Identify Risks Early   ✓ Design Launch Path", 65, drawCtaY + 80);
+        .text("✓ Refine MVP Scope   ✓ Challenge Key Assumptions   ✓ Reduce Execution Risk   ✓ Build Practical Plan", 65, drawCtaY + 80);
 
       doc
         .font("Helvetica-Bold")
         .fontSize(10)
         .fillColor("#f472b6")
-        .text("Book Your Discovery Session at: MehdiGolzari.dev", 65, drawCtaY + 102);
+        .text("Review Your Blueprint Together at: MehdiGolzari.dev", 65, drawCtaY + 102);
 
       doc.y = drawCtaY + 135;
 
-      // Global Footer (Page numbers)
+      // Global Footer (Page numbers, excluding Cover Page)
       const range = doc.bufferedPageRange();
       for (let i = range.start; i < range.start + range.count; i++) {
         doc.switchToPage(i);
+        if (i === 0) continue; // Skip cover page footer
         doc
           .fillColor("#94a3b8")
           .font("Helvetica")

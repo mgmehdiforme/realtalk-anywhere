@@ -42,8 +42,8 @@ function AuthCallbackPage() {
           if (res.token) {
             document.cookie = `founder_session=${res.token}; Path=/; Max-Age=${30 * 24 * 60 * 60}; SameSite=Lax`;
           }
-          // Redirect to assessment landing/wizard
-          navigate({ to: "/assessment" });
+          // Redirect to blueprint builder
+          navigate({ to: "/blueprint" });
         } else {
           setError(res.error || "Authentication failed.");
         }
@@ -64,10 +64,10 @@ function AuthCallbackPage() {
             <p className="text-sm text-muted-foreground">{error}</p>
             <div className="mt-4">
               <Link
-                to="/assessment"
+                to="/blueprint"
                 className="inline-flex items-center justify-center rounded-xl bg-neon px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
               >
-                Go back to Assessment
+                Go back to Blueprint Builder
               </Link>
             </div>
           </div>

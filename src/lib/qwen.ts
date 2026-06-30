@@ -68,9 +68,9 @@ const DEFAULT_MOCK_RESULT: QwenAnalysisResult = {
 };
 
 /**
- * Generate AI analysis report from assessment answers using Qwen
+ * Generate AI analysis report from blueprint inputs using Qwen
  */
-export async function analyzeAssessmentAnswers(
+export async function analyzeBlueprintAnswers(
   answers: Record<string, any>,
   founderEmail: string
 ): Promise<QwenAnalysisResult> {
@@ -104,7 +104,7 @@ export async function analyzeAssessmentAnswers(
   }
 
   const systemPrompt = `You are a Senior SaaS Architect and Founder Advisor. 
-Analyze the provided startup assessment answers and return a JSON object with a structured analysis.
+Analyze the provided startup blueprint inputs and return a JSON object with a structured analysis.
 The JSON object MUST exactly match the following structure:
 {
   "executiveSummary": "A concise 2-3 sentence overview summarizing the founder profile, startup idea, and primary opportunity.",
@@ -154,11 +154,11 @@ Style Guidelines:
    - "The first assumption I would challenge..."
    - "Before investing months in development..."
    - "If we were working together..."
-3. DO NOT use generic templates like "Based on your answers..." or "We recommend...". Write naturally as if talking directly to a founder.
+3. DO NOT use generic templates like "Based on your inputs..." or "We recommend...". Write naturally as if talking directly to a founder.
 4. Keep the tone optimistic but highly realistic and strategic.
 5. Do not return any markdown formatting (like \`\`\`json), just return the raw JSON string. Ensure the response parses correctly as JSON.`;
 
-  const userPrompt = `Assessment answers for founder ${founderEmail}:
+  const userPrompt = `Blueprint inputs for founder ${founderEmail}:
 ${JSON.stringify(answers, null, 2)}`;
 
   try {

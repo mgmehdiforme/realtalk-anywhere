@@ -57,18 +57,18 @@ export function DemoModalProvider({ children }: { children: ReactNode }) {
               </div>
               <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
                 <ClipboardCheck className="h-4.5 w-4.5 text-neon" />
-                Qualify Your Project First
+                Build Your Execution Blueprint First
               </h3>
               <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
-                Take the 10-minute assessment to receive an instant AI technical report & PDF roadmap. Doing this first ensures we spend our conversation designing real solutions rather than gathering basic scope details.
+                Create your personalized Go-to-Launch Blueprint™ before our session. Building your blueprint first clarifies your MVP scope and highlights technical risks so we can spend our time designing execution strategies.
               </p>
               <div className="mt-4">
                 <Link
-                  to="/assessment"
+                  to="/blueprint"
                   onClick={() => setOpen(false)}
                   className="w-full flex items-center justify-center gap-2 rounded-xl bg-neon px-5 py-3 text-xs font-bold text-primary-foreground shadow-neon transition hover:brightness-110"
                 >
-                  Start Free Founder Assessment ⚡
+                  Build My Blueprint ⚡
                 </Link>
               </div>
             </div>
