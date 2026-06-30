@@ -13,6 +13,7 @@ import { Route as ServicesRouteImport } from './routes/services'
 import { Route as ResumeRouteImport } from './routes/resume'
 import { Route as FounderToLaunchFrameworkRouteImport } from './routes/founder-to-launch-framework'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as BlueprintRouteImport } from './routes/blueprint'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
@@ -38,6 +39,11 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlueprintRoute = BlueprintRouteImport.update({
+  id: '/blueprint',
+  path: '/blueprint',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -57,6 +63,7 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/blueprint': typeof BlueprintRoute
   '/contact': typeof ContactRoute
   '/founder-to-launch-framework': typeof FounderToLaunchFrameworkRoute
   '/resume': typeof ResumeRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/blueprint': typeof BlueprintRoute
   '/contact': typeof ContactRoute
   '/founder-to-launch-framework': typeof FounderToLaunchFrameworkRoute
   '/resume': typeof ResumeRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/blueprint': typeof BlueprintRoute
   '/contact': typeof ContactRoute
   '/founder-to-launch-framework': typeof FounderToLaunchFrameworkRoute
   '/resume': typeof ResumeRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/blueprint'
     | '/contact'
     | '/founder-to-launch-framework'
     | '/resume'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/blueprint'
     | '/contact'
     | '/founder-to-launch-framework'
     | '/resume'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/blueprint'
     | '/contact'
     | '/founder-to-launch-framework'
     | '/resume'
@@ -115,6 +127,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  BlueprintRoute: typeof BlueprintRoute
   ContactRoute: typeof ContactRoute
   FounderToLaunchFrameworkRoute: typeof FounderToLaunchFrameworkRoute
   ResumeRoute: typeof ResumeRoute
@@ -152,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blueprint': {
+      id: '/blueprint'
+      path: '/blueprint'
+      fullPath: '/blueprint'
+      preLoaderRoute: typeof BlueprintRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -179,6 +199,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  BlueprintRoute: BlueprintRoute,
   ContactRoute: ContactRoute,
   FounderToLaunchFrameworkRoute: FounderToLaunchFrameworkRoute,
   ResumeRoute: ResumeRoute,
@@ -188,3 +209,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
