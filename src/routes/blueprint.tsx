@@ -39,8 +39,9 @@ import {
 /**
  * Fetch the current user state, blueprint progress/submission, and env configs
  */
-export const getBlueprintState = createServerFn()
-  .handler(async ({ request }) => {
+export const getBlueprintState = createServerFn({ method: "GET" })
+  .handler(async () => {
+
     const { getSessionFromRequest } = await import("@/lib/auth");
     const { getUser, getBlueprint } = await import("@/lib/db");
 
