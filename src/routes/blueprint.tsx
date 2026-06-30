@@ -40,14 +40,12 @@ import {
  * Fetch the current user state, blueprint progress/submission, and env configs
  */
 export const getBlueprintState = createServerFn({ method: "GET" })
-  .handler(async () => {
-
+  .handler(async ({ request }) => {
     const { getSessionFromRequest } = await import("@/lib/auth");
     const { getUser, getBlueprint } = await import("@/lib/db");
-    const { getWebRequest } = await import("@tanstack/react-start/server");
 
-    const request = getWebRequest();
-    const session = getSessionFromRequest(request!);
+    const session = getSessionFromRequest(request);
+
 
     const googleClientId = process.env.GOOGLE_CLIENT_ID || "";
     const showMockLogin = !googleClientId || !process.env.GOOGLE_CLIENT_SECRET;
