@@ -107,7 +107,8 @@ function Landing() {
                 to="/blueprint"
                 className="inline-flex items-center justify-center rounded-xl bg-neon px-6 py-3.5 text-base font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
               >
-                Build My Blueprint
+                Build My Blueprint Report | Free
+
               </Link>
               <Link
                 to="/founder-to-launch-framework"
