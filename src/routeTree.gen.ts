@@ -16,7 +16,11 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as BlueprintRouteImport } from './routes/blueprint'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BlogIndexRouteImport } from './routes/blog/index'
+import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as AdminLoginRouteImport } from './routes/admin/login'
+import { Route as AdminBlogRouteImport } from './routes/admin/blog'
 
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
@@ -54,9 +58,29 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminBlogRoute = AdminBlogRouteImport.update({
+  id: '/admin/blog',
+  path: '/admin/blog',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -68,7 +92,11 @@ export interface FileRoutesByFullPath {
   '/founder-to-launch-framework': typeof FounderToLaunchFrameworkRoute
   '/resume': typeof ResumeRoute
   '/services': typeof ServicesRoute
+  '/admin/blog': typeof AdminBlogRoute
+  '/admin/login': typeof AdminLoginRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/blog/': typeof BlogIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,7 +106,11 @@ export interface FileRoutesByTo {
   '/founder-to-launch-framework': typeof FounderToLaunchFrameworkRoute
   '/resume': typeof ResumeRoute
   '/services': typeof ServicesRoute
+  '/admin/blog': typeof AdminBlogRoute
+  '/admin/login': typeof AdminLoginRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/blog': typeof BlogIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,7 +121,11 @@ export interface FileRoutesById {
   '/founder-to-launch-framework': typeof FounderToLaunchFrameworkRoute
   '/resume': typeof ResumeRoute
   '/services': typeof ServicesRoute
+  '/admin/blog': typeof AdminBlogRoute
+  '/admin/login': typeof AdminLoginRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/blog/': typeof BlogIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,7 +137,11 @@ export interface FileRouteTypes {
     | '/founder-to-launch-framework'
     | '/resume'
     | '/services'
+    | '/admin/blog'
+    | '/admin/login'
     | '/auth/callback'
+    | '/blog/$slug'
+    | '/blog/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,7 +151,11 @@ export interface FileRouteTypes {
     | '/founder-to-launch-framework'
     | '/resume'
     | '/services'
+    | '/admin/blog'
+    | '/admin/login'
     | '/auth/callback'
+    | '/blog/$slug'
+    | '/blog'
   id:
     | '__root__'
     | '/'
@@ -121,7 +165,11 @@ export interface FileRouteTypes {
     | '/founder-to-launch-framework'
     | '/resume'
     | '/services'
+    | '/admin/blog'
+    | '/admin/login'
     | '/auth/callback'
+    | '/blog/$slug'
+    | '/blog/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,7 +180,11 @@ export interface RootRouteChildren {
   FounderToLaunchFrameworkRoute: typeof FounderToLaunchFrameworkRoute
   ResumeRoute: typeof ResumeRoute
   ServicesRoute: typeof ServicesRoute
+  AdminBlogRoute: typeof AdminBlogRoute
+  AdminLoginRoute: typeof AdminLoginRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  BlogSlugRoute: typeof BlogSlugRoute
+  BlogIndexRoute: typeof BlogIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -186,11 +238,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/blog': {
+      id: '/admin/blog'
+      path: '/admin/blog'
+      fullPath: '/admin/blog'
+      preLoaderRoute: typeof AdminBlogRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -204,7 +284,11 @@ const rootRouteChildren: RootRouteChildren = {
   FounderToLaunchFrameworkRoute: FounderToLaunchFrameworkRoute,
   ResumeRoute: ResumeRoute,
   ServicesRoute: ServicesRoute,
+  AdminBlogRoute: AdminBlogRoute,
+  AdminLoginRoute: AdminLoginRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  BlogSlugRoute: BlogSlugRoute,
+  BlogIndexRoute: BlogIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -155,14 +155,29 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function NavBar() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
   const links = [
     { to: "/" as const, label: "Home", exact: true },
     { to: "/services" as const, label: "Offers" },
+    { to: "/blog" as const, label: "Blog" },
     { to: "/about" as const, label: "About" },
     { to: "/resume" as const, label: "Resume" },
     { to: "/contact" as const, label: "Contact" },
     { to: "/blueprint" as const, label: "Go-to-Launch Blueprint™" },
   ];
+
+  // Dynamic scroll listener for modern sticky UI/UX
+  useEffect(() => {
+    const handleScroll = () => {
+      const isPastThreshold = window.scrollY > 15;
+      setScrolled(isPastThreshold);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -174,29 +189,45 @@ function NavBar() {
   }, [open]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/70 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-5 sm:px-8">
-        <Link to="/" className="flex min-w-0 items-center gap-2.5" onClick={() => setOpen(false)}>
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-neon shadow-neon">
+    <header
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "border-b border-border/80 bg-background/85 shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-2xl py-0.5"
+          : "border-b border-border/40 bg-background/60 backdrop-blur-lg py-1.5"
+      }`}
+    >
+      <div
+        className={`mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 sm:px-8 transition-all duration-300 ${
+          scrolled ? "h-14" : "h-16"
+        }`}
+      >
+        <Link to="/" className="flex min-w-0 items-center gap-2.5 group" onClick={() => setOpen(false)}>
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-neon shadow-neon transition-transform duration-200 group-hover:scale-105">
             <span className="h-3 w-3 rounded-sm bg-background" />
           </span>
           <span className="truncate font-display text-base font-semibold tracking-tight">
             MehdiGolzari<span className="text-neon-gradient">.dev</span>
           </span>
         </Link>
-        <nav className="hidden items-center gap-1 text-sm md:flex">
+
+        {/* Desktop Modern Pill Nav */}
+        <nav className="hidden items-center gap-1 text-sm md:flex rounded-full border border-border/50 bg-card/60 p-1 shadow-xs backdrop-blur-md">
           {links.map((l) => (
             <Link
               key={l.to}
               to={l.to}
               activeOptions={l.exact ? { exact: true } : undefined}
-              className="rounded-md px-3 py-2 text-muted-foreground transition hover:text-foreground"
-              activeProps={{ className: "rounded-md px-3 py-2 text-foreground" }}
+              className="rounded-full px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-200 hover:bg-muted/80 hover:text-foreground"
+              activeProps={{
+                className:
+                  "rounded-full px-3.5 py-1.5 text-xs font-semibold text-foreground bg-background shadow-xs border border-border/60",
+              }}
             >
               {l.label}
             </Link>
           ))}
         </nav>
+
         <div className="flex items-center gap-2">
           <div className="hidden items-center gap-2 md:flex">
             <LanguageSelect />
@@ -254,7 +285,7 @@ function NavBar() {
                     activeOptions={l.exact ? { exact: true } : undefined}
                     onClick={() => setOpen(false)}
                     className="rounded-lg px-4 py-3 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                    activeProps={{ className: "rounded-lg px-4 py-3 text-foreground bg-muted" }}
+                    activeProps={{ className: "rounded-lg px-4 py-3 text-foreground bg-muted font-semibold" }}
                   >
                     {l.label}
                   </Link>
@@ -291,16 +322,19 @@ function Footer() {
               WhatsApp
             </a>
             <a
-              className="hover:text-foreground"
               href="https://linkedin.com/in/mehdigolzariofficial"
               target="_blank"
               rel="noreferrer"
+              className="hover:text-foreground"
             >
               LinkedIn
             </a>
           </div>
         </div>
         <div className="flex flex-col gap-2 text-left sm:items-end">
+          <Link to="/blog" className="hover:text-foreground">
+            Technical Blog
+          </Link>
           <Link to="/founder-to-launch-framework" className="hover:text-foreground">
             Founder-to-Launch Framework™
           </Link>
