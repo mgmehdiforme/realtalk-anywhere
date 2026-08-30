@@ -49,8 +49,8 @@ steps:
 
 # Substitution defaults - override in the Cloud Build trigger UI or --substitutions flag
 substitutions:
-  _SERVICE_NAME: realtalk-anywhere
-  _REGION: us-central1
+  _SERVICE_NAME: mehdi-golzari
+  _REGION: europe-west1
   _REPOSITORY: realtalk
 
 # Store build image in Artifact Registry
