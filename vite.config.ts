@@ -13,6 +13,9 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    define: {
+      "process.env": {},
+    },
     build: {
       rollupOptions: {
         external: ["vinxi/http"],

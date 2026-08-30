@@ -14,7 +14,8 @@ import {
   Flame,
   CheckCircle2,
 } from "lucide-react";
-import { getBlogPosts, BLOG_PILLAR_CATEGORIES, type BlogPost } from "@/lib/db";
+import { getBlogPosts } from "@/lib/db";
+import { BLOG_PILLAR_CATEGORIES, type BlogPost } from "@/lib/blog-types";
 
 interface BlogSearchSchema {
   tag?: string;

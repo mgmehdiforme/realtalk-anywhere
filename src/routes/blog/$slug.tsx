@@ -19,7 +19,8 @@ import {
   ExternalLink,
   ChevronRight,
 } from "lucide-react";
-import { getBlogPostBySlug, getRelatedBlogPosts, type BlogPost } from "@/lib/db";
+import { getBlogPostBySlug, getRelatedBlogPosts } from "@/lib/db";
+import type { BlogPost } from "@/lib/blog-types";
 import { marked } from "marked";
 import katex from "katex";
 
