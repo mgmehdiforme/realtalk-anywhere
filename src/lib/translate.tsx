@@ -1,32 +1,41 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Globe, Check, Loader2 } from "lucide-react";
 
-declare global {
-  interface Window {
-    google?: any;
-    googleTranslateElementInit?: () => void;
-  }
-}
-
 const LANGS = [
-  { code: "en", label: "English", flag: "EN" },
+  { code: "en", label: "English", flag: "🇺🇸" },
   { code: "nl", label: "Nederlands", flag: "🇳🇱" },
   { code: "de", label: "Deutsch", flag: "🇩🇪" },
   { code: "sv", label: "Svenska", flag: "🇸🇪" },
   { code: "da", label: "Dansk", flag: "🇩🇰" },
   { code: "no", label: "Norsk", flag: "🇳🇴" },
+  { code: "fr", label: "Français", flag: "🇫🇷" },
+  { code: "es", label: "Español", flag: "🇪🇸" },
 ];
 
-const INCLUDED = LANGS.map((l) => l.code).join(",");
+function setTranslationCookie(langCode: string) {
+  const host = typeof window !== "undefined" ? window.location.hostname : "";
+  if (!host) return;
 
-function setCookie(name: string, value: string) {
-  const host = window.location.hostname;
-  document.cookie = `${name}=${value};path=/`;
-  document.cookie = `${name}=${value};path=/;domain=.${host}`;
-  const parts = host.split(".");
-  if (parts.length > 1) {
-    const root = parts.slice(-2).join(".");
-    document.cookie = `${name}=${value};path=/;domain=.${root}`;
+  if (langCode === "en") {
+    const expired = "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = `googtrans${expired}`;
+    document.cookie = `googtrans${expired} domain=${host};`;
+    document.cookie = `googtrans${expired} domain=.${host};`;
+    const parts = host.split(".");
+    if (parts.length >= 2) {
+      const root = parts.slice(-2).join(".");
+      document.cookie = `googtrans${expired} domain=.${root};`;
+    }
+  } else {
+    const val = `/en/${langCode}`;
+    document.cookie = `googtrans=${val}; path=/;`;
+    document.cookie = `googtrans=${val}; path=/; domain=${host};`;
+    document.cookie = `googtrans=${val}; path=/; domain=.${host};`;
+    const parts = host.split(".");
+    if (parts.length >= 2) {
+      const root = parts.slice(-2).join(".");
+      document.cookie = `googtrans=${val}; path=/; domain=.${root};`;
+    }
   }
 }
 
@@ -35,127 +44,93 @@ export function LanguageSelect() {
   const [current, setCurrent] = useState("en");
   const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const scriptLoaded = useRef(false);
 
-  // Lazy-load Google Translate script on demand
-  const loadTranslateScript = useCallback(() => {
-    if (scriptLoaded.current || typeof window === "undefined") return;
-    scriptLoaded.current = true;
-
-    window.googleTranslateElementInit = () => {
-      if (window.google?.translate?.TranslateElement) {
-        new window.google.translate.TranslateElement(
-          {
-            pageLanguage: "en",
-            includedLanguages: INCLUDED,
-            autoDisplay: false,
-            layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
-          },
-          "google_translate_element",
-        );
-      }
-    };
-
-    const s = document.createElement("script");
-    s.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-    s.async = true;
-    document.body.appendChild(s);
+  useEffect(() => {
+    // Read current language from cookie
+    const match = document.cookie.match(/googtrans=\/[a-zA-Z-]+\/([a-zA-Z-]+)/);
+    if (match && match[1]) {
+      setCurrent(match[1].toLowerCase());
+    }
   }, []);
 
   useEffect(() => {
-    // Read current selection from cookie if already set
-    const m = document.cookie.match(/googtrans=\/[a-z]+\/([a-z-]+)/);
-    if (m) {
-      setCurrent(m[1]);
-      if (m[1] !== "en") {
-        // If a non-English language was previously selected, load script to apply translation
-        loadTranslateScript();
+    const onDocClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
       }
-    }
-
-    // Schedule background load after page is fully idle
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      (window as any).requestIdleCallback(() => loadTranslateScript(), { timeout: 5000 });
-    }
-  }, [loadTranslateScript]);
-
-  useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
-  const handleToggle = () => {
-    loadTranslateScript();
-    setOpen((o) => !o);
-  };
-
-  const pick = (code: string) => {
-    if (code === current) {
+  const selectLanguage = (code: string) => {
+    if (code === current && !loading) {
       setOpen(false);
       return;
     }
-    setCurrent(code);
+
     setOpen(false);
     setLoading(true);
-    if (code === "en") {
-      setCookie("googtrans", "");
-      document.cookie = "googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    setCurrent(code);
+    setTranslationCookie(code);
+
+    // Try live DOM trigger via Google Translate combo box
+    const combo = document.querySelector<HTMLSelectElement>(".goog-te-combo");
+    if (combo) {
+      combo.value = code;
+      combo.dispatchEvent(new Event("change", { bubbles: true }));
+      setTimeout(() => {
+        setLoading(false);
+      }, 500);
     } else {
-      setCookie("googtrans", `/en/${code}`);
+      setTimeout(() => {
+        window.location.reload();
+      }, 200);
     }
-    setTimeout(() => window.location.reload(), 150);
   };
 
-  const active = LANGS.find((l) => l.code === current) ?? LANGS[0];
+  const activeLang = LANGS.find((l) => l.code === current) ?? LANGS[0];
 
   return (
     <div ref={ref} className="relative">
-      {/* Hidden Google widget container */}
-      <div
-        id="google_translate_element"
-        className="absolute -left-[9999px] top-0 h-0 w-0 overflow-hidden"
-        aria-hidden
-      />
-
       <button
-        onClick={handleToggle}
-        onMouseEnter={loadTranslateScript}
-        onFocus={loadTranslateScript}
+        onClick={() => setOpen((o) => !o)}
         disabled={loading}
-        aria-label="Choose language"
+        aria-label="Select language"
         className="notranslate inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 text-xs font-medium text-muted-foreground transition hover:text-foreground disabled:opacity-70"
       >
         {loading ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin text-neon" />
         ) : (
-          <Globe className="h-3.5 w-3.5" />
+          <Globe className="h-3.5 w-3.5 text-neon" />
         )}
-        <span>{active.flag}</span>
-        <span className="hidden sm:inline">{loading ? "Translating…" : active.label}</span>
+        <span className="text-sm leading-none">{activeLang.flag}</span>
+        <span className="hidden sm:inline font-semibold">{loading ? "Translating…" : activeLang.label}</span>
       </button>
 
       {loading && (
-        <div className="fixed inset-x-0 top-0 z-[100] h-0.5 overflow-hidden bg-transparent">
+        <div className="fixed inset-x-0 top-0 z-[100] h-0.5 overflow-hidden bg-transparent pointer-events-none">
           <div className="h-full w-1/3 animate-[slide-in-right_1.2s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-neon to-transparent" />
         </div>
       )}
 
       {open && (
-        <div className="notranslate absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-border bg-card shadow-card">
+        <div className="notranslate absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-border bg-card shadow-2xl z-50 py-1">
           {LANGS.map((l) => (
             <button
               key={l.code}
-              onClick={() => pick(l.code)}
-              className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm text-foreground/90 transition hover:bg-muted"
+              onClick={() => selectLanguage(l.code)}
+              className={`flex w-full items-center justify-between px-3 py-2 text-left text-xs transition ${
+                l.code === current
+                  ? "bg-neon/15 text-neon font-bold"
+                  : "text-foreground/90 hover:bg-muted font-medium"
+              }`}
             >
               <span className="flex items-center gap-2">
-                <span>{l.flag}</span>
+                <span className="text-sm leading-none">{l.flag}</span>
                 <span>{l.label}</span>
               </span>
-              {l.code === current && <Check className="h-4 w-4 text-neon" />}
+              {l.code === current && <Check className="h-3.5 w-3.5 text-neon" />}
             </button>
           ))}
         </div>

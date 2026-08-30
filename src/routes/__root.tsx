@@ -133,8 +133,47 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        {/* Hidden persistent Google Translate element */}
+        <div id="google_translate_element" style={{ display: "none" }} aria-hidden="true" />
         {children}
         <Scripts />
+
+        {/* Google Translate Init & Loader */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.googleTranslateElementInit = function() {
+                if (window.google && window.google.translate && window.google.translate.TranslateElement) {
+                  new window.google.translate.TranslateElement({
+                    pageLanguage: 'en',
+                    includedLanguages: 'en,nl,de,sv,da,no,fr,es',
+                    autoDisplay: false,
+                    layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE
+                  }, 'google_translate_element');
+                }
+              };
+
+              function loadGoogleTranslateScript() {
+                if (window._gtScriptLoaded) return;
+                window._gtScriptLoaded = true;
+                var s = document.createElement('script');
+                s.async = true;
+                s.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+                document.head.appendChild(s);
+              }
+
+              // Load immediately if translated cookie is present, otherwise load on idle/interaction
+              if (document.cookie.indexOf('googtrans=') !== -1 && document.cookie.indexOf('googtrans=/en/en') === -1) {
+                loadGoogleTranslateScript();
+              } else if ('requestIdleCallback' in window) {
+                requestIdleCallback(loadGoogleTranslateScript, { timeout: 3500 });
+              } else {
+                window.addEventListener('load', loadGoogleTranslateScript);
+              }
+            `,
+          }}
+        />
+
         {/* Google Tag Manager (Deferred to idle to prevent render blocking) */}
         <script
           dangerouslySetInnerHTML={{
