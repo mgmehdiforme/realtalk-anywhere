@@ -116,7 +116,7 @@ const competencies: Record<string, string[]> = {
 
 const roles = [
   {
-    company: "SE Marketing & PR",
+    company: "Opzora.AI",
     location: "Dubai, UAE · Remote",
     title: "CTO — Leading end-to-end Technical Strategy",
     period: "Jun 2026 – Present",
