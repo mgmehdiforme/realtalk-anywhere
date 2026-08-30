@@ -368,7 +368,7 @@ function SingleBlogPostPage() {
         />
       </div>
 
-      <article className="mx-auto max-w-7xl px-4 sm:px-8 py-8 sm:py-12 w-full max-w-full min-w-0">
+      <article className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full min-w-0">
         {/* Breadcrumb Navigation */}
         <nav className="flex items-center gap-2 text-xs text-muted-foreground mb-8 overflow-x-auto whitespace-nowrap pb-1">
           <Link to="/" className="hover:text-foreground transition">
@@ -383,7 +383,7 @@ function SingleBlogPostPage() {
         </nav>
 
         {/* ── ARTICLE HEADER ── */}
-        <header className="max-w-4xl w-full min-w-0 space-y-6 mb-10">
+        <header className="w-full min-w-0 space-y-6 mb-10">
           <div className="flex flex-wrap items-center gap-2">
             {post.tags.map((tag) => (
               <span
@@ -427,7 +427,7 @@ function SingleBlogPostPage() {
         </header>
 
         {/* ── HERO BANNER IMAGE ── */}
-        <div className="max-w-5xl w-full rounded-2xl sm:rounded-3xl border border-border bg-card overflow-hidden shadow-card mb-8 sm:mb-12">
+        <div className="w-full rounded-2xl sm:rounded-3xl border border-border bg-card overflow-hidden shadow-card mb-8 sm:mb-12">
           <img
             src={post.coverImage}
             alt={post.title}
@@ -436,7 +436,7 @@ function SingleBlogPostPage() {
         </div>
 
         {/* ── TWO-COLUMN ARTICLE BODY ── */}
-        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 max-w-5xl w-full min-w-0">
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 w-full min-w-0">
           {/* Main Markdown Body (8 Cols) */}
           <div className="lg:col-span-8 space-y-8 w-full min-w-0 max-w-full">
             <div
