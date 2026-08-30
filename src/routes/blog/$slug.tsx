@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { getBlogPostBySlug, getRelatedBlogPosts, type BlogPost } from "@/lib/db";
 import { marked } from "marked";
+import katex from "katex";
 
 /**
  * Server Function to load post by slug and related posts
@@ -127,6 +128,12 @@ export const Route = createFileRoute("/blog/$slug")({
         { name: "article:published_time", content: post.publishedAt || post.createdAt },
         { name: "article:author", content: "Mehdi Golzari" },
       ],
+      links: [
+        {
+          rel: "stylesheet",
+          href: "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
+        },
+      ],
       scripts: [
         {
           type: "application/ld+json",
@@ -141,6 +148,41 @@ export const Route = createFileRoute("/blog/$slug")({
   },
   component: SingleBlogPostPage,
 });
+
+/**
+ * Preprocess math formulas ($$...$$ for display math, $...$ for inline math)
+ */
+function renderMathInMarkdown(content: string): string {
+  if (!content) return "";
+
+  // 1. Block Math: $$ ... $$
+  let processed = content.replace(/\$\$([\s\S]+?)\$\$/g, (_match, math) => {
+    try {
+      const rendered = katex.renderToString(math.trim(), {
+        displayMode: true,
+        throwOnError: false,
+      });
+      return `\n\n<div class="my-8 rounded-2xl border border-neon/40 bg-[#0d1326] p-5 shadow-card overflow-x-auto text-center font-mono text-sm sm:text-base text-foreground leading-relaxed">${rendered}</div>\n\n`;
+    } catch {
+      return `\n\n<div class="my-8 rounded-2xl border border-border bg-card p-5 text-center font-mono text-sm text-foreground">${math}</div>\n\n`;
+    }
+  });
+
+  // 2. Inline Math: $ ... $
+  processed = processed.replace(/(^|[^\\])\$([^\$\n]+?)\$/g, (_match, prefix, math) => {
+    try {
+      const rendered = katex.renderToString(math.trim(), {
+        displayMode: false,
+        throwOnError: false,
+      });
+      return `${prefix}<span class="inline-math px-1">${rendered}</span>`;
+    } catch {
+      return `${prefix}$${math}$`;
+    }
+  });
+
+  return processed;
+}
 
 function SingleBlogPostPage() {
   const { post, related } = Route.useLoaderData();
@@ -180,8 +222,11 @@ function SingleBlogPostPage() {
     const renderer = new marked.Renderer();
 
     // Custom Heading Renderer with Section Dividers and Generous Spacing
-    renderer.heading = ({ text, depth }: { text: string; depth: number }) => {
-      const cleanText = text.replace(/<[^>]*>/g, "");
+    (renderer as any).heading = function (this: any, token: any) {
+      const depth = token.depth;
+      const text = this.parser.parseInline(token.tokens || []);
+      const rawText = token.text || "";
+      const cleanText = rawText.replace(/<[^>]*>/g, "");
       const id = cleanText
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
@@ -217,8 +262,9 @@ function SingleBlogPostPage() {
     };
 
     // Custom Paragraph Renderer with Generous Spacing & High-Contrast Typography
-    renderer.paragraph = ({ text }: { text: string }) => {
-      return `<p class="mb-7 text-[15px] sm:text-base leading-[1.85] text-foreground/85 font-normal break-words">${text}</p>`;
+    (renderer as any).paragraph = function (this: any, token: any) {
+      const inlineHtml = this.parser.parseInline(token.tokens || []);
+      return `<p class="mb-7 text-[15px] sm:text-base leading-[1.85] text-foreground/85 font-normal break-words">${inlineHtml}</p>`;
     };
 
     // Custom Horizontal Rule Renderer
@@ -227,25 +273,30 @@ function SingleBlogPostPage() {
     };
 
     // Custom List & ListItem Renderer
-    (renderer as any).list = function ({ body, ordered }: { body: string; ordered: boolean }) {
-      return ordered
+    (renderer as any).list = function (this: any, token: any) {
+      const body = token.items
+        ? token.items.map((item: any) => this.listitem(item)).join("")
+        : token.body || "";
+      return token.ordered
         ? `<ol class="my-7 pl-6 list-decimal space-y-3.5 text-[15px] sm:text-base leading-[1.85] text-foreground/85">${body}</ol>`
         : `<ul class="my-7 pl-6 list-disc space-y-3.5 text-[15px] sm:text-base leading-[1.85] text-foreground/85">${body}</ul>`;
     };
 
-    renderer.listitem = ({ text }: { text: string }) => {
-      return `<li class="pl-1 text-foreground/85 leading-[1.85] break-words">${text}</li>`;
+    (renderer as any).listitem = function (this: any, token: any) {
+      const itemContent = this.parser.parseInline(token.tokens || []);
+      return `<li class="pl-1 text-foreground/85 leading-[1.85] break-words">${itemContent}</li>`;
     };
 
     // Custom Callout / Alert Box Renderer
-    renderer.blockquote = ({ text }: { text: string }) => {
-      const alertMatch = text.match(
+    (renderer as any).blockquote = function (this: any, token: any) {
+      const rawText = token.text || "";
+      const alertMatch = rawText.match(
         /\[!(IMPORTANT|RECOMMENDATION|TIP|WARNING|NOTE|CHECKLIST)\]\s*(?:<br\s*\/?>)?([\s\S]*)/i,
       );
 
       if (alertMatch) {
         const alertType = alertMatch[1].toUpperCase();
-        const alertBody = alertMatch[2];
+        const parsedAlertBody = this.parser.parse(token.tokens || []);
 
         if (alertType === "IMPORTANT") {
           return `<div class="my-8 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5 shadow-lg relative overflow-hidden w-full max-w-full min-w-0">
@@ -253,7 +304,7 @@ function SingleBlogPostPage() {
               <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
               Important Architectural Requirement
             </div>
-            <div class="text-xs sm:text-sm text-foreground/90 leading-relaxed font-normal break-words">${alertBody}</div>
+            <div class="text-xs sm:text-sm text-foreground/90 leading-relaxed font-normal break-words">${parsedAlertBody}</div>
           </div>`;
         }
 
@@ -263,7 +314,7 @@ function SingleBlogPostPage() {
               <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
               Founder Recommendation
             </div>
-            <div class="text-xs sm:text-sm text-foreground/90 leading-relaxed font-normal break-words">${alertBody}</div>
+            <div class="text-xs sm:text-sm text-foreground/90 leading-relaxed font-normal break-words">${parsedAlertBody}</div>
           </div>`;
         }
 
@@ -273,7 +324,7 @@ function SingleBlogPostPage() {
               <svg class="w-4 h-4 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               Common Founder Pitfall
             </div>
-            <div class="text-xs sm:text-sm text-foreground/90 leading-relaxed font-normal break-words">${alertBody}</div>
+            <div class="text-xs sm:text-sm text-foreground/90 leading-relaxed font-normal break-words">${parsedAlertBody}</div>
           </div>`;
         }
 
@@ -283,12 +334,13 @@ function SingleBlogPostPage() {
               <svg class="w-4 h-4 text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               Architectural Context
             </div>
-            <div class="text-xs sm:text-sm text-foreground/90 leading-relaxed font-normal break-words">${alertBody}</div>
+            <div class="text-xs sm:text-sm text-foreground/90 leading-relaxed font-normal break-words">${parsedAlertBody}</div>
           </div>`;
         }
       }
 
-      return `<blockquote class="my-8 border-l-4 border-neon bg-card/60 rounded-r-2xl p-5 italic text-foreground/90 text-sm leading-relaxed w-full max-w-full min-w-0 break-words">${text}</blockquote>`;
+      const parsedBlockquote = this.parser.parse(token.tokens || []);
+      return `<blockquote class="my-8 border-l-4 border-neon bg-card/60 rounded-r-2xl p-5 italic text-foreground/90 text-sm leading-relaxed w-full max-w-full min-w-0 break-words">${parsedBlockquote}</blockquote>`;
     };
 
     // Custom Code Block Renderer
@@ -338,7 +390,8 @@ function SingleBlogPostPage() {
       </div>`;
     };
 
-    const rawHtml = marked.parse(post.content, { renderer }) as string;
+    const preprocessedContent = renderMathInMarkdown(post.content);
+    const rawHtml = marked.parse(preprocessedContent, { renderer }) as string;
     return { htmlContent: rawHtml, toc: headings };
   }, [post.content]);
 
