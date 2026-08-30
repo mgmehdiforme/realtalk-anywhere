@@ -170,8 +170,17 @@ function SingleBlogPostPage() {
   const { htmlContent, toc } = useMemo(() => {
     const headings: Array<{ id: string; text: string; level: number }> = [];
 
-    // Custom renderer to add IDs to headings for TOC linking
+    const escapeHtml = (str: string) =>
+      str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    // Custom renderer for rich typography, callouts, and code blocks
     const renderer = new marked.Renderer();
+
     renderer.heading = ({ text, depth }: { text: string; depth: number }) => {
       const cleanText = text.replace(/<[^>]*>/g, "");
       const id = cleanText
@@ -184,6 +193,107 @@ function SingleBlogPostPage() {
       }
 
       return `<h${depth} id="${id}" class="scroll-mt-24 group flex items-center justify-between">${text}<a href="#${id}" class="opacity-0 group-hover:opacity-100 text-neon ml-2 text-sm">#</a></h${depth}>`;
+    };
+
+    // Custom Callout / Alert Box Renderer
+    renderer.blockquote = ({ text }: { text: string }) => {
+      const alertMatch = text.match(
+        /\[!(IMPORTANT|RECOMMENDATION|TIP|WARNING|NOTE|CHECKLIST)\]\s*(?:<br\s*\/?>)?([\s\S]*)/i,
+      );
+
+      if (alertMatch) {
+        const alertType = alertMatch[1].toUpperCase();
+        const alertBody = alertMatch[2];
+
+        if (alertType === "IMPORTANT") {
+          return `<div class="my-6 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5 shadow-lg relative overflow-hidden">
+            <div class="flex items-center gap-2 font-display text-xs font-bold text-amber-400 mb-2 uppercase tracking-wider">
+              <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              Important Architectural Requirement
+            </div>
+            <div class="text-xs sm:text-sm text-foreground/90 leading-relaxed font-normal">${alertBody}</div>
+          </div>`;
+        }
+
+        if (alertType === "RECOMMENDATION" || alertType === "TIP") {
+          return `<div class="my-6 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-5 shadow-lg relative overflow-hidden">
+            <div class="flex items-center gap-2 font-display text-xs font-bold text-emerald-400 mb-2 uppercase tracking-wider">
+              <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              Founder Recommendation
+            </div>
+            <div class="text-xs sm:text-sm text-foreground/90 leading-relaxed font-normal">${alertBody}</div>
+          </div>`;
+        }
+
+        if (alertType === "WARNING") {
+          return `<div class="my-6 rounded-2xl border border-rose-500/40 bg-rose-500/10 p-5 shadow-lg relative overflow-hidden">
+            <div class="flex items-center gap-2 font-display text-xs font-bold text-rose-400 mb-2 uppercase tracking-wider">
+              <svg class="w-4 h-4 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Common Founder Pitfall
+            </div>
+            <div class="text-xs sm:text-sm text-foreground/90 leading-relaxed font-normal">${alertBody}</div>
+          </div>`;
+        }
+
+        if (alertType === "NOTE" || alertType === "CHECKLIST") {
+          return `<div class="my-6 rounded-2xl border border-indigo-500/40 bg-indigo-500/10 p-5 shadow-lg relative overflow-hidden">
+            <div class="flex items-center gap-2 font-display text-xs font-bold text-indigo-400 mb-2 uppercase tracking-wider">
+              <svg class="w-4 h-4 text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Architectural Context
+            </div>
+            <div class="text-xs sm:text-sm text-foreground/90 leading-relaxed font-normal">${alertBody}</div>
+          </div>`;
+        }
+      }
+
+      return `<blockquote class="my-6 border-l-4 border-neon bg-card/60 rounded-r-2xl p-5 italic text-foreground text-sm leading-relaxed">${text}</blockquote>`;
+    };
+
+    // Custom Code Block Renderer
+    renderer.code = ({ text, lang }: { text: string; lang?: string }) => {
+      const cleanLang = (lang || "code").toLowerCase();
+      const encodedCode = encodeURIComponent(text);
+      const isDiagram =
+        cleanLang.includes("ascii") || cleanLang.includes("mermaid") || cleanLang.includes("diagram");
+
+      return `<div class="my-6 rounded-2xl border border-border bg-[#0a0f1d] overflow-hidden shadow-card group">
+        <div class="flex items-center justify-between px-4 py-2 bg-[#0e162b] border-b border-border/80 text-[11px] font-mono text-muted-foreground">
+          <span class="font-bold text-neon uppercase tracking-wider">${cleanLang.toUpperCase()}</span>
+          <button onclick="navigator.clipboard.writeText(decodeURIComponent('${encodedCode}')).then(()=>{this.innerText='Copied!';setTimeout(()=>this.innerText='Copy Code',2000)})" class="hover:text-foreground transition-colors px-2 py-0.5 rounded bg-muted/40 hover:bg-muted/70 text-[10px]">
+            Copy Code
+          </button>
+        </div>
+        <pre class="p-4 sm:p-5 overflow-x-auto text-xs sm:text-sm font-mono leading-relaxed text-[#e2e8f0] ${isDiagram ? "whitespace-pre text-neon-2" : ""}"><code>${escapeHtml(text)}</code></pre>
+      </div>`;
+    };
+
+    // Custom Comparison Table Renderer
+    (renderer as any).table = function (this: any, token: any) {
+      const headerHtml = (token.header || [])
+        .map(
+          (cell: any) =>
+            `<th class="p-3.5 sm:p-4 text-xs font-bold uppercase tracking-wider text-neon">${this.parser.parseInline(cell.tokens || [])}</th>`,
+        )
+        .join("");
+
+      const bodyHtml = (token.rows || [])
+        .map((row: any) => {
+          const rowContent = (row || [])
+            .map(
+              (cell: any) =>
+                `<td class="p-3.5 sm:p-4 text-muted-foreground leading-relaxed">${this.parser.parseInline(cell.tokens || [])}</td>`,
+            )
+            .join("");
+          return `<tr class="hover:bg-muted/20 transition-colors">${rowContent}</tr>`;
+        })
+        .join("");
+
+      return `<div class="overflow-x-auto my-8 rounded-2xl border border-border bg-card/80 shadow-md">
+        <table class="w-full text-left text-xs sm:text-sm border-collapse">
+          <thead class="bg-muted/70 border-b border-border text-foreground font-display font-semibold"><tr>${headerHtml}</tr></thead>
+          <tbody class="divide-y divide-border/60">${bodyHtml}</tbody>
+        </table>
+      </div>`;
     };
 
     const rawHtml = marked.parse(post.content, { renderer }) as string;
@@ -288,17 +398,15 @@ function SingleBlogPostPage() {
           {/* Main Markdown Body (8 Cols) */}
           <div className="lg:col-span-8 space-y-8">
             <div
-              className="prose dark:prose-invert max-w-none text-sm leading-relaxed
+              className="prose dark:prose-invert max-w-none text-[15px] sm:text-base leading-relaxed sm:leading-8
                 prose-headings:font-display prose-headings:font-bold prose-headings:tracking-tight
-                prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4 prose-h2:text-foreground prose-h2:border-b prose-h2:border-border prose-h2:pb-2
-                prose-h3:text-lg prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-foreground
-                prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-5
+                prose-h2:text-2xl sm:text-3xl prose-h2:mt-12 prose-h2:mb-5 prose-h2:text-foreground prose-h2:border-b prose-h2:border-border/80 prose-h2:pb-3
+                prose-h3:text-lg sm:text-xl prose-h3:mt-9 prose-h3:mb-4 prose-h3:text-foreground
+                prose-p:text-muted-foreground prose-p:leading-relaxed sm:prose-p:leading-8 prose-p:mb-6
+                prose-strong:text-foreground prose-strong:font-bold
                 prose-a:text-neon prose-a:font-semibold prose-a:no-underline hover:prose-a:underline
-                prose-blockquote:border-l-4 prose-blockquote:border-neon prose-blockquote:bg-card/50 prose-blockquote:p-4 prose-blockquote:rounded-r-xl prose-blockquote:italic prose-blockquote:text-foreground
-                prose-pre:bg-card prose-pre:border prose-pre:border-border prose-pre:rounded-2xl prose-pre:p-4 prose-pre:font-mono prose-pre:text-xs
-                prose-code:text-neon prose-code:bg-neon/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:font-mono prose-code:text-[11px]
-                prose-table:w-full prose-table:border-collapse prose-th:border prose-th:border-border prose-th:p-2.5 prose-th:bg-muted/40 prose-td:border prose-td:border-border prose-td:p-2.5
-                prose-ul:list-disc prose-ul:pl-5 prose-ul:space-y-2 prose-li:text-muted-foreground"
+                prose-ul:list-disc prose-ul:pl-6 prose-ul:space-y-3 prose-li:text-muted-foreground prose-li:leading-relaxed
+                prose-ol:list-decimal prose-ol:pl-6 prose-ol:space-y-3 prose-li:text-muted-foreground prose-li:leading-relaxed"
               dangerouslySetInnerHTML={{ __html: htmlContent }}
             />
 
