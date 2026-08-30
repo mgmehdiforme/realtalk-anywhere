@@ -72,12 +72,12 @@ flowchart TD
 ## 3. The 4-Stage Autonomous Pipeline
 
 ### Stage 1: Deep Trend Research & Topic Scouting
-- **Model:** `gemini-2.0-flash` / `gemini-3.7-flash` with Google Search Grounding.
+- **Model:** `gemini-3.7-flash` with Google Search Grounding.
 - **Task:** Scans live discussions on HackerNews, Substack, Medium, and engineering blogs for high-friction architectural topics (e.g., deterministic state machines for agents, modular monolith extraction, hybrid RAG, PostgreSQL RLS multi-tenancy).
 - **Deduplication:** Cross-references candidate topics against the last 30 published slugs in `data/db.json` to guarantee zero topic overlap.
 
 ### Stage 2: CTO-Grade Technical Writing & SEO
-- **Model:** `gemini-2.0-flash` / `gemini-3.7-flash`.
+- **Model:** `gemini-3.7-flash`.
 - **Task:** Drafts a complete 1,500+ word article in Mehdi Golzari's voice containing:
   - **Executive Hook:** Real-world friction and cost of premature scaling.
   - **Architecture Diagrams:** Structured ASCII / Mermaid diagrams.
@@ -146,9 +146,7 @@ Accessible at `https://mehdigolzari.dev/admin/blog`:
 - **Schedule:** `0 0 */2 * *` (Every 2 days at midnight UTC)
 - **Target URI:** `https://mehdigolzari.dev/api/blog/cron-generate`
 - **HTTP Method:** `POST`
-- **Authentication:** Dual-layer security:
-  - **OIDC Token:** Signed by service account `mehdi-cron-invoker@mehdigolzari.iam.gserviceaccount.com` (`roles/run.invoker`).
-  - **Application Header:** `Authorization: Bearer <CRON_SECRET>`.
+- **Authentication:** `Authorization: Bearer <CRON_SECRET>`
 
 ### 2. Cloud Storage FUSE Mount
 - **Bucket:** `gs://mehdigolzari-realtalk-data`
@@ -156,8 +154,8 @@ Accessible at `https://mehdigolzari.dev/admin/blog`:
 - **Permissions:** Compute Service Account granted `roles/storage.objectAdmin`.
 
 ### 3. Automated Setup Scripts
-- **PowerShell:** [`scripts/setup-gcp-full.ps1`](file:///d:/MehdiGolzari/realtalk-anywhere/scripts/setup-gcp-full.ps1)
-- **Bash:** [`scripts/setup-gcp-full.sh`](file:///d:/MehdiGolzari/realtalk-anywhere/scripts/setup-gcp-full.sh)
+- **PowerShell:** [`scripts/setup-gcp.ps1`](file:///d:/MehdiGolzari/realtalk-anywhere/scripts/setup-gcp.ps1)
+- **Bash:** [`scripts/setup-gcp.sh`](file:///d:/MehdiGolzari/realtalk-anywhere/scripts/setup-gcp.sh)
 
 ---
 
@@ -165,14 +163,17 @@ Accessible at `https://mehdigolzari.dev/admin/blog`:
 
 | Variable Name | Required | Default / Example | Purpose |
 | :--- | :---: | :--- | :--- |
+| `GOOGLE_CLOUD_PROJECT` | Yes | `mehdigolzari` | GCP Project ID for Vertex AI. |
+| `GOOGLE_CLOUD_LOCATION` | Yes | `global` | Vertex AI Endpoint Location. |
+| `VERTEX_PROJECT_ID` | Yes | `mehdigolzari` | Vertex AI Project ID. |
+| `VERTEX_LOCATION` | Yes | `global` | Global location for Vertex AI endpoint. |
+| `GEMINI_MODEL` | Yes | `gemini-3.7-flash` | Global default Gemini model for research & drafting. |
+| `GEMINI_RESEARCH_MODEL` | Yes | `gemini-3.7-flash` | Dedicated model override for Stage 1 Deep Research. |
+| `GEMINI_DEEPRESEARCH_MODEL` | Yes | `gemini-3.7-flash` | Deep research grounding model. |
+| `GEMINI_CONTENT_MODEL` | Yes | `gemini-3.7-flash` | Dedicated model override for Stage 2 Technical Drafting. |
+| `GEMINI_API_KEY` | Optional | `AIzaSy...` | Fallback Google AI Studio API key. |
 | `ADMIN_USERNAME` | Yes | `mehdi` | Admin dashboard login username. |
 | `ADMIN_PASSWORD` | Yes | `YOUR_SECURE_PASSWORD` | Admin dashboard login password. |
-| `ADMIN_PASSWORD_HASH` | Optional | `sha256_hash` | Optional pre-hashed admin password. |
-| `CRON_SECRET` | Yes | `mehdi_autonomous_cron_secret_2026` | Bearer token required for `/api/blog/cron-generate`. |
-| `GEMINI_API_KEY` | Recommended | `AIzaSy...` | Google AI Studio / Gemini API key. |
-| `GEMINI_MODEL` | Optional | `gemini-2.0-flash` | Global default Gemini model for research & drafting. |
-| `GEMINI_RESEARCH_MODEL` | Optional | `gemini-2.0-flash` | Dedicated model override for Stage 1 Deep Research. |
-| `GEMINI_CONTENT_MODEL` | Optional | `gemini-2.0-flash` | Dedicated model override for Stage 2 Technical Drafting. |
-| `QWEN_API_KEY` | Optional | `sk-ws-...` | Secondary failover LLM provider API key. |
+| `CRON_SECRET` | Yes | `mehdi-autonomous-cron-secret-2026` | Bearer token required for `/api/blog/cron-generate`. |
 | `SITE_URL` | Yes | `https://mehdigolzari.dev` | Canonical base URL for OpenGraph and sitemap. |
 | `JWT_SECRET` | Yes | `hex_string` | Secret for HMAC cookie session signing. |

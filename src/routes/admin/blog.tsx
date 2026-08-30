@@ -72,7 +72,7 @@ function AdminBlogDashboard() {
   const [regeneratingImage, setRegeneratingImage] = useState(false);
 
   const GEN_STEPS = [
-    { label: "1. Scanning HackerNews & Substack trends with Gemini 1.5 Pro...", icon: "🔍" },
+    { label: "1. Scanning HackerNews & Substack trends with Gemini 3.7 Flash...", icon: "🔍" },
     { label: "2. Selecting unique, non-overlapping architectural problem...", icon: "💡" },
     { label: "3. Drafting CTO-grade markdown with trade-off matrices...", icon: "✍️" },
     { label: "4. Rendering 1200x630 dark-mode hero banner & publishing...", icon: "🎨" },
@@ -320,7 +320,7 @@ function AdminBlogDashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative">
             <div className="space-y-1.5">
               <div className="inline-flex items-center gap-1.5 rounded-full bg-neon/15 px-2.5 py-0.5 text-[10px] font-bold text-neon uppercase tracking-wider border border-neon/20">
-                <Sparkles className="h-3 w-3" /> Gemini 1.5 Pro + Imagen 3
+                <Sparkles className="h-3 w-3" /> Gemini 3.7 Flash + Vertex AI
               </div>
               <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground">
                 Autonomous AI Generation Engine

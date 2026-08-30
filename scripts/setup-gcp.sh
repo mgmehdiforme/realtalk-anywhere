@@ -9,9 +9,11 @@ REGION="${2:-europe-west1}"
 SERVICE_NAME="${3:-mehdi-golzari}"
 ADMIN_USERNAME="${4:-mehdi}"
 ADMIN_PASSWORD="${5:-}"
-CRON_SECRET="${6:-mehdi_autonomous_cron_secret_2026}"
-GEMINI_API_KEY="${7:-}"
-GEMINI_MODEL="${8:-gemini-2.0-flash}"
+CRON_SECRET="${6:-mehdi-autonomous-cron-secret-2026}"
+GEMINI_API_KEY="${7:-AIzaSyBV5yYg_ebQLMSod_hAPTVePvBxpah2BDU}"
+GEMINI_MODEL="${8:-gemini-3.7-flash}"
+GEMINI_CONTENT_MODEL="${9:-gemini-3.7-flash}"
+VERTEX_LOCATION="global"
 
 echo "=========================================================="
 echo "  🚀 MehdiGolzari.dev GCP Infrastructure Automation Setup  "
@@ -33,6 +35,7 @@ gcloud services enable \
   cloudscheduler.googleapis.com \
   aiplatform.googleapis.com \
   generativelanguage.googleapis.com \
+  apikeys.googleapis.com \
   storage.googleapis.com \
   --project="$PROJECT_ID" || echo "⚠️ Ensure billing is enabled for $PROJECT_ID"
 
@@ -49,7 +52,7 @@ gcloud artifacts repositories create realtalk \
 echo ""
 echo "[4/5] Updating Cloud Run ($SERVICE_NAME) environment variables..."
 
-ENV_VARS="ADMIN_USERNAME=${ADMIN_USERNAME},CRON_SECRET=${CRON_SECRET},GEMINI_MODEL=${GEMINI_MODEL},SITE_URL=https://mehdigolzari.dev"
+ENV_VARS="ADMIN_USERNAME=${ADMIN_USERNAME},CRON_SECRET=${CRON_SECRET},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${VERTEX_LOCATION},VERTEX_PROJECT_ID=${PROJECT_ID},VERTEX_LOCATION=${VERTEX_LOCATION},GEMINI_MODEL=${GEMINI_MODEL},GEMINI_RESEARCH_MODEL=${GEMINI_MODEL},GEMINI_DEEPRESEARCH_MODEL=${GEMINI_MODEL},GEMINI_CONTENT_MODEL=${GEMINI_CONTENT_MODEL},SITE_URL=https://mehdigolzari.dev"
 
 if [ -n "$ADMIN_PASSWORD" ]; then
   ENV_VARS="${ENV_VARS},ADMIN_PASSWORD=${ADMIN_PASSWORD}"
@@ -87,8 +90,10 @@ echo ""
 echo "=========================================================="
 echo "  ✅ GCP Setup Complete! Autonomous Blog Engine is Live.   "
 echo "=========================================================="
-echo "  • Cloud Run URL:    ${SERVICE_URL}"
-echo "  • Cron Endpoint:    ${CRON_URI}"
-echo "  • Admin Portal:     ${SERVICE_URL}/admin/blog"
-echo "  • Active AI Model:  ${GEMINI_MODEL}"
+echo "  • Cloud Run URL:       ${SERVICE_URL}"
+echo "  • Cron Endpoint:       ${CRON_URI}"
+echo "  • Admin Portal:        ${SERVICE_URL}/admin/blog"
+echo "  • Vertex Location:     ${VERTEX_LOCATION}"
+echo "  • Active AI Model:     ${GEMINI_MODEL}"
+echo "  • Content Model:       ${GEMINI_CONTENT_MODEL}"
 echo "=========================================================="

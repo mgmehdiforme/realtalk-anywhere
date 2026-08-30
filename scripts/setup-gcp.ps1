@@ -3,19 +3,21 @@
   Automated GCP Setup Script for MehdiGolzari.dev (Project: mehdigolzari)
 .DESCRIPTION
   Enables required APIs (Vertex AI, Cloud Scheduler, Cloud Run, Artifact Registry),
-  provisions Artifact Registry, configures Cloud Run env variables (including Gemini & Admin credentials),
+  provisions Artifact Registry, configures Cloud Run env variables (including Vertex AI Global & Admin credentials),
   and sets up the 48-hour autonomous Cloud Scheduler blog generation job.
 #>
 
 param(
   [string]$ProjectId = "mehdigolzari",
   [string]$Region = "europe-west1",
+  [string]$VertexLocation = "global",
   [string]$ServiceName = "mehdi-golzari",
   [string]$AdminUsername = "mehdi",
   [string]$AdminPassword = "",
-  [string]$CronSecret = "mehdi_autonomous_cron_secret_2026",
-  [string]$GeminiApiKey = "",
-  [string]$GeminiModel = "gemini-2.0-flash"
+  [string]$CronSecret = "mehdi-autonomous-cron-secret-2026",
+  [string]$GeminiApiKey = "AIzaSyBV5yYg_ebQLMSod_hAPTVePvBxpah2BDU",
+  [string]$GeminiModel = "gemini-3.7-flash",
+  [string]$GeminiContentModel = "gemini-3.7-flash"
 )
 
 Write-Host "==========================================================" -ForegroundColor Cyan
@@ -36,6 +38,7 @@ gcloud services enable `
   cloudscheduler.googleapis.com `
   aiplatform.googleapis.com `
   generativelanguage.googleapis.com `
+  apikeys.googleapis.com `
   storage.googleapis.com `
   --project=$ProjectId
 
@@ -57,7 +60,14 @@ Write-Host "`n[4/5] Updating Cloud Run ($ServiceName) environment variables..." 
 $envPairs = @(
   "ADMIN_USERNAME=$AdminUsername",
   "CRON_SECRET=$CronSecret",
+  "GOOGLE_CLOUD_PROJECT=$ProjectId",
+  "GOOGLE_CLOUD_LOCATION=$VertexLocation",
+  "VERTEX_PROJECT_ID=$ProjectId",
+  "VERTEX_LOCATION=$VertexLocation",
   "GEMINI_MODEL=$GeminiModel",
+  "GEMINI_RESEARCH_MODEL=$GeminiModel",
+  "GEMINI_DEEPRESEARCH_MODEL=$GeminiModel",
+  "GEMINI_CONTENT_MODEL=$GeminiContentModel",
   "SITE_URL=https://mehdigolzari.dev"
 )
 
@@ -102,8 +112,10 @@ gcloud scheduler jobs create http autonomous-blog-generator `
 Write-Host "`n==========================================================" -ForegroundColor Green
 Write-Host "  ✅ GCP Setup Complete! Autonomous Blog Engine is Live.   " -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Green
-Write-Host "  • Cloud Run URL:    $serviceUrl" -ForegroundColor Cyan
-Write-Host "  • Cron Endpoint:    $cronUri" -ForegroundColor Cyan
-Write-Host "  • Admin Portal:     $serviceUrl/admin/blog" -ForegroundColor Cyan
-Write-Host "  • Active AI Model:  $GeminiModel" -ForegroundColor Cyan
+Write-Host "  • Cloud Run URL:       $serviceUrl" -ForegroundColor Cyan
+Write-Host "  • Cron Endpoint:       $cronUri" -ForegroundColor Cyan
+Write-Host "  • Admin Portal:        $serviceUrl/admin/blog" -ForegroundColor Cyan
+Write-Host "  • Vertex Location:     $VertexLocation" -ForegroundColor Cyan
+Write-Host "  • Active AI Model:     $GeminiModel" -ForegroundColor Cyan
+Write-Host "  • Content Model:       $GeminiContentModel" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Green
