@@ -1,4 +1,9 @@
-import { getBlogPosts, saveBlogPost, type BlogPost } from "./db";
+import {
+  saveBlogPost,
+  getBlogInventorySummary,
+  checkContentDuplicate,
+  type BlogPost,
+} from "./db";
 import {
   performDeepTopicResearch,
   generateBlogPostContent,
@@ -25,7 +30,7 @@ export interface AutonomousGenerationResult {
 
 /**
  * ─────────────────────────────────────────────────────────────────────────────
- * 4-STAGE AUTONOMOUS BLOG GENERATION PIPELINE
+ * 4-STAGE AUTONOMOUS BLOG GENERATION PIPELINE WITH CONTEXTUAL LINKING & DEDUP
  * ─────────────────────────────────────────────────────────────────────────────
  */
 export async function generateAutonomousBlogPost(
@@ -33,34 +38,42 @@ export async function generateAutonomousBlogPost(
 ): Promise<AutonomousGenerationResult> {
   console.log("=== STARTING AUTONOMOUS 4-STAGE BLOG ENGINE ===");
 
-  // 1. Fetch existing posts to avoid topic duplication
-  const { posts: existingPosts } = await getBlogPosts({ status: "all" });
-  const existingSlugsAndTitles = existingPosts.map((p) => ({
-    slug: p.slug,
-    title: p.title,
-  }));
+  // 1. Fetch complete blog inventory and high-value conversion routes for AI context
+  const inventory = await getBlogInventorySummary();
+  console.log(`Loaded Inventory: ${inventory.articles.length} published articles, ${inventory.conversionPages.length} conversion routes.`);
 
   // ──────────────── STAGE 1: DEEP RESEARCH & TOPIC SCOUTING ────────────────
-  console.log("Stage 1/4: Deep Research & Topic Selection...");
+  console.log("Stage 1/4: Deep Trend Research & Topic Selection...");
   onProgress?.({
     stage: 1,
     name: "Deep Trend Research",
-    description: "Scanning HackerNews, Substack & Medium trends for CTO architectural topics...",
+    description: "Scanning HackerNews, Substack & tech shifts for founder architectural topics...",
   });
 
-  const researchResult = await performDeepTopicResearch(existingSlugsAndTitles);
-  console.log(`Stage 1 Complete: Selected Topic "${researchResult.selectedTopic}"`);
+  let researchResult = await performDeepTopicResearch(inventory);
+
+  // Deduplication & Cannibalization Safety Gate
+  let dedupCheck = await checkContentDuplicate(researchResult.suggestedTitle, researchResult.suggestedSlug);
+  if (dedupCheck.isDuplicate) {
+    console.warn(
+      `[DEDUP WARNING] Proposed topic "${researchResult.suggestedTitle}" overlaps with existing post "${dedupCheck.similarPost?.title}" (Score: ${(dedupCheck.similarityScore * 100).toFixed(1)}%). Re-rolling topic...`,
+    );
+    // Re-roll once with refreshed prompt context
+    researchResult = await performDeepTopicResearch(inventory);
+  }
+
+  console.log(`Stage 1 Complete: Selected Topic "${researchResult.selectedTopic}" [Pillar: ${researchResult.pillarCategory}]`);
 
   // ──────────────── STAGE 2: CTO CONTENT & SEO DRAFTING ────────────────
-  console.log("Stage 2/4: Generating CTO-Level Markdown & SEO Metadata...");
+  console.log("Stage 2/4: Generating CTO-Level Markdown with Semantic Internal Linking...");
   onProgress?.({
     stage: 2,
     name: "Technical Content Drafting",
-    description: `Drafting comprehensive architecture article for "${researchResult.suggestedTitle}"...`,
-    data: { topic: researchResult.selectedTopic },
+    description: `Drafting comprehensive architecture article for "${researchResult.suggestedTitle}" with contextual internal links...`,
+    data: { topic: researchResult.selectedTopic, pillar: researchResult.pillarCategory },
   });
 
-  const articleResult = await generateBlogPostContent(researchResult);
+  const articleResult = await generateBlogPostContent(researchResult, inventory);
   console.log(`Stage 2 Complete: Generated ${articleResult.contentMarkdown.length} chars of Markdown`);
 
   // ──────────────── STAGE 3: COVER HERO GENERATION ────────────────
@@ -82,7 +95,7 @@ export async function generateAutonomousBlogPost(
   console.log(`Stage 3 Complete: Cover image generated at ${coverImageUrl}`);
 
   // ──────────────── STAGE 4: PERSISTENCE & PUBLICATION ────────────────
-  console.log("Stage 4/4: Persisting Article to Database...");
+  console.log("Stage 4/4: Persisting Article to Database & Search Index...");
   onProgress?.({
     stage: 4,
     name: "Publishing & Indexing",
@@ -97,6 +110,7 @@ export async function generateAutonomousBlogPost(
     content: articleResult.contentMarkdown,
     coverImage: coverImageUrl,
     tags: articleResult.tags,
+    category: articleResult.pillarCategory || researchResult.pillarCategory || "ai-engineering",
     readTimeMinutes: articleResult.readTimeMinutes,
     status: "published",
     seo: {

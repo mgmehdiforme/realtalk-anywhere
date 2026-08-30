@@ -228,6 +228,58 @@ ${blogUrls}
   }
 }
 
+/**
+ * Handle Dynamic RSS Feed (/rss.xml, /feed.xml)
+ */
+async function handleRssFeedRequest(request: Request): Promise<Response | null> {
+  const url = new URL(request.url);
+  if (url.pathname !== "/rss.xml" && url.pathname !== "/feed.xml") return null;
+
+  try {
+    const baseUrl = "https://mehdigolzari.dev";
+    const { getBlogPosts } = await import("./lib/db");
+    const { posts } = await getBlogPosts({ status: "published", limit: 20 });
+
+    const items = posts
+      .map(
+        (p) => `    <item>
+      <title><![CDATA[${p.title}]]></title>
+      <link>${baseUrl}/blog/${p.slug}</link>
+      <guid isPermaLink="true">${baseUrl}/blog/${p.slug}</guid>
+      <description><![CDATA[${p.excerpt}]]></description>
+      <pubDate>${new Date(p.publishedAt || p.createdAt).toUTCString()}</pubDate>
+      <author>mehdi@mehdigolzari.dev (Mehdi Golzari)</author>
+      ${(p.tags || []).map((t) => `<category>${t}</category>`).join("\n      ")}
+    </item>`,
+      )
+      .join("\n");
+
+    const rssXml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mehdi Golzari | Technical Partner &amp; Fractional CTO Architectural Insights</title>
+    <link>${baseUrl}/blog</link>
+    <description>Pragmatic software architecture, deterministic AI systems, and 0-to-1 MVP roadmaps for startup founders.</description>
+    <language>en-us</language>
+    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+    <atom:link href="${baseUrl}/rss.xml" rel="self" type="application/rss+xml"/>
+${items}
+  </channel>
+</rss>`.trim();
+
+    return new Response(rssXml, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/rss+xml; charset=utf-8",
+        "Cache-Control": "public, max-age=3600",
+      },
+    });
+  } catch (error) {
+    console.error("Error generating RSS feed:", error);
+    return new Response("Failed to generate RSS feed", { status: 500 });
+  }
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
@@ -243,7 +295,11 @@ export default {
       const sitemapResponse = await handleSitemapRequest(request);
       if (sitemapResponse) return sitemapResponse;
 
-      // 4. Delegate to TanStack Start SSR
+      // 4. Check RSS Feed
+      const rssResponse = await handleRssFeedRequest(request);
+      if (rssResponse) return rssResponse;
+
+      // 5. Delegate to TanStack Start SSR
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);

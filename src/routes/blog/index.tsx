@@ -14,7 +14,7 @@ import {
   Layers,
   Zap,
 } from "lucide-react";
-import { getBlogPosts, type BlogPost } from "@/lib/db";
+import { getBlogPosts, BLOG_PILLAR_CATEGORIES, type BlogPost } from "@/lib/db";
 import { DemoButton } from "@/lib/demo-modal";
 
 /**
@@ -51,33 +51,32 @@ export const Route = createFileRoute("/blog/")({
   component: BlogIndexPage,
 });
 
-const CATEGORIES = [
-  "All",
-  "Architecture",
-  "AI Engineering",
-  "SaaS MVP",
-  "Scaling",
-  "Databases",
-  "DevOps",
+const PILLAR_TABS = [
+  { id: "all", label: "All Insights" },
+  ...BLOG_PILLAR_CATEGORIES.map((c) => ({
+    id: c.id,
+    label: c.name.split("&")[0].trim(),
+  })),
 ];
 
 function BlogIndexPage() {
   const { posts } = Route.useLoaderData();
-  const [selectedTag, setSelectedTag] = useState("All");
+  const [selectedPillar, setSelectedPillar] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredPosts = posts.filter((post: BlogPost) => {
-    const matchesTag =
-      selectedTag === "All" ||
-      post.tags.some((t) => t.toLowerCase() === selectedTag.toLowerCase());
+    const matchesPillar =
+      selectedPillar === "all" ||
+      (post.category && post.category.toLowerCase() === selectedPillar.toLowerCase()) ||
+      post.tags?.some((t) => t.toLowerCase() === selectedPillar.toLowerCase());
 
     const matchesSearch =
       !searchQuery.trim() ||
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
+      (post.tags && post.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase())));
 
-    return matchesTag && matchesSearch;
+    return matchesPillar && matchesSearch;
   });
 
   const featuredPost = filteredPosts.length > 0 ? filteredPosts[0] : null;
@@ -114,19 +113,19 @@ function BlogIndexPage() {
             />
           </div>
 
-          {/* Category Filter Pills */}
+          {/* Strategic Pillar Category Tabs */}
           <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-            {CATEGORIES.map((cat) => (
+            {PILLAR_TABS.map((tab) => (
               <button
-                key={cat}
-                onClick={() => setSelectedTag(cat)}
+                key={tab.id}
+                onClick={() => setSelectedPillar(tab.id)}
                 className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                  selectedTag === cat
+                  selectedPillar === tab.id
                     ? "bg-neon text-primary-foreground shadow-neon"
                     : "border border-border bg-card/60 text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
-                {cat}
+                {tab.label}
               </button>
             ))}
           </div>

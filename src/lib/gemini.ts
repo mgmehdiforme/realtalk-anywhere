@@ -2,6 +2,12 @@ import fs from "fs/promises";
 import path from "path";
 import { GoogleAuth } from "google-auth-library";
 
+import {
+  BLOG_PILLAR_CATEGORIES,
+  type BlogInventorySummary,
+  checkContentDuplicate,
+} from "./db";
+
 export interface ResearchTopicResult {
   selectedTopic: string;
   sourceTrend: string;
@@ -9,6 +15,7 @@ export interface ResearchTopicResult {
   whyCTOsCare: string;
   suggestedTitle: string;
   suggestedSlug: string;
+  pillarCategory: string;
   tags: string[];
 }
 
@@ -18,6 +25,7 @@ export interface GeneratedArticleResult {
   excerpt: string;
   readTimeMinutes: number;
   tags: string[];
+  pillarCategory: string;
   contentMarkdown: string;
   targetKeywords: string[];
   imagePrompt: string;
@@ -377,13 +385,26 @@ async function executeUniversalLLMPrompt(
  * STAGE 1: REAL-TIME DEEP RESEARCH & TOPIC DISCOVERY (VERTEX AI GLOBAL)
  * ─────────────────────────────────────────────────────────────────────────────
  */
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * STAGE 1: REAL-TIME DEEP RESEARCH & TOPIC DISCOVERY (VERTEX AI GLOBAL)
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 export async function performDeepTopicResearch(
-  existingSlugsAndTitles: Array<{ slug: string; title: string }>,
+  inventory: BlogInventorySummary,
 ): Promise<ResearchTopicResult> {
-  const existingListText = existingSlugsAndTitles
+  const publishedArticlesText = (inventory.articles || [])
     .slice(-30)
-    .map((item) => `- "${item.title}" (slug: ${item.slug})`)
+    .map(
+      (item) =>
+        `- "${item.title}" (slug: ${item.slug}, category: ${item.category}, tags: ${item.tags.join(", ")})\n  Theme: ${item.excerpt}`,
+    )
     .join("\n");
+
+  const categoriesCatalogText = BLOG_PILLAR_CATEGORIES.map(
+    (c) =>
+      `- Category ID: "${c.id}" | Name: "${c.name}"\n  Description: ${c.description}\n  Target Focus: ${c.themeKeywords.join(", ")}`,
+  ).join("\n\n");
 
   const systemInstruction = `You are Mehdi Golzari, a Senior Independent Technical Partner and Fractional CTO for early-stage SaaS & AI startup founders.
 Your job is to scout current tech news, AI ecosystem shifts, and startup engineering trends to discover high-converting, high-signal architectural topics.
@@ -396,16 +417,12 @@ AUDIENCE PROFILE (CRITICAL):
   * Experiencing runaway AI token bills, non-deterministic agent crashes, and slow feature velocity.
   * Needing a senior technical partner to prepare their codebase for investor due diligence and seed funding.
 
-HIGH-LEVERAGE THEMES TO SCOUT:
-1. Technical Partner Playbook: How domain founders can ship resilient AI MVPs in weeks using proven architectural patterns.
-2. Codebase Audits & Agency Traps: How to evaluate developer deliverables and avoid costly complete rewrites.
-3. Deterministic AI Architectures: Taming non-deterministic LLMs and agentic loops into reliable commercial SaaS features.
-4. Lean, Scale-Ready Stacks: Fast-to-market modular monoliths, PostgreSQL RLS multi-tenancy, and serverless architectures with near-zero idle cost.
-5. Tech Debt & Due Diligence: Architecting early systems to pass investor technical reviews with flying colors.
+5 CORE STRATEGIC PILLAR CATEGORIES (You MUST assign the topic to one of these):
+${categoriesCatalogText}
 
 CRITICAL DEDUPLICATION RULE:
-You MUST NOT select any topic that matches or overlaps with these recently published articles:
-${existingListText || "None yet published."}
+You MUST NOT select any topic that matches or overlaps with these published articles:
+${publishedArticlesText || "None yet published."}
 
 Return a STRICT JSON object with this EXACT structure (valid JSON only, no markdown code wrappers):
 {
@@ -415,6 +432,7 @@ Return a STRICT JSON object with this EXACT structure (valid JSON only, no markd
   "whyCTOsCare": "Why a founder seeking a technical partner needs this exact insight to protect their product and capital",
   "suggestedTitle": "High-impact, founder-converting headline (max 60 chars)",
   "suggestedSlug": "kebab-case-slug-without-special-chars",
+  "pillarCategory": "ai-engineering",
   "tags": ["Tag1", "Tag2", "Tag3"]
 }`;
 
@@ -445,6 +463,12 @@ Return a STRICT JSON object with this EXACT structure (valid JSON only, no markd
     .replace(/-+/g, "-")
     .replace(/(^-|-$)/g, "");
 
+  // Validate pillar category
+  const validPillarIds = BLOG_PILLAR_CATEGORIES.map((c) => c.id as string);
+  if (!parsed.pillarCategory || !validPillarIds.includes(parsed.pillarCategory)) {
+    parsed.pillarCategory = "ai-engineering";
+  }
+
   if (!parsed.tags || !Array.isArray(parsed.tags)) {
     parsed.tags = ["Architecture", "SaaS", "AI"];
   }
@@ -459,7 +483,23 @@ Return a STRICT JSON object with this EXACT structure (valid JSON only, no markd
  */
 export async function generateBlogPostContent(
   research: ResearchTopicResult,
+  inventory?: BlogInventorySummary,
 ): Promise<GeneratedArticleResult> {
+  const publishedArticles = inventory?.articles || [];
+  const conversionPages = inventory?.conversionPages || [];
+
+  const existingLinksInventoryText = [
+    "--- HIGH-VALUE CONVERSION & ADVISORY PAGES ---",
+    ...conversionPages.map(
+      (cp) => `- [${cp.title}](${cp.url}) -> Intent: ${cp.intent}`,
+    ),
+    "",
+    "--- PUBLISHED ARTICLES IN OUR REPOSITORY (FOR TOPIC CLUSTER CROSS-LINKING) ---",
+    ...publishedArticles.slice(0, 15).map(
+      (pa) => `- [${pa.title}](${pa.url}) (Category: ${pa.category}) -> Focus: ${pa.excerpt}`,
+    ),
+  ].join("\n");
+
   const systemPrompt = `You are Mehdi Golzari, Senior Independent Technical Partner & Fractional CTO for SaaS & AI startup founders.
 You write authoritative, pragmatic, and high-trust architectural guides grounded in modern software engineering and your proprietary Founder-to-Launch Framework™.
 
@@ -483,8 +523,13 @@ MANDATORY WRITING & FORMATTING RULES:
    | Approach | Time-to-MVP | Monthly Burn ($) | Dev Complexity | Failure Risk |
 6. Numbered CTO Action Checklist:
    Provide a step-by-step checklist with bold titles and concrete founder directives.
-7. Technical Partnership Callout:
-   Conclude with an advisory callout for founders who need a seasoned Technical Partner or Fractional CTO to audit their stack, guide their roadmap, or generate a custom Go-to-Launch Blueprint™ (https://mehdigolzari.dev/blueprint).
+7. CONTEXTUAL SEMANTIC INTERNAL LINKING (CRITICAL SEO REQUIREMENT):
+   You MUST insert 3 to 5 natural, high-relevance internal markdown links into the body content referencing our site inventory:
+   ${existingLinksInventoryText}
+   - Rule A: Always use descriptive, keyword-rich anchor text that clearly explains the destination page. For example: [deterministic AI state machines](/blog/why-naive-ai-agents-fail-deterministic-mvp-architecture). NEVER use vague text like "click here", "read this", or "our website".
+   - Rule B: When discussing early MVP scoping, boundary validation, or technical debt prevention, naturally link to [Founder-to-Launch Blueprint™](/blueprint).
+   - Rule C: When discussing hiring technical partners, CTO equity, or auditing agency code, link to [Fractional CTO Advisory](/offers/fractional-cto) or [Technical Due Diligence](/offers/technical-due-diligence).
+   - Rule D: Cross-link to related published articles from our catalog when referencing complementary engineering topics.
 
 Return a STRICT JSON object with this EXACT structure (valid JSON only, no markdown code block surrounding the JSON):
 {
@@ -492,6 +537,7 @@ Return a STRICT JSON object with this EXACT structure (valid JSON only, no markd
   "slug": "${research.suggestedSlug}",
   "excerpt": "High-impact 2-sentence summary explaining the problem and solution (max 160 chars)",
   "tags": ${JSON.stringify(research.tags)},
+  "pillarCategory": "${research.pillarCategory || "ai-engineering"}",
   "contentMarkdown": "Full comprehensive Markdown article (1,500 - 2,500 words)...",
   "targetKeywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
   "imagePrompt": "Detailed prompt describing a dark-mode 3D architectural illustration with glowing indigo and neon violet accents for the cover banner"
@@ -504,9 +550,10 @@ Return a STRICT JSON object with this EXACT structure (valid JSON only, no markd
 - Why CTOs Care: ${research.whyCTOsCare}
 - Suggested Title: ${research.suggestedTitle}
 - Suggested Slug: ${research.suggestedSlug}
+- Pillar Category: ${research.pillarCategory || "ai-engineering"}
 - Tags: ${research.tags.join(", ")}
 
-Draft the complete, production-grade technical article JSON now with rich alert blocks, code snippets, comparison table, and checklist for founders looking for a technical partner.`;
+Draft the complete, production-grade technical article JSON now with internal links, rich alert blocks, code snippets, comparison table, and checklist for founders looking for a technical partner.`;
 
   const contentModel =
     process.env.GEMINI_CONTENT_MODEL ||
@@ -523,6 +570,11 @@ Draft the complete, production-grade technical article JSON now with rich alert 
 
   const parsed = extractJsonObject<GeneratedArticleResult>(rawJson);
 
+  // Fallback link enrichment if model generated zero internal links
+  if (inventory && (!parsed.contentMarkdown.includes("](") || !parsed.contentMarkdown.includes("/"))) {
+    parsed.contentMarkdown = enrichContentWithFallbackInternalLinks(parsed.contentMarkdown, inventory);
+  }
+
   // Calculate actual reading time based on word count (~200 words per minute)
   const wordCount = (parsed.contentMarkdown || "").split(/\s+/).filter(Boolean).length;
   parsed.readTimeMinutes = Math.max(3, Math.ceil(wordCount / 200));
@@ -534,7 +586,46 @@ Draft the complete, production-grade technical article JSON now with rich alert 
     .replace(/-+/g, "-")
     .replace(/(^-|-$)/g, "");
 
+  parsed.pillarCategory = research.pillarCategory || parsed.pillarCategory || "ai-engineering";
+
   return parsed;
+}
+
+export function enrichContentWithFallbackInternalLinks(
+  contentMarkdown: string,
+  inventory: BlogInventorySummary,
+): string {
+  let enriched = contentMarkdown;
+
+  // Link Blueprint if not already linked
+  if (!enriched.includes("/blueprint")) {
+    enriched = enriched.replace(
+      /(Founder-to-Launch Framework™|Go-to-Launch Blueprint|MVP architecture blueprint)/i,
+      "[$1](/blueprint)",
+    );
+  }
+
+  // Link Fractional CTO if not already linked
+  if (!enriched.includes("/offers/fractional-cto")) {
+    enriched = enriched.replace(
+      /(Fractional CTO|Technical Partner Advisory|Technical Co-Founder)/i,
+      "[$1](/offers/fractional-cto)",
+    );
+  }
+
+  // Link existing articles if matching their title
+  for (const article of inventory.articles || []) {
+    if (!enriched.includes(article.url)) {
+      const escapedTitle = article.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const titleRegex = new RegExp(`\\b(${escapedTitle})\\b`, "i");
+      if (titleRegex.test(enriched)) {
+        enriched = enriched.replace(titleRegex, `[$1](${article.url})`);
+        break; // Add 1 article link fallback
+      }
+    }
+  }
+
+  return enriched;
 }
 
 import { buildBrandedBlogHeroSvg } from "./svg-generator";

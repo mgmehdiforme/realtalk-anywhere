@@ -19,7 +19,7 @@ import {
   ExternalLink,
   ChevronRight,
 } from "lucide-react";
-import { getBlogPostBySlug, getBlogPosts, type BlogPost } from "@/lib/db";
+import { getBlogPostBySlug, getRelatedBlogPosts, type BlogPost } from "@/lib/db";
 import { marked } from "marked";
 
 /**
@@ -33,9 +33,7 @@ export const getSingleBlogPost = createServerFn()
       return { post: null, related: [] };
     }
 
-    const { posts: allPosts } = await getBlogPosts({ status: "published", limit: 4 });
-    const related = allPosts.filter((p) => p.slug !== data.slug).slice(0, 3);
-
+    const related = await getRelatedBlogPosts(data.slug, 3);
     return { post, related };
   });
 
