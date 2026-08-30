@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
 import {
   ArrowRight,
   Check,
@@ -24,11 +25,30 @@ import {
   Gauge,
   Cpu,
   Wifi,
+  BookOpen,
+  ArrowUpRight,
+  Layers,
+  Tag as TagIcon,
 } from "lucide-react";
 import { DemoButton } from "@/lib/demo-modal";
 import avatarAsset from "@/assets/avatar.png.asset.json";
+import { getBlogPosts } from "@/lib/db";
+import { BLOG_PILLAR_CATEGORIES, type BlogPost } from "@/lib/blog-types";
+
+export const getHomeFeaturedPosts = createServerFn().handler(async () => {
+  try {
+    const { posts } = await getBlogPosts({ status: "published", limit: 3 });
+    return { posts: posts.slice(0, 3) };
+  } catch (error) {
+    console.error("Failed to fetch home featured blog posts:", error);
+    return { posts: [] };
+  }
+});
 
 export const Route = createFileRoute("/")({
+  loader: async () => {
+    return await getHomeFeaturedPosts();
+  },
   head: () => ({
     meta: [
       { title: "MehdiGolzari.dev — Independent Technical Partner for SaaS Founders" },
@@ -82,6 +102,8 @@ const SERVICES = [
 ];
 
 function Landing() {
+  const { posts } = Route.useLoaderData();
+
   return (
     <div>
       {/* HERO */}
@@ -945,6 +967,156 @@ function Landing() {
           </div>
         </div>
       </section>
+
+      {/* FEATURED ARCHITECTURE BLOG & TECHNICAL INSIGHTS */}
+      {posts && posts.length > 0 && (
+        <section className="relative overflow-hidden border-t border-border bg-card/30 py-20 sm:py-28">
+          <div
+            className="absolute left-1/2 top-10 h-96 w-[70%] -translate-x-1/2 rounded-full bg-neon/5 blur-3xl pointer-events-none"
+            aria-hidden
+          />
+          <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 pb-10 border-b border-border">
+              <div className="max-w-2xl">
+                <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-neon backdrop-blur shadow-sm">
+                  <BookOpen className="h-3.5 w-3.5" />
+                  <span>Technical Co-Founder Insights & Playbooks</span>
+                </div>
+                <h2 className="mt-4 font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
+                  Architecture & Engineering <br />
+                  <span className="text-neon-gradient">Playbooks for Founders</span>
+                </h2>
+                <p className="mt-3.5 text-base text-muted-foreground leading-relaxed">
+                  Deep dives on deterministic AI state machines, 0-to-1 MVP architecture, avoiding costly dev agency traps, and fractional CTO execution.
+                </p>
+              </div>
+              <div className="shrink-0">
+                <Link
+                  to="/blog"
+                  className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground shadow-sm transition hover:border-neon hover:text-neon hover:shadow-neon"
+                >
+                  <span>Explore All Insights</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+
+            <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {posts.map((post) => {
+                const pillar = BLOG_PILLAR_CATEGORIES.find((p) => p.id === post.category);
+                return (
+                  <article
+                    key={post.id}
+                    className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-neon/50 hover:shadow-neon"
+                  >
+                    {/* Cover image banner */}
+                    <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted/60">
+                      {post.coverImage ? (
+                        <img
+                          src={post.coverImage}
+                          alt={post.title}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-card to-muted p-6">
+                          <Layers className="h-12 w-12 text-neon/40" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent opacity-60" />
+                      {pillar && (
+                        <div className="absolute bottom-3 left-3">
+                          <span className="inline-flex items-center rounded-md bg-background/90 px-2.5 py-1 text-[11px] font-bold text-neon backdrop-blur border border-border/60">
+                            {pillar.name.split("&")[0].trim()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-1 flex-col justify-between p-6">
+                      <div>
+                        {/* Meta items */}
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(post.publishedAt || post.createdAt).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {post.readTimeMinutes || 5} min read
+                          </span>
+                        </div>
+
+                        {/* Title */}
+                        <h3 className="mt-3 font-display text-lg font-bold leading-snug tracking-tight text-foreground transition group-hover:text-neon line-clamp-2">
+                          <Link to="/blog/$slug" params={{ slug: post.slug }}>
+                            {post.title}
+                          </Link>
+                        </h3>
+
+                        {/* Excerpt */}
+                        <p className="mt-2.5 text-xs leading-relaxed text-muted-foreground line-clamp-3">
+                          {post.excerpt}
+                        </p>
+                      </div>
+
+                      <div className="mt-6 flex items-center justify-between border-t border-border pt-4 text-xs font-semibold">
+                        <span className="text-muted-foreground flex items-center gap-1">
+                          <TagIcon className="h-3 w-3 text-neon" />
+                          {post.tags?.[0] || "Architecture"}
+                        </span>
+                        <Link
+                          to="/blog/$slug"
+                          params={{ slug: post.slug }}
+                          aria-label={`Read full deep dive: ${post.title}`}
+                          className="inline-flex items-center gap-1 font-bold text-neon transition hover:underline"
+                        >
+                          <span>Read Deep Dive</span>
+                          <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
+                        </Link>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+
+            {/* Bottom Founder Blueprint Banner */}
+            <div className="mt-12 rounded-2xl border border-neon/30 bg-gradient-to-r from-neon/10 via-card to-neon/5 p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm">
+              <div className="space-y-1 text-center sm:text-left">
+                <div className="text-xs font-bold uppercase tracking-widest text-neon">
+                  Fractional CTO & Technical Partnering
+                </div>
+                <h4 className="font-display text-lg sm:text-xl font-bold">
+                  Looking for senior engineering leadership for your MVP?
+                </h4>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  Get direct 1-on-1 architecture reviews and fractional co-founder execution without the overhead of full-time hiring.
+                </p>
+              </div>
+              <div className="shrink-0 flex items-center gap-3">
+                <Link
+                  to="/services"
+                  className="rounded-xl bg-neon px-5 py-2.5 text-xs sm:text-sm font-semibold text-primary-foreground shadow-neon transition hover:brightness-110"
+                >
+                  View Offers & Packages
+                </Link>
+                <Link
+                  to="/blog"
+                  className="rounded-xl border border-border bg-card px-4 py-2.5 text-xs sm:text-sm font-semibold text-foreground transition hover:bg-muted"
+                >
+                  Browse Blog
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* PROMISE */}
       <section className="mx-auto max-w-5xl px-5 pb-10 sm:px-8">
