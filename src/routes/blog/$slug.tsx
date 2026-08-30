@@ -181,6 +181,7 @@ function SingleBlogPostPage() {
     // Custom renderer for rich typography, callouts, and code blocks
     const renderer = new marked.Renderer();
 
+    // Custom Heading Renderer with Section Dividers and Generous Spacing
     renderer.heading = ({ text, depth }: { text: string; depth: number }) => {
       const cleanText = text.replace(/<[^>]*>/g, "");
       const id = cleanText
@@ -192,7 +193,50 @@ function SingleBlogPostPage() {
         headings.push({ id, text: cleanText, level: depth });
       }
 
-      return `<h${depth} id="${id}" class="scroll-mt-24 group flex items-center justify-between">${text}<a href="#${id}" class="opacity-0 group-hover:opacity-100 text-neon ml-2 text-sm">#</a></h${depth}>`;
+      if (depth === 2) {
+        return `<div class="mt-16 sm:mt-20 mb-8 pt-8 border-t border-border/80 group">
+          <div class="flex items-center justify-between gap-4">
+            <h2 id="${id}" class="scroll-mt-24 font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground leading-[1.25]">
+              ${text}
+            </h2>
+            <a href="#${id}" class="opacity-0 group-hover:opacity-100 text-neon text-base transition-opacity font-mono">#</a>
+          </div>
+        </div>`;
+      }
+
+      if (depth === 3) {
+        return `<div class="mt-10 sm:mt-12 mb-5 group">
+          <div class="flex items-center justify-between gap-4">
+            <h3 id="${id}" class="scroll-mt-24 font-display text-lg sm:text-xl font-bold tracking-tight text-foreground/95 leading-[1.3]">
+              ${text}
+            </h3>
+            <a href="#${id}" class="opacity-0 group-hover:opacity-100 text-neon text-sm transition-opacity font-mono">#</a>
+          </div>
+        </div>`;
+      }
+
+      return `<h${depth} id="${id}" class="scroll-mt-24 font-display font-bold mt-8 mb-4">${text}</h${depth}>`;
+    };
+
+    // Custom Paragraph Renderer with Generous Spacing & High-Contrast Typography
+    renderer.paragraph = ({ text }: { text: string }) => {
+      return `<p class="mb-7 text-[15px] sm:text-base leading-[1.85] text-foreground/85 font-normal break-words">${text}</p>`;
+    };
+
+    // Custom Horizontal Rule Renderer
+    renderer.hr = () => {
+      return `<div class="my-14 border-t border-border/80"></div>`;
+    };
+
+    // Custom List & ListItem Renderer
+    (renderer as any).list = function ({ body, ordered }: { body: string; ordered: boolean }) {
+      return ordered
+        ? `<ol class="my-7 pl-6 list-decimal space-y-3.5 text-[15px] sm:text-base leading-[1.85] text-foreground/85">${body}</ol>`
+        : `<ul class="my-7 pl-6 list-disc space-y-3.5 text-[15px] sm:text-base leading-[1.85] text-foreground/85">${body}</ul>`;
+    };
+
+    renderer.listitem = ({ text }: { text: string }) => {
+      return `<li class="pl-1 text-foreground/85 leading-[1.85] break-words">${text}</li>`;
     };
 
     // Custom Callout / Alert Box Renderer
@@ -206,7 +250,7 @@ function SingleBlogPostPage() {
         const alertBody = alertMatch[2];
 
         if (alertType === "IMPORTANT") {
-          return `<div class="my-6 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 sm:p-5 shadow-lg relative overflow-hidden w-full max-w-full min-w-0">
+          return `<div class="my-8 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5 shadow-lg relative overflow-hidden w-full max-w-full min-w-0">
             <div class="flex items-center gap-2 font-display text-xs font-bold text-amber-400 mb-2 uppercase tracking-wider">
               <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
               Important Architectural Requirement
@@ -216,7 +260,7 @@ function SingleBlogPostPage() {
         }
 
         if (alertType === "RECOMMENDATION" || alertType === "TIP") {
-          return `<div class="my-6 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4 sm:p-5 shadow-lg relative overflow-hidden w-full max-w-full min-w-0">
+          return `<div class="my-8 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-5 shadow-lg relative overflow-hidden w-full max-w-full min-w-0">
             <div class="flex items-center gap-2 font-display text-xs font-bold text-emerald-400 mb-2 uppercase tracking-wider">
               <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
               Founder Recommendation
@@ -226,7 +270,7 @@ function SingleBlogPostPage() {
         }
 
         if (alertType === "WARNING") {
-          return `<div class="my-6 rounded-2xl border border-rose-500/40 bg-rose-500/10 p-4 sm:p-5 shadow-lg relative overflow-hidden w-full max-w-full min-w-0">
+          return `<div class="my-8 rounded-2xl border border-rose-500/40 bg-rose-500/10 p-5 shadow-lg relative overflow-hidden w-full max-w-full min-w-0">
             <div class="flex items-center gap-2 font-display text-xs font-bold text-rose-400 mb-2 uppercase tracking-wider">
               <svg class="w-4 h-4 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               Common Founder Pitfall
@@ -236,7 +280,7 @@ function SingleBlogPostPage() {
         }
 
         if (alertType === "NOTE" || alertType === "CHECKLIST") {
-          return `<div class="my-6 rounded-2xl border border-indigo-500/40 bg-indigo-500/10 p-4 sm:p-5 shadow-lg relative overflow-hidden w-full max-w-full min-w-0">
+          return `<div class="my-8 rounded-2xl border border-indigo-500/40 bg-indigo-500/10 p-5 shadow-lg relative overflow-hidden w-full max-w-full min-w-0">
             <div class="flex items-center gap-2 font-display text-xs font-bold text-indigo-400 mb-2 uppercase tracking-wider">
               <svg class="w-4 h-4 text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               Architectural Context
@@ -246,7 +290,7 @@ function SingleBlogPostPage() {
         }
       }
 
-      return `<blockquote class="my-6 border-l-4 border-neon bg-card/60 rounded-r-2xl p-4 sm:p-5 italic text-foreground text-sm leading-relaxed w-full max-w-full min-w-0 break-words">${text}</blockquote>`;
+      return `<blockquote class="my-8 border-l-4 border-neon bg-card/60 rounded-r-2xl p-5 italic text-foreground/90 text-sm leading-relaxed w-full max-w-full min-w-0 break-words">${text}</blockquote>`;
     };
 
     // Custom Code Block Renderer
@@ -256,14 +300,14 @@ function SingleBlogPostPage() {
       const isDiagram =
         cleanLang.includes("ascii") || cleanLang.includes("mermaid") || cleanLang.includes("diagram");
 
-      return `<div class="my-6 rounded-2xl border border-border bg-[#0a0f1d] overflow-hidden shadow-card group w-full max-w-full min-w-0">
-        <div class="flex items-center justify-between px-3.5 sm:px-4 py-2 bg-[#0e162b] border-b border-border/80 text-[11px] font-mono text-muted-foreground">
+      return `<div class="my-8 rounded-2xl border border-border bg-[#0a0f1d] overflow-hidden shadow-card group w-full max-w-full min-w-0">
+        <div class="flex items-center justify-between px-4 py-2.5 bg-[#0e162b] border-b border-border/80 text-[11px] font-mono text-muted-foreground">
           <span class="font-bold text-neon uppercase tracking-wider">${cleanLang.toUpperCase()}</span>
-          <button onclick="navigator.clipboard.writeText(decodeURIComponent('${encodedCode}')).then(()=>{this.innerText='Copied!';setTimeout(()=>this.innerText='Copy Code',2000)})" class="hover:text-foreground transition-colors px-2 py-0.5 rounded bg-muted/40 hover:bg-muted/70 text-[10px]">
+          <button onclick="navigator.clipboard.writeText(decodeURIComponent('${encodedCode}')).then(()=>{this.innerText='Copied!';setTimeout(()=>this.innerText='Copy Code',2000)})" class="hover:text-foreground transition-colors px-2.5 py-1 rounded bg-muted/40 hover:bg-muted/70 text-[10px] font-medium">
             Copy Code
           </button>
         </div>
-        <pre class="p-3.5 sm:p-5 overflow-x-auto w-full max-w-full text-xs sm:text-sm font-mono leading-relaxed text-[#e2e8f0] ${isDiagram ? "whitespace-pre text-neon-2" : ""}"><code>${escapeHtml(text)}</code></pre>
+        <pre class="p-4 sm:p-5 overflow-x-auto w-full max-w-full text-xs sm:text-sm font-mono leading-relaxed text-[#e2e8f0] ${isDiagram ? "whitespace-pre text-neon-2" : ""}"><code>${escapeHtml(text)}</code></pre>
       </div>`;
     };
 
@@ -272,7 +316,7 @@ function SingleBlogPostPage() {
       const headerHtml = (token.header || [])
         .map(
           (cell: any) =>
-            `<th class="p-3 sm:p-4 text-xs font-bold uppercase tracking-wider text-neon">${this.parser.parseInline(cell.tokens || [])}</th>`,
+            `<th class="p-4 text-xs font-bold uppercase tracking-wider text-neon">${this.parser.parseInline(cell.tokens || [])}</th>`,
         )
         .join("");
 
@@ -281,14 +325,14 @@ function SingleBlogPostPage() {
           const rowContent = (row || [])
             .map(
               (cell: any) =>
-                `<td class="p-3 sm:p-4 text-muted-foreground leading-relaxed">${this.parser.parseInline(cell.tokens || [])}</td>`,
+                `<td class="p-4 text-muted-foreground leading-relaxed">${this.parser.parseInline(cell.tokens || [])}</td>`,
             )
             .join("");
           return `<tr class="hover:bg-muted/20 transition-colors">${rowContent}</tr>`;
         })
         .join("");
 
-      return `<div class="overflow-x-auto my-8 rounded-2xl border border-border bg-card/80 shadow-md w-full max-w-full min-w-0">
+      return `<div class="overflow-x-auto my-10 rounded-2xl border border-border bg-card/80 shadow-md w-full max-w-full min-w-0">
         <table class="w-full min-w-[500px] text-left text-xs sm:text-sm border-collapse">
           <thead class="bg-muted/70 border-b border-border text-foreground font-display font-semibold"><tr>${headerHtml}</tr></thead>
           <tbody class="divide-y divide-border/60">${bodyHtml}</tbody>
@@ -396,15 +440,9 @@ function SingleBlogPostPage() {
           {/* Main Markdown Body (8 Cols) */}
           <div className="lg:col-span-8 space-y-8 w-full min-w-0 max-w-full">
             <div
-              className="prose dark:prose-invert max-w-none w-full min-w-0 break-words [overflow-wrap:anywhere] [word-break:break-word] text-[15px] sm:text-base leading-relaxed sm:leading-8
-                prose-headings:font-display prose-headings:font-bold prose-headings:tracking-tight prose-headings:break-words
-                prose-h2:text-xl sm:text-3xl prose-h2:mt-10 sm:prose-h2:mt-12 prose-h2:mb-4 sm:prose-h2:mb-5 prose-h2:text-foreground prose-h2:border-b prose-h2:border-border/80 prose-h2:pb-3
-                prose-h3:text-base sm:text-xl prose-h3:mt-8 sm:prose-h3:mt-9 prose-h3:mb-3 sm:prose-h3:mb-4 prose-h3:text-foreground
-                prose-p:text-muted-foreground prose-p:leading-relaxed sm:prose-p:leading-8 prose-p:mb-5 sm:prose-p:mb-6
-                prose-strong:text-foreground prose-strong:font-bold
-                prose-a:text-neon prose-a:font-semibold prose-a:no-underline hover:prose-a:underline
-                prose-ul:list-disc prose-ul:pl-5 sm:prose-ul:pl-6 prose-ul:space-y-2.5 sm:prose-ul:space-y-3 prose-li:text-muted-foreground prose-li:leading-relaxed
-                prose-ol:list-decimal prose-ol:pl-5 sm:prose-ol:pl-6 prose-ol:space-y-2.5 sm:prose-ol:space-y-3 prose-li:text-muted-foreground prose-li:leading-relaxed"
+              className="prose dark:prose-invert max-w-none w-full min-w-0 break-words [overflow-wrap:anywhere] [word-break:break-word] text-[15px] sm:text-base leading-[1.85]
+                prose-strong:text-foreground prose-strong:font-bold prose-strong:tracking-tight
+                prose-a:text-neon prose-a:font-semibold prose-a:no-underline hover:prose-a:underline"
               dangerouslySetInnerHTML={{ __html: htmlContent }}
             />
 
