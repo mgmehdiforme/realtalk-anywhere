@@ -264,7 +264,9 @@ export async function getBlogPosts(options?: GetBlogPostsOptions): Promise<{
   // Filter by tag
   if (options?.tag) {
     const targetTag = options.tag.toLowerCase();
-    posts = posts.filter((p) => p.tags.some((t) => t.toLowerCase() === targetTag));
+    posts = posts.filter(
+      (p) => Array.isArray(p.tags) && p.tags.some((t) => (t || "").toLowerCase() === targetTag),
+    );
   }
 
   // Filter by search keyword
@@ -272,10 +274,10 @@ export async function getBlogPosts(options?: GetBlogPostsOptions): Promise<{
     const q = options.search.toLowerCase();
     posts = posts.filter(
       (p) =>
-        p.title.toLowerCase().includes(q) ||
-        p.excerpt.toLowerCase().includes(q) ||
-        p.content.toLowerCase().includes(q) ||
-        p.tags.some((t) => t.toLowerCase().includes(q)),
+        (p.title || "").toLowerCase().includes(q) ||
+        (p.excerpt || "").toLowerCase().includes(q) ||
+        (p.content || "").toLowerCase().includes(q) ||
+        (Array.isArray(p.tags) && p.tags.some((t) => (t || "").toLowerCase().includes(q))),
     );
   }
 

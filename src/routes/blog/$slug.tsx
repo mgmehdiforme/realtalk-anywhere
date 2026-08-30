@@ -436,13 +436,24 @@ function SingleBlogPostPage() {
         {/* ── ARTICLE HEADER ── */}
         <header className="w-full min-w-0 space-y-6 mb-10">
           <div className="flex flex-wrap items-center gap-2">
-            {post.tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full bg-neon/15 px-3 py-1 font-mono text-[10px] font-bold text-neon uppercase tracking-wider border border-neon/30"
+            {post.category && (
+              <Link
+                to="/blog"
+                search={{ category: post.category }}
+                className="rounded-full bg-neon/15 px-3 py-1 font-mono text-[10px] font-bold text-neon uppercase tracking-wider border border-neon/30 hover:bg-neon hover:text-primary-foreground transition"
               >
-                {tag}
-              </span>
+                {post.category.replace(/-/g, " ")}
+              </Link>
+            )}
+            {(post.tags || []).map((tag) => (
+              <Link
+                key={tag}
+                to="/blog"
+                search={{ tag }}
+                className="rounded-full bg-muted/70 px-3 py-1 text-[10px] font-semibold text-muted-foreground border border-border hover:border-neon hover:text-neon transition"
+              >
+                #{tag}
+              </Link>
             ))}
           </div>
 
@@ -564,7 +575,7 @@ function SingleBlogPostPage() {
                   <div className="flex items-center gap-2 font-display text-xs font-bold text-foreground uppercase tracking-wider">
                     <BookOpen className="h-4 w-4 text-neon" /> Table of Contents
                   </div>
-                  <nav className="space-y-1.5 text-xs">
+                  <nav className="space-y-1.5 text-xs max-h-[260px] overflow-y-auto pr-1">
                     {toc.map((item) => (
                       <a
                         key={item.id}
@@ -579,6 +590,70 @@ function SingleBlogPostPage() {
                   </nav>
                 </div>
               )}
+
+              {/* Topic Tags for this Post */}
+              {Array.isArray(post.tags) && post.tags.length > 0 && (
+                <div className="rounded-2xl border border-border bg-card p-5 shadow-card space-y-3">
+                  <div className="flex items-center gap-2 font-display text-xs font-bold text-foreground uppercase tracking-wider">
+                    <Layers className="h-4 w-4 text-neon" /> Article Topics
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {post.tags.map((tag) => (
+                      <Link
+                        key={tag}
+                        to="/blog"
+                        search={{ tag }}
+                        className="rounded-lg border border-border bg-muted/40 px-2.5 py-1 font-mono text-[10px] font-semibold text-muted-foreground hover:border-neon hover:text-neon transition"
+                      >
+                        #{tag}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Founder-to-Launch Blueprint Sticky Card */}
+              <div className="rounded-2xl border-2 border-neon/40 bg-gradient-to-br from-card to-neon/10 p-5 shadow-card space-y-3">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-neon/20 px-2 py-0.5 font-mono text-[10px] font-bold text-neon uppercase tracking-wider">
+                  <Sparkles className="h-3 w-3" /> Interactive Tool
+                </div>
+                <h4 className="font-display text-sm font-bold text-foreground">
+                  Founder-to-Launch Blueprint™
+                </h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Design your exact SaaS MVP architecture and cost roadmap in 10 minutes.
+                </p>
+                <Link
+                  to="/blueprint"
+                  className="block text-center rounded-xl bg-neon px-3 py-2 text-xs font-bold text-primary-foreground shadow-neon hover:brightness-110 transition"
+                >
+                  Generate Free Blueprint →
+                </Link>
+              </div>
+
+              {/* Fractional CTO Advisory Card */}
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-card space-y-3">
+                <div className="flex items-center gap-2 font-display text-xs font-bold text-foreground uppercase tracking-wider">
+                  <Shield className="h-4 w-4 text-neon" /> Technical Partnership
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Looking for a Senior Technical Partner to lead product engineering from 0 to scale?
+                </p>
+                <div className="space-y-2">
+                  <Link
+                    to="/services"
+                    className="block text-center rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs font-semibold hover:bg-muted transition"
+                  >
+                    Fractional CTO Advisory →
+                  </Link>
+                  <Link
+                    to="/contact"
+                    className="block text-center rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs font-semibold hover:bg-muted transition"
+                  >
+                    Schedule Code Audit →
+                  </Link>
+                </div>
+              </div>
 
               {/* Social Share Box */}
               <div className="rounded-2xl border border-border bg-card p-5 shadow-card space-y-3">
