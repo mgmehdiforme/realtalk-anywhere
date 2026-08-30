@@ -419,9 +419,10 @@ function BlogIndexPage() {
                               <Link
                                 to="/blog/$slug"
                                 params={{ slug: post.slug }}
-                                className="font-bold text-neon hover:underline"
+                                aria-label={`Read full deep dive: ${post.title}`}
+                                className="font-bold text-neon hover:underline inline-flex items-center gap-1"
                               >
-                                Read →
+                                Read Deep Dive →
                               </Link>
                             </div>
                           </div>

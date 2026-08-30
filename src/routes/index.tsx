@@ -113,9 +113,10 @@ function Landing() {
               </Link>
               <Link
                 to="/founder-to-launch-framework"
+                aria-label="Learn more about the Founder-to-Launch Framework"
                 className="inline-flex items-center justify-center rounded-xl border border-border bg-card/40 px-5 py-3.5 text-sm font-semibold text-foreground backdrop-blur transition hover:bg-card"
               >
-                Learn More
+                Explore Framework →
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
@@ -156,12 +157,19 @@ function Landing() {
                 {/* Profile */}
                 <div className="px-6 pt-7">
                   <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <img
-                        src={avatarAsset.url}
-                        alt="Mehdi Golzari"
-                        className="h-14 w-14 rounded-2xl object-cover shadow-neon ring-2 ring-[color:var(--neon)]/40"
-                      />
+                    <div className="relative h-14 w-14 shrink-0">
+                      <picture>
+                        <source srcSet="/avatar.webp" type="image/webp" />
+                        <img
+                          src="/avatar.png"
+                          alt="Mehdi Golzari — Senior Technical Partner"
+                          width={56}
+                          height={56}
+                          loading="eager"
+                          fetchPriority="high"
+                          className="h-14 w-14 rounded-2xl object-cover shadow-neon ring-2 ring-[color:var(--neon)]/40"
+                        />
+                      </picture>
                       <div className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full border-2 border-card bg-emerald-500 text-white">
                         <Check className="h-3 w-3" strokeWidth={3} />
                       </div>

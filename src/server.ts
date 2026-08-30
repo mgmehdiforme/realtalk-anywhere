@@ -301,8 +301,37 @@ export default {
 
       // 5. Delegate to TanStack Start SSR
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      let response = await handler.fetch(request, env, ctx);
+      response = await normalizeCatastrophicSsrResponse(response);
+
+      // Attach high-performance caching headers for static assets
+      if (response.status === 200) {
+        const url = new URL(request.url);
+        const pathname = url.pathname;
+
+        const isImmutable =
+          pathname.startsWith("/assets/") ||
+          pathname.endsWith(".js") ||
+          pathname.endsWith(".css") ||
+          pathname.endsWith(".woff2") ||
+          pathname.endsWith(".woff");
+
+        const isPublicMedia =
+          pathname === "/avatar.png" ||
+          pathname === "/avatar.webp" ||
+          pathname === "/favicon.ico" ||
+          pathname === "/demo.mp4" ||
+          pathname.endsWith(".pdf") ||
+          pathname.startsWith("/api/blog/asset");
+
+        if (isImmutable) {
+          response.headers.set("Cache-Control", "public, max-age=31536000, immutable");
+        } else if (isPublicMedia) {
+          response.headers.set("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+        }
+      }
+
+      return response;
     } catch (error) {
       console.error(error);
       return new Response(renderErrorPage(), {

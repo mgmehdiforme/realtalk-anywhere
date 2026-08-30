@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Globe, Check, Loader2 } from "lucide-react";
 
 declare global {
@@ -35,15 +35,12 @@ export function LanguageSelect() {
   const [current, setCurrent] = useState("en");
   const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const loaded = useRef(false);
+  const scriptLoaded = useRef(false);
 
-  useEffect(() => {
-    // Track current selection from cookie
-    const m = document.cookie.match(/googtrans=\/[a-z]+\/([a-z-]+)/);
-    if (m) setCurrent(m[1]);
-
-    if (loaded.current) return;
-    loaded.current = true;
+  // Lazy-load Google Translate script on demand
+  const loadTranslateScript = useCallback(() => {
+    if (scriptLoaded.current || typeof window === "undefined") return;
+    scriptLoaded.current = true;
 
     window.googleTranslateElementInit = () => {
       if (window.google?.translate?.TranslateElement) {
@@ -60,32 +57,27 @@ export function LanguageSelect() {
     };
 
     const s = document.createElement("script");
-    s.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+    s.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
     s.async = true;
     document.body.appendChild(s);
-
-    // Aggressively hide the Google Translate banner whenever it gets injected
-    const killBanner = () => {
-      document
-        .querySelectorAll<HTMLElement>(
-          ".goog-te-banner-frame, iframe.goog-te-banner-frame, iframe.skiptranslate",
-        )
-        .forEach((el) => {
-          el.style.display = "none";
-          el.style.visibility = "hidden";
-          el.style.height = "0";
-        });
-      if (document.body.style.top) document.body.style.top = "";
-      if (document.documentElement.style.top) document.documentElement.style.top = "";
-    };
-    const observer = new MutationObserver(killBanner);
-    observer.observe(document.documentElement, { childList: true, subtree: true });
-    const id = window.setInterval(killBanner, 400);
-    return () => {
-      observer.disconnect();
-      window.clearInterval(id);
-    };
   }, []);
+
+  useEffect(() => {
+    // Read current selection from cookie if already set
+    const m = document.cookie.match(/googtrans=\/[a-z]+\/([a-z-]+)/);
+    if (m) {
+      setCurrent(m[1]);
+      if (m[1] !== "en") {
+        // If a non-English language was previously selected, load script to apply translation
+        loadTranslateScript();
+      }
+    }
+
+    // Schedule background load after page is fully idle
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      (window as any).requestIdleCallback(() => loadTranslateScript(), { timeout: 5000 });
+    }
+  }, [loadTranslateScript]);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -94,6 +86,11 @@ export function LanguageSelect() {
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
+
+  const handleToggle = () => {
+    loadTranslateScript();
+    setOpen((o) => !o);
+  };
 
   const pick = (code: string) => {
     if (code === current) {
@@ -124,7 +121,9 @@ export function LanguageSelect() {
       />
 
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={handleToggle}
+        onMouseEnter={loadTranslateScript}
+        onFocus={loadTranslateScript}
         disabled={loading}
         aria-label="Choose language"
         className="notranslate inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 text-xs font-medium text-muted-foreground transition hover:text-foreground disabled:opacity-70"

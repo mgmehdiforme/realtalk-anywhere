@@ -130,24 +130,37 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
-        {/* Google tag (gtag.js) */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-1CT57YD43D" />
+        <HeadContent />
+      </head>
+      <body>
+        {children}
+        <Scripts />
+        {/* Google Tag Manager (Deferred to idle to prevent render blocking) */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-
               gtag('config', 'G-1CT57YD43D');
+
+              function loadGtagScript() {
+                if (window._gtagLoaded) return;
+                window._gtagLoaded = true;
+                var s = document.createElement('script');
+                s.async = true;
+                s.src = 'https://www.googletagmanager.com/gtag/js?id=G-1CT57YD43D';
+                document.head.appendChild(s);
+              }
+
+              if ('requestIdleCallback' in window) {
+                requestIdleCallback(loadGtagScript, { timeout: 3000 });
+              } else {
+                window.addEventListener('load', loadGtagScript);
+              }
             `,
           }}
         />
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
       </body>
     </html>
   );
