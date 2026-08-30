@@ -6,7 +6,7 @@ import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { verifyCronSecret } from "./lib/admin-auth";
 import { generateAutonomousBlogPost } from "./lib/blog-generator";
-import { getAllPublishedSlugs } from "./lib/db";
+import { getAllPublishedSlugs, getBlogPostBySlug } from "./lib/db";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -57,32 +57,66 @@ async function handleBlogAssetRequest(request: Request): Promise<Response | null
   const cleanSlug = slug.replace(/[^a-zA-Z0-9-_]/g, "");
   const assetsDir = path.resolve(process.cwd(), "data/blog-assets");
 
-  // Try SVG first, then WEBP, then PNG
+  // 1. Try reading existing asset from GCS-mounted directory
   const extensions = [".svg", ".webp", ".png"];
   for (const ext of extensions) {
     const filePath = path.join(assetsDir, `${cleanSlug}${ext}`);
     try {
-      const buffer = await fs.readFile(filePath);
-      const mimeType =
-        ext === ".svg"
-          ? "image/svg+xml"
-          : ext === ".webp"
-            ? "image/webp"
-            : "image/png";
-
-      return new Response(buffer, {
-        status: 200,
-        headers: {
-          "Content-Type": mimeType,
-          "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
-        },
-      });
+      if (ext === ".svg") {
+        const svgContent = await fs.readFile(filePath, "utf-8");
+        return new Response(svgContent, {
+          status: 200,
+          headers: {
+            "Content-Type": "image/svg+xml; charset=utf-8",
+            "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+          },
+        });
+      } else {
+        const buffer = await fs.readFile(filePath);
+        const mimeType = ext === ".webp" ? "image/webp" : "image/png";
+        return new Response(new Uint8Array(buffer), {
+          status: 200,
+          headers: {
+            "Content-Type": mimeType,
+            "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+          },
+        });
+      }
     } catch {
-      // Continue to next extension
+      // Continue to next extension or fallback
     }
   }
 
-  return new Response("Asset not found", { status: 404 });
+  // 2. Dynamic Fallback: If asset file is not on disk, synthesize branded SVG immediately
+  try {
+    const post = await getBlogPostBySlug(cleanSlug);
+    const title =
+      post?.title ||
+      cleanSlug
+        .split("-")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ");
+    const tag = post?.tags?.[0] || "Architecture";
+
+    const { buildBrandedBlogHeroSvg } = await import("./lib/svg-generator");
+    const generatedSvg = buildBrandedBlogHeroSvg(cleanSlug, title, tag);
+
+    // Save to persistent GCS storage in background
+    fs.mkdir(assetsDir, { recursive: true })
+      .then(() => fs.writeFile(path.join(assetsDir, `${cleanSlug}.svg`), generatedSvg, "utf-8"))
+      .catch((err) => console.error("Failed to cache generated SVG asset to GCS mount:", err));
+
+    return new Response(generatedSvg, {
+      status: 200,
+      headers: {
+        "Content-Type": "image/svg+xml; charset=utf-8",
+        "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+      },
+    });
+  } catch (err) {
+    console.error("Failed to generate fallback blog asset:", err);
+    return new Response("Asset not found", { status: 404 });
+  }
 }
 
 /**

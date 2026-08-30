@@ -517,6 +517,8 @@ Draft the complete, production-grade technical article JSON now.`;
   return parsed;
 }
 
+import { buildBrandedBlogHeroSvg } from "./svg-generator";
+
 /**
  * ─────────────────────────────────────────────────────────────────────────────
  * STAGE 3: COVER IMAGE GENERATION & ASSET STORAGE
@@ -533,133 +535,8 @@ export async function generateCoverImage(
   const fileName = `${slug}.svg`;
   const filePath = path.join(BLOG_ASSETS_DIR, fileName);
 
-  // Generate ultra-clean, high-resolution branded SVG hero graphic (1200x630)
-  // Perfectly matching the dark OKLCH aesthetic of MehdiGolzari.dev
-  const svgContent = `
-<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <!-- Background Gradients -->
-    <radialGradient id="bgGrad" cx="50%" cy="40%" r="70%" fx="30%" fy="20%">
-      <stop offset="0%" stop-color="#1e1b4b" />
-      <stop offset="50%" stop-color="#0f172a" />
-      <stop offset="100%" stop-color="#09090b" />
-    </radialGradient>
-
-    <!-- Neon Glows -->
-    <radialGradient id="neonGlow1" cx="20%" cy="20%" r="50%">
-      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.35" />
-      <stop offset="100%" stop-color="#6366f1" stop-opacity="0" />
-    </radialGradient>
-    <radialGradient id="neonGlow2" cx="80%" cy="70%" r="50%">
-      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.3" />
-      <stop offset="100%" stop-color="#a855f7" stop-opacity="0" />
-    </radialGradient>
-
-    <!-- Text Gradient -->
-    <linearGradient id="neonText" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#38bdf8" />
-      <stop offset="50%" stop-color="#818cf8" />
-      <stop offset="100%" stop-color="#c084fc" />
-    </linearGradient>
-
-    <linearGradient id="cardBorder" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.4" />
-      <stop offset="100%" stop-color="#a855f7" stop-opacity="0.1" />
-    </linearGradient>
-
-    <!-- Grid Pattern -->
-    <pattern id="techGrid" width="40" height="40" patternUnits="userSpaceOnUse">
-      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255, 255, 255, 0.04)" stroke-width="1" />
-    </pattern>
-  </defs>
-
-  <!-- Background Base -->
-  <rect width="1200" height="630" fill="url(#bgGrad)" />
-  <rect width="1200" height="630" fill="url(#techGrid)" />
-
-  <!-- Ambient Glow Orbs -->
-  <rect width="1200" height="630" fill="url(#neonGlow1)" />
-  <rect width="1200" height="630" fill="url(#neonGlow2)" />
-
-  <!-- Outer Frame -->
-  <rect x="40" y="40" width="1120" height="550" rx="24" stroke="url(#cardBorder)" stroke-width="1.5" fill="none" />
-
-  <!-- Header Branding -->
-  <g transform="translate(80, 95)">
-    <!-- Logo Icon -->
-    <rect width="32" height="32" rx="8" fill="#6366f1" />
-    <rect x="10" y="10" width="12" height="12" rx="3" fill="#09090b" />
-    <text x="44" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700" fill="#ffffff" letter-spacing="-0.5">
-      MehdiGolzari<tspan fill="#a855f7">.dev</tspan>
-    </text>
-    <text x="210" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="500" fill="#94a3b8">
-      · Architectural Insights
-    </text>
-  </g>
-
-  <!-- Category Tag Badge -->
-  <g transform="translate(80, 175)">
-    <rect width="${Math.max(categoryTag.length * 10 + 32, 120)}" height="32" rx="16" fill="rgba(99, 102, 241, 0.15)" stroke="rgba(99, 102, 241, 0.4)" stroke-width="1" />
-    <text x="16" y="20" font-family="ui-monospace, monospace" font-size="12" font-weight="700" fill="#38bdf8" text-transform="uppercase" letter-spacing="1">
-      ${escapeXml(categoryTag.toUpperCase())}
-    </text>
-  </g>
-
-  <!-- Title Wrapping (2 Lines Max) -->
-  <g transform="translate(80, 270)">
-    <text font-family="system-ui, -apple-system, sans-serif" font-size="44" font-weight="800" fill="#ffffff" letter-spacing="-1">
-      ${wrapTextToSvg(title, 42)}
-    </text>
-  </g>
-
-  <!-- Footer Metadata & Architecture Signature -->
-  <line x1="80" y1="495" x2="1120" y2="495" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
-
-  <g transform="translate(80, 535)">
-    <text font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600" fill="#e2e8f0">
-      Senior Independent Technical Partner for SaaS & AI Founders
-    </text>
-    <text x="750" y="0" font-family="ui-monospace, monospace" font-size="13" font-weight="500" fill="#94a3b8">
-      Founder-to-Launch Framework™
-    </text>
-  </g>
-</svg>`.trim();
+  const svgContent = buildBrandedBlogHeroSvg(slug, title, categoryTag);
 
   await fs.writeFile(filePath, svgContent, "utf-8");
   return `/api/blog/asset?slug=${slug}`;
-}
-
-function escapeXml(unsafe: string): string {
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
-function wrapTextToSvg(text: string, maxCharsPerLine = 40): string {
-  const words = text.split(" ");
-  const lines: string[] = [];
-  let currentLine = "";
-
-  for (const word of words) {
-    if ((currentLine + " " + word).trim().length <= maxCharsPerLine) {
-      currentLine = (currentLine + " " + word).trim();
-    } else {
-      if (currentLine) lines.push(currentLine);
-      currentLine = word;
-      if (lines.length >= 2) break;
-    }
-  }
-  if (currentLine && lines.length < 2) {
-    lines.push(currentLine);
-  }
-
-  return lines
-    .map(
-      (line, i) =>
-        `<tspan x="0" dy="${i === 0 ? 0 : 56}">${escapeXml(line)}</tspan>`,
-    )
-    .join("");
 }
