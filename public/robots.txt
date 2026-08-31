@@ -1,0 +1,49 @@
+# Robots.txt for MehdiGolzari.dev
+# Generated for technical search optimization and crawler governance
+
+User-agent: *
+Allow: /
+Allow: /blog
+Allow: /blog/*
+Allow: /blueprint
+Allow: /services
+Allow: /founder-to-launch-framework
+Allow: /about
+Allow: /resume
+Allow: /contact
+Allow: /assets/
+Allow: /api/blog/asset
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /auth
+Disallow: /auth/*
+Disallow: /api/cron/*
+
+# Standard Search Crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# AI Retrieval & Organic Discovery Bots (Permit for AI Search Citations & Overviews)
+User-agent: GPTBot
+Allow: /
+Allow: /blog/*
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /blog/*
+
+User-agent: ClaudeBot
+Allow: /
+Allow: /blog/*
+
+# Canonical XML Sitemap
+Sitemap: https://mehdigolzari.dev/sitemap.xml

@@ -53,25 +53,111 @@ export const Route = createFileRoute("/blog/")({
       return { posts: [] };
     }
   },
-  head: () => ({
-    meta: [
-      { title: "Technical Insights & SaaS Architecture Blog — MehdiGolzari.dev" },
-      {
-        name: "description",
-        content:
-          "Practical, high-signal, CTO-level architectural deep-dives for SaaS and AI founders. Modular monoliths, deterministic AI, multi-tenancy, and fractional CTO strategy.",
+  head: ({ loaderData }) => {
+    const posts = loaderData?.posts || [];
+    const blogJsonLd = {
+      "@context": "https://schema.org",
+      "@type": "Blog",
+      "@id": "https://mehdigolzari.dev/blog/#blog",
+      url: "https://mehdigolzari.dev/blog",
+      name: "Technical Insights & SaaS Architecture Blog",
+      description:
+        "Practical, high-signal, CTO-level architectural deep-dives for SaaS and AI founders. Modular monoliths, deterministic AI, multi-tenancy, and fractional CTO strategy.",
+      publisher: {
+        "@type": "Person",
+        name: "Mehdi Golzari",
+        url: "https://mehdigolzari.dev/about",
       },
-      { property: "og:title", content: "Technical Insights & SaaS Architecture Blog — MehdiGolzari.dev" },
-      {
-        property: "og:description",
-        content:
-          "Practical architectural deep-dives for SaaS and AI founders. Battle-tested engineering without agency fluff.",
-      },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://mehdigolzari.dev/blog" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+      inLanguage: "en-US",
+      blogPost: posts.slice(0, 10).map((p: BlogPost) => ({
+        "@type": "BlogPosting",
+        headline: p.title,
+        description: p.excerpt,
+        url: `https://mehdigolzari.dev/blog/${p.slug}`,
+        datePublished: p.publishedAt || p.createdAt,
+        dateModified: p.updatedAt || p.publishedAt || p.createdAt,
+        author: {
+          "@type": "Person",
+          name: "Mehdi Golzari",
+        },
+      })),
+    };
+
+    const breadcrumbsJsonLd = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: "https://mehdigolzari.dev",
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Technical Blog",
+          item: "https://mehdigolzari.dev/blog",
+        },
+      ],
+    };
+
+    return {
+      meta: [
+        { title: "Technical Insights & SaaS Architecture Blog — Mehdi Golzari" },
+        {
+          name: "description",
+          content:
+            "Practical, high-signal, CTO-level architectural deep-dives for SaaS and AI founders. Modular monoliths, deterministic AI, multi-tenancy, and fractional CTO strategy.",
+        },
+        { property: "og:site_name", content: "MehdiGolzari.dev" },
+        { property: "og:title", content: "Technical Insights & SaaS Architecture Blog — Mehdi Golzari" },
+        {
+          property: "og:description",
+          content:
+            "Practical architectural deep-dives for SaaS and AI founders. Battle-tested engineering without agency fluff.",
+        },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: "https://mehdigolzari.dev/blog" },
+        {
+          property: "og:image",
+          content:
+            "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/ac23c38d-b692-43ac-863d-d0c7e38bfc5b",
+        },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: "Technical Insights & SaaS Architecture Blog — Mehdi Golzari" },
+        {
+          name: "twitter:description",
+          content:
+            "Practical architectural deep-dives for SaaS and AI founders. Battle-tested engineering without agency fluff.",
+        },
+        {
+          name: "twitter:image",
+          content:
+            "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/ac23c38d-b692-43ac-863d-d0c7e38bfc5b",
+        },
+      ],
+      links: [
+        { rel: "canonical", href: "https://mehdigolzari.dev/blog" },
+        {
+          rel: "alternate",
+          type: "application/rss+xml",
+          title: "Mehdi Golzari — Architectural Blog RSS",
+          href: "https://mehdigolzari.dev/rss.xml",
+        },
+      ],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(blogJsonLd),
+        },
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(breadcrumbsJsonLd),
+        },
+      ],
+    };
+  },
   component: BlogIndexPage,
 });
 

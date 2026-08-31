@@ -74,52 +74,109 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Senior Independent Technical Partner for SaaS Founders" },
-      {
-        name: "description",
-        content:
-          "Work directly with the senior engineer Mehdi Golzari building your product. SaaS MVP, AI MVP, scaling and fractional CTO — no agencies, no middlemen.",
-      },
-      { name: "author", content: "Mehdi Golzari" },
-      { property: "og:title", content: "Senior Independent Technical Partner for SaaS Founders" },
-      {
-        property: "og:description",
-        content:
-          "Work directly with the senior engineer Mehdi Golzari building your product. SaaS MVP, AI MVP, scaling and fractional CTO — no agencies, no middlemen.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Senior Independent Technical Partner for SaaS Founders" },
-      {
-        name: "twitter:description",
-        content:
-          "Work directly with the senior engineer Mehdi Golzari building your product. SaaS MVP, AI MVP, scaling and fractional CTO — no agencies, no middlemen.",
-      },
-      {
-        property: "og:image",
-        content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/ac23c38d-b692-43ac-863d-d0c7e38bfc5b",
-      },
-      {
-        name: "twitter:image",
-        content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/ac23c38d-b692-43ac-863d-d0c7e38bfc5b",
-      },
-    ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
-      },
-    ],
-  }),
+  head: () => {
+    const jsonLdGlobalWebsite = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://mehdigolzari.dev/#website",
+          url: "https://mehdigolzari.dev",
+          name: "Mehdi Golzari — Senior Independent Technical Partner",
+          description:
+            "Architectural insights, deterministic AI agents, and 0-to-1 MVP roadmap advisory for startup founders.",
+          publisher: {
+            "@id": "https://mehdigolzari.dev/#person",
+          },
+          inLanguage: "en-US",
+        },
+        {
+          "@type": "Person",
+          "@id": "https://mehdigolzari.dev/#person",
+          name: "Mehdi Golzari",
+          url: "https://mehdigolzari.dev/about",
+          jobTitle: "Senior Independent Technical Partner & Fractional CTO",
+          image: "https://mehdigolzari.dev/avatar.webp",
+          sameAs: [
+            "https://github.com/mgmehdiforme",
+            "https://linkedin.com/in/mehdigolzari",
+            "https://x.com/mehdigolzaridev",
+          ],
+          knowsAbout: [
+            "Software Architecture",
+            "Deterministic AI Systems",
+            "LLM Engineering",
+            "Fractional CTO Advisory",
+            "SaaS MVP Development",
+            "Cloud Cost Optimization",
+          ],
+        },
+      ],
+    };
+
+    return {
+      meta: [
+        { charSet: "utf-8" },
+        { name: "viewport", content: "width=device-width, initial-scale=1" },
+        { title: "Senior Independent Technical Partner for SaaS Founders — Mehdi Golzari" },
+        {
+          name: "description",
+          content:
+            "Work directly with senior engineer Mehdi Golzari building your product. SaaS MVP, deterministic AI agents, scaling, and fractional CTO — no agencies, no middlemen.",
+        },
+        { name: "author", content: "Mehdi Golzari" },
+        { property: "og:site_name", content: "MehdiGolzari.dev" },
+        { property: "og:title", content: "Senior Independent Technical Partner for SaaS Founders" },
+        {
+          property: "og:description",
+          content:
+            "Work directly with senior engineer Mehdi Golzari building your product. SaaS MVP, deterministic AI agents, scaling, and fractional CTO — no agencies, no middlemen.",
+        },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: "https://mehdigolzari.dev" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:site", content: "@mehdigolzaridev" },
+        { name: "twitter:creator", content: "@mehdigolzaridev" },
+        { name: "twitter:title", content: "Senior Independent Technical Partner for SaaS Founders" },
+        {
+          name: "twitter:description",
+          content:
+            "Work directly with senior engineer Mehdi Golzari building your product. SaaS MVP, deterministic AI agents, scaling, and fractional CTO — no agencies, no middlemen.",
+        },
+        {
+          property: "og:image",
+          content:
+            "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/ac23c38d-b692-43ac-863d-d0c7e38bfc5b",
+        },
+        {
+          name: "twitter:image",
+          content:
+            "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/ac23c38d-b692-43ac-863d-d0c7e38bfc5b",
+        },
+      ],
+      links: [
+        { rel: "stylesheet", href: appCss },
+        { rel: "preconnect", href: "https://fonts.googleapis.com" },
+        { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+        {
+          rel: "stylesheet",
+          href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
+        },
+        {
+          rel: "alternate",
+          type: "application/rss+xml",
+          title: "Mehdi Golzari — Architectural Insights & Engineering RSS",
+          href: "https://mehdigolzari.dev/rss.xml",
+        },
+      ],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(jsonLdGlobalWebsite),
+        },
+      ],
+    };
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,

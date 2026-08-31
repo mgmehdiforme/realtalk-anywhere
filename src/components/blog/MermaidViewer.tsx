@@ -449,6 +449,8 @@ export async function renderMermaidBlocksInContainer(
     const previewContainer = block.querySelector<HTMLElement>(".mermaid-preview-container");
     const fullscreenBtn = block.querySelector<HTMLElement>(".mermaid-fullscreen-btn");
 
+    if (!svgTarget) continue;
+
     const hasSvg = svgTarget.querySelector("svg") !== null;
     if (hasSvg) continue;
 

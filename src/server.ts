@@ -6,7 +6,8 @@ import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { verifyCronSecret } from "./lib/admin-auth";
 import { generateAutonomousBlogPost } from "./lib/blog-generator";
-import { getAllPublishedSlugs, getBlogPostBySlug } from "./lib/db";
+import { getAllPublishedSlugs, getBlogPostBySlug, getBlogPosts } from "./lib/db";
+import { pingSearchEngines, INDEXNOW_KEY } from "./lib/seo-ping";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -119,6 +120,103 @@ async function handleBlogAssetRequest(request: Request): Promise<Response | null
   }
 }
 
+function escapeXml(unsafe: string): string {
+  return (unsafe || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+/**
+ * Handle Robots.txt (/robots.txt)
+ */
+async function handleRobotsRequest(request: Request): Promise<Response | null> {
+  const url = new URL(request.url);
+  if (url.pathname !== "/robots.txt") return null;
+
+  const robotsContent = `# Robots.txt for MehdiGolzari.dev
+# Generated for technical search optimization and crawler governance
+
+User-agent: *
+Allow: /
+Allow: /blog
+Allow: /blog/*
+Allow: /blueprint
+Allow: /services
+Allow: /founder-to-launch-framework
+Allow: /about
+Allow: /resume
+Allow: /contact
+Allow: /assets/
+Allow: /api/blog/asset
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /auth
+Disallow: /auth/*
+Disallow: /api/cron/*
+
+# Standard Search Crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# AI Retrieval & Organic Discovery Bots
+User-agent: GPTBot
+Allow: /
+Allow: /blog/*
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /blog/*
+
+User-agent: ClaudeBot
+Allow: /
+Allow: /blog/*
+
+# Authoritative XML Sitemap
+Sitemap: https://mehdigolzari.dev/sitemap.xml
+`;
+
+  return new Response(robotsContent.trim(), {
+    status: 200,
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "public, max-age=86400",
+    },
+  });
+}
+
+/**
+ * Handle IndexNow Verification Key Endpoint (/<key>.txt, /indexnow.txt, /api/indexnow-key)
+ */
+async function handleIndexNowKeyRequest(request: Request): Promise<Response | null> {
+  const url = new URL(request.url);
+  if (
+    url.pathname === `/${INDEXNOW_KEY}.txt` ||
+    url.pathname === "/indexnow.txt" ||
+    url.pathname === "/api/indexnow-key"
+  ) {
+    return new Response(INDEXNOW_KEY, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "public, max-age=86400",
+      },
+    });
+  }
+  return null;
+}
+
 /**
  * Handle Cloud Scheduler Autonomous Cron Endpoint (/api/blog/cron-generate)
  */
@@ -139,10 +237,16 @@ async function handleCronGenerateRequest(request: Request): Promise<Response | n
 
   try {
     const result = await generateAutonomousBlogPost();
+
+    // Trigger instant search engine indexing pings in the background
+    pingSearchEngines(result.post.slug).catch((err) =>
+      console.warn("[SEO PING BACKGROUND ERROR]", err),
+    );
+
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Autonomous article generated and published successfully",
+        message: "Autonomous article generated, published, and submitted for indexing",
         post: {
           id: result.post.id,
           title: result.post.title,
@@ -165,7 +269,7 @@ async function handleCronGenerateRequest(request: Request): Promise<Response | n
 }
 
 /**
- * Handle Dynamic Sitemap XML (/sitemap.xml)
+ * Handle Dynamic Sitemap XML (/sitemap.xml) with Image Sitemap Extensions
  */
 async function handleSitemapRequest(request: Request): Promise<Response | null> {
   const url = new URL(request.url);
@@ -173,7 +277,7 @@ async function handleSitemapRequest(request: Request): Promise<Response | null> 
 
   try {
     const baseUrl = "https://mehdigolzari.dev";
-    const publishedPosts = await getAllPublishedSlugs();
+    const { posts } = await getBlogPosts({ status: "published" });
     const today = new Date().toISOString().split("T")[0];
 
     const staticRoutes = [
@@ -198,19 +302,30 @@ async function handleSitemapRequest(request: Request): Promise<Response | null> 
       )
       .join("\n");
 
-    const blogUrls = publishedPosts
-      .map(
-        (p) => `  <url>
+    const blogUrls = (posts || [])
+      .map((p) => {
+        const postDate = (p.updatedAt || p.publishedAt || today).split("T")[0];
+        const coverUrl = p.coverImage?.startsWith("http")
+          ? p.coverImage
+          : `${baseUrl}${p.coverImage || "/api/blog/asset?slug=" + p.slug}`;
+
+        return `  <url>
     <loc>${baseUrl}/blog/${p.slug}</loc>
-    <lastmod>${(p.updatedAt || today).split("T")[0]}</lastmod>
+    <lastmod>${postDate}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>`,
-      )
+    <image:image>
+      <image:loc>${escapeXml(coverUrl)}</image:loc>
+      <image:title>${escapeXml(p.title)}</image:title>
+      <image:caption>${escapeXml(p.excerpt || p.title)}</image:caption>
+    </image:image>
+  </url>`;
+      })
       .join("\n");
 
     const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${staticUrls}
 ${blogUrls}
 </urlset>`.trim();
@@ -229,7 +344,7 @@ ${blogUrls}
 }
 
 /**
- * Handle Dynamic RSS Feed (/rss.xml, /feed.xml)
+ * Handle Dynamic RSS / Atom Feed (/rss.xml, /feed.xml) with Rich Content & CDATA
  */
 async function handleRssFeedRequest(request: Request): Promise<Response | null> {
   const url = new URL(request.url);
@@ -237,25 +352,34 @@ async function handleRssFeedRequest(request: Request): Promise<Response | null> 
 
   try {
     const baseUrl = "https://mehdigolzari.dev";
-    const { getBlogPosts } = await import("./lib/db");
-    const { posts } = await getBlogPosts({ status: "published", limit: 20 });
+    const { posts } = await getBlogPosts({ status: "published", limit: 30 });
 
-    const items = posts
-      .map(
-        (p) => `    <item>
+    const items = (posts || [])
+      .map((p) => {
+        const postUrl = `${baseUrl}/blog/${p.slug}`;
+        const pubDate = new Date(p.publishedAt || p.createdAt || Date.now()).toUTCString();
+        const coverUrl = p.coverImage?.startsWith("http")
+          ? p.coverImage
+          : `${baseUrl}${p.coverImage || "/api/blog/asset?slug=" + p.slug}`;
+
+        return `    <item>
       <title><![CDATA[${p.title}]]></title>
-      <link>${baseUrl}/blog/${p.slug}</link>
-      <guid isPermaLink="true">${baseUrl}/blog/${p.slug}</guid>
+      <link>${postUrl}</link>
+      <guid isPermaLink="true">${postUrl}</guid>
       <description><![CDATA[${p.excerpt}]]></description>
-      <pubDate>${new Date(p.publishedAt || p.createdAt).toUTCString()}</pubDate>
+      <content:encoded><![CDATA[<p>${p.excerpt}</p><p><a href="${postUrl}">Read complete technical guide &rarr;</a></p>]]></content:encoded>
+      <enclosure url="${coverUrl}" type="image/svg+xml" length="1024"/>
+      <pubDate>${pubDate}</pubDate>
       <author>mehdi@mehdigolzari.dev (Mehdi Golzari)</author>
-      ${(p.tags || []).map((t) => `<category>${t}</category>`).join("\n      ")}
-    </item>`,
-      )
+      ${(p.tags || []).map((t) => `<category>${escapeXml(t)}</category>`).join("\n      ")}
+    </item>`;
+      })
       .join("\n");
 
     const rssXml = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" 
+     xmlns:atom="http://www.w3.org/2005/Atom"
+     xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Mehdi Golzari | Technical Partner &amp; Fractional CTO Architectural Insights</title>
     <link>${baseUrl}/blog</link>
@@ -287,19 +411,27 @@ export default {
       const assetResponse = await handleBlogAssetRequest(request);
       if (assetResponse) return assetResponse;
 
-      // 2. Check Autonomous Cron Endpoint
+      // 2. Check Robots.txt
+      const robotsResponse = await handleRobotsRequest(request);
+      if (robotsResponse) return robotsResponse;
+
+      // 3. Check IndexNow Key Verification
+      const indexNowResponse = await handleIndexNowKeyRequest(request);
+      if (indexNowResponse) return indexNowResponse;
+
+      // 4. Check Autonomous Cron Endpoint
       const cronResponse = await handleCronGenerateRequest(request);
       if (cronResponse) return cronResponse;
 
-      // 3. Check Sitemap XML
+      // 5. Check Sitemap XML
       const sitemapResponse = await handleSitemapRequest(request);
       if (sitemapResponse) return sitemapResponse;
 
-      // 4. Check RSS Feed
+      // 6. Check RSS Feed
       const rssResponse = await handleRssFeedRequest(request);
       if (rssResponse) return rssResponse;
 
-      // 5. Delegate to TanStack Start SSR
+      // 7. Delegate to TanStack Start SSR
       const handler = await getServerEntry();
       let response = await handler.fetch(request, env, ctx);
       response = await normalizeCatastrophicSsrResponse(response);
@@ -321,6 +453,8 @@ export default {
           pathname === "/avatar.webp" ||
           pathname === "/favicon.ico" ||
           pathname === "/demo.mp4" ||
+          pathname === "/robots.txt" ||
+          pathname === `/${INDEXNOW_KEY}.txt` ||
           pathname.endsWith(".pdf") ||
           pathname.startsWith("/api/blog/asset");
 

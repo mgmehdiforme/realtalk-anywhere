@@ -61,7 +61,9 @@ export const Route = createFileRoute("/blog/$slug")({
     const canonicalUrl = `https://mehdigolzari.dev/blog/${post.slug}`;
     const coverUrl = post.coverImage.startsWith("http")
       ? post.coverImage
-      : `https://mehdigolzari.dev${post.coverImage}`;
+      : `https://mehdigolzari.dev${post.coverImage || "/api/blog/asset?slug=" + post.slug}`;
+
+    const wordCount = post.content ? post.content.split(/\s+/).filter(Boolean).length : undefined;
 
     const jsonLdArticle = {
       "@context": "https://schema.org",
@@ -71,11 +73,19 @@ export const Route = createFileRoute("/blog/$slug")({
       image: [coverUrl],
       datePublished: post.publishedAt || post.createdAt,
       dateModified: post.updatedAt || post.publishedAt || post.createdAt,
+      inLanguage: "en-US",
+      wordCount,
+      articleSection: post.category ? post.category.replace(/-/g, " ") : "AI Engineering",
       author: {
         "@type": "Person",
         name: "Mehdi Golzari",
         url: "https://mehdigolzari.dev/about",
-        jobTitle: "Senior Independent Technical Partner",
+        jobTitle: "Senior Independent Technical Partner & Fractional CTO",
+        sameAs: [
+          "https://github.com/mgmehdiforme",
+          "https://linkedin.com/in/mehdigolzari",
+          "https://x.com/mehdigolzaridev",
+        ],
       },
       publisher: {
         "@type": "Organization",
@@ -90,7 +100,7 @@ export const Route = createFileRoute("/blog/$slug")({
         "@type": "WebPage",
         "@id": canonicalUrl,
       },
-      keywords: post.seo.keywords?.join(", ") || post.tags.join(", "),
+      keywords: post.seo?.keywords?.join(", ") || post.tags?.join(", ") || "software architecture, AI engineering",
     };
 
     const jsonLdBreadcrumbs = {
@@ -120,21 +130,33 @@ export const Route = createFileRoute("/blog/$slug")({
 
     return {
       meta: [
-        { title: `${post.title} — MehdiGolzari.dev` },
-        { name: "description", content: post.excerpt },
+        { title: `${post.seo?.metaTitle || post.title} — MehdiGolzari.dev` },
+        { name: "description", content: post.seo?.metaDescription || post.excerpt },
+        { property: "og:site_name", content: "MehdiGolzari.dev" },
         { property: "og:title", content: post.title },
         { property: "og:description", content: post.excerpt },
         { property: "og:type", content: "article" },
         { property: "og:url", content: canonicalUrl },
         { property: "og:image", content: coverUrl },
         { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:site", content: "@mehdigolzaridev" },
+        { name: "twitter:creator", content: "@mehdigolzaridev" },
         { name: "twitter:title", content: post.title },
         { name: "twitter:description", content: post.excerpt },
         { name: "twitter:image", content: coverUrl },
         { name: "article:published_time", content: post.publishedAt || post.createdAt },
+        { name: "article:modified_time", content: post.updatedAt || post.publishedAt || post.createdAt },
         { name: "article:author", content: "Mehdi Golzari" },
+        { name: "article:section", content: post.category || "AI Engineering" },
       ],
       links: [
+        { rel: "canonical", href: canonicalUrl },
+        {
+          rel: "alternate",
+          type: "application/rss+xml",
+          title: "Mehdi Golzari — Architectural Insights RSS",
+          href: "https://mehdigolzari.dev/rss.xml",
+        },
         {
           rel: "stylesheet",
           href: "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
@@ -532,17 +554,62 @@ function SingleBlogPostPage() {
       <ReadingProgressBar />
 
       <article className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full min-w-0">
-        {/* Breadcrumb Navigation */}
-        <nav className="flex items-center gap-2 text-xs text-muted-foreground mb-8 overflow-x-auto whitespace-nowrap pb-1">
-          <Link to="/" className="hover:text-foreground transition">
-            Home
-          </Link>
-          <span>/</span>
-          <Link to="/blog" className="hover:text-foreground transition">
-            Blog
-          </Link>
-          <span>/</span>
-          <span className="text-foreground truncate max-w-[200px] sm:max-w-xs">{post.title}</span>
+        {/* Semantic Accessible Breadcrumb Navigation */}
+        <nav aria-label="Breadcrumb" className="mb-8 overflow-x-auto whitespace-nowrap pb-1">
+          <ol
+            itemScope
+            itemType="https://schema.org/BreadcrumbList"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground"
+          >
+            <li
+              itemProp="itemListElement"
+              itemScope
+              itemType="https://schema.org/ListItem"
+              className="flex items-center gap-1.5"
+            >
+              <Link
+                to="/"
+                itemProp="item"
+                className="hover:text-neon transition-colors"
+              >
+                <span itemProp="name">Home</span>
+              </Link>
+              <meta itemProp="position" content="1" />
+              <ChevronRight className="h-3 w-3 text-muted-foreground/50 shrink-0" />
+            </li>
+
+            <li
+              itemProp="itemListElement"
+              itemScope
+              itemType="https://schema.org/ListItem"
+              className="flex items-center gap-1.5"
+            >
+              <Link
+                to="/blog"
+                itemProp="item"
+                className="hover:text-neon transition-colors"
+              >
+                <span itemProp="name">Technical Blog</span>
+              </Link>
+              <meta itemProp="position" content="2" />
+              <ChevronRight className="h-3 w-3 text-muted-foreground/50 shrink-0" />
+            </li>
+
+            <li
+              itemProp="itemListElement"
+              itemScope
+              itemType="https://schema.org/ListItem"
+              className="flex items-center"
+            >
+              <span
+                itemProp="name"
+                className="text-foreground font-medium truncate max-w-[200px] sm:max-w-xs md:max-w-md"
+              >
+                {post.title}
+              </span>
+              <meta itemProp="position" content="3" />
+            </li>
+          </ol>
         </nav>
 
         {/* ── ARTICLE HEADER ── */}

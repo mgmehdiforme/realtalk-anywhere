@@ -11,6 +11,7 @@ import {
 } from "./db";
 import { generateAutonomousBlogPost } from "./blog-generator";
 import { generateCoverImage } from "./gemini";
+import { pingSearchEngines } from "./seo-ping";
 
 /**
  * Admin Login Server Function
@@ -80,6 +81,11 @@ export const triggerAutonomousGenerationAction = createServerFn().handler(async 
 
   try {
     const result = await generateAutonomousBlogPost();
+    if (result.post.status === "published") {
+      pingSearchEngines(result.post.slug).catch((err) =>
+        console.warn("[SEO PING ERROR]", err),
+      );
+    }
     return { success: true, post: result.post };
   } catch (error: any) {
     console.error("Admin manual trigger error:", error);
@@ -110,6 +116,12 @@ export const updateBlogPostAction = createServerFn()
       ...data.updates,
       id: data.id,
     });
+
+    if (updated.status === "published") {
+      pingSearchEngines(updated.slug).catch((err) =>
+        console.warn("[SEO PING ERROR]", err),
+      );
+    }
 
     return { success: true, post: updated };
   });
