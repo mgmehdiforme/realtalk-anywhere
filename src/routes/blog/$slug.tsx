@@ -59,9 +59,10 @@ export const Route = createFileRoute("/blog/$slug")({
     }
 
     const canonicalUrl = `https://mehdigolzari.dev/blog/${post.slug}`;
-    const coverUrl = post.coverImage.startsWith("http")
-      ? post.coverImage
-      : `https://mehdigolzari.dev${post.coverImage || "/api/blog/asset?slug=" + post.slug}`;
+    const rawCover = post.coverImage || `/api/blog/asset?slug=${post.slug}`;
+    const coverUrl = rawCover.startsWith("http")
+      ? rawCover
+      : `https://mehdigolzari.dev${rawCover.startsWith("/") ? rawCover : `/${rawCover}`}`;
 
     const wordCount = post.content ? post.content.split(/\s+/).filter(Boolean).length : undefined;
 

@@ -3,9 +3,17 @@
  * Implements the IndexNow protocol (Bing, Yandex, Seznam, Naver) and Google sitemap pinging.
  */
 
-export const INDEXNOW_KEY = process.env.INDEXNOW_KEY || "8f7e2d9a1b4c6e0f";
-export const DOMAIN = process.env.SITE_DOMAIN || "mehdigolzari.dev";
-export const SITE_URL = process.env.SITE_URL || `https://${DOMAIN}`;
+const getEnv = (key: string): string | undefined => {
+  try {
+    return typeof process !== "undefined" && process?.env ? process.env[key] : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+export const INDEXNOW_KEY = getEnv("INDEXNOW_KEY") || "8f7e2d9a1b4c6e0f";
+export const DOMAIN = getEnv("SITE_DOMAIN") || "mehdigolzari.dev";
+export const SITE_URL = getEnv("SITE_URL") || `https://${DOMAIN}`;
 
 export interface PingResult {
   engine: string;

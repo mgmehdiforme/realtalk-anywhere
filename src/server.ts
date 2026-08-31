@@ -268,6 +268,14 @@ async function handleCronGenerateRequest(request: Request): Promise<Response | n
   }
 }
 
+function resolveCoverUrl(baseUrl: string, coverImage?: string, slug?: string): string {
+  const rawCover = coverImage || (slug ? `/api/blog/asset?slug=${slug}` : "/avatar.webp");
+  if (rawCover.startsWith("http://") || rawCover.startsWith("https://")) {
+    return rawCover;
+  }
+  return `${baseUrl}${rawCover.startsWith("/") ? rawCover : `/${rawCover}`}`;
+}
+
 /**
  * Handle Dynamic Sitemap XML (/sitemap.xml) with Image Sitemap Extensions
  */
@@ -305,9 +313,7 @@ async function handleSitemapRequest(request: Request): Promise<Response | null> 
     const blogUrls = (posts || [])
       .map((p) => {
         const postDate = (p.updatedAt || p.publishedAt || today).split("T")[0];
-        const coverUrl = p.coverImage?.startsWith("http")
-          ? p.coverImage
-          : `${baseUrl}${p.coverImage || "/api/blog/asset?slug=" + p.slug}`;
+        const coverUrl = resolveCoverUrl(baseUrl, p.coverImage, p.slug);
 
         return `  <url>
     <loc>${baseUrl}/blog/${p.slug}</loc>
@@ -358,9 +364,7 @@ async function handleRssFeedRequest(request: Request): Promise<Response | null> 
       .map((p) => {
         const postUrl = `${baseUrl}/blog/${p.slug}`;
         const pubDate = new Date(p.publishedAt || p.createdAt || Date.now()).toUTCString();
-        const coverUrl = p.coverImage?.startsWith("http")
-          ? p.coverImage
-          : `${baseUrl}${p.coverImage || "/api/blog/asset?slug=" + p.slug}`;
+        const coverUrl = resolveCoverUrl(baseUrl, p.coverImage, p.slug);
 
         return `    <item>
       <title><![CDATA[${p.title}]]></title>
