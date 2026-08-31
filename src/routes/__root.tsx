@@ -128,13 +128,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {/* Hidden persistent Google Translate element */}
-        <div id="google_translate_element" style={{ display: "none" }} aria-hidden="true" />
+        <div id="google_translate_element" style={{ display: "none" }} aria-hidden="true" suppressHydrationWarning />
         {children}
         <Scripts />
 
@@ -208,6 +208,11 @@ function RootShell({ children }: { children: ReactNode }) {
 function NavBar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const links = [
     { to: "/" as const, label: "Home", exact: true },
@@ -304,7 +309,7 @@ function NavBar() {
       </div>
 
       {/* Mobile slide-in sidebar — portaled to body to escape header's backdrop-filter containing block */}
-      {typeof document !== "undefined" &&
+      {mounted &&
         createPortal(
           <div
             className={`fixed inset-0 z-[100] md:hidden ${open ? "pointer-events-auto" : "pointer-events-none"}`}

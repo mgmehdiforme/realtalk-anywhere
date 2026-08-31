@@ -213,3 +213,31 @@ body {
   background: transparent !important;
   box-shadow: none !important;
 }
+
+/* Mermaid Architecture Diagram Enhancements */
+.mermaid-svg-target svg {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
+  margin: 0 auto;
+}
+
+.mermaid-svg-target svg .cluster rect {
+  stroke-dasharray: 4 2;
+  rx: 8px;
+  ry: 8px;
+}
+
+.mermaid-fullscreen-svg svg {
+  max-width: none !important;
+  max-height: none !important;
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.7));
+}
+
+.mermaid-fullscreen-svg svg text {
+  font-family: var(--font-sans) !important;
+}
+
+.cursor-zoom-in {
+  cursor: zoom-in;
+}

@@ -1,6 +1,11 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef, memo, useCallback } from "react";
 import { createServerFn } from "@tanstack/react-start";
+import {
+  renderMermaidBlocksInContainer,
+  MermaidViewerModal,
+  type FullscreenDiagramData,
+} from "@/components/blog/MermaidViewer";
 import {
   Clock,
   ArrowLeft,
@@ -162,6 +167,7 @@ function renderMathInMarkdown(content: string): string {
       const rendered = katex.renderToString(math.trim(), {
         displayMode: true,
         throwOnError: false,
+        strict: false,
       });
       return `\n\n<div class="my-8 rounded-2xl border border-neon/40 bg-[#0d1326] p-5 shadow-card overflow-x-auto text-center font-mono text-sm sm:text-base text-foreground leading-relaxed">${rendered}</div>\n\n`;
     } catch {
@@ -175,6 +181,7 @@ function renderMathInMarkdown(content: string): string {
       const rendered = katex.renderToString(math.trim(), {
         displayMode: false,
         throwOnError: false,
+        strict: false,
       });
       return `${prefix}<span class="inline-math px-1">${rendered}</span>`;
     } catch {
@@ -185,27 +192,80 @@ function renderMathInMarkdown(content: string): string {
   return processed;
 }
 
-function SingleBlogPostPage() {
-  const { post, related } = Route.useLoaderData();
-  const [readingProgress, setReadingProgress] = useState(0);
-  const [copied, setCopied] = useState(false);
-  const [activeTocId, setActiveTocId] = useState<string>("");
+/**
+ * High-performance, isolated Reading Progress Bar to prevent page re-renders on scroll
+ */
+function ReadingProgressBar() {
+  const [progress, setProgress] = useState(0);
 
-  if (!post) return null;
-
-  // Track scroll position for reading progress bar
   useEffect(() => {
     const handleScroll = () => {
       const totalScroll = document.documentElement.scrollTop;
       const windowHeight =
         document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      const scroll = `${(totalScroll / windowHeight) * 100}`;
-      setReadingProgress(Math.min(Math.max(Number(scroll), 0), 100));
+      if (windowHeight > 0) {
+        const scroll = (totalScroll / windowHeight) * 100;
+        setProgress(Math.min(Math.max(scroll, 0), 100));
+      }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  return (
+    <div className="fixed top-0 inset-x-0 z-[60] h-1 bg-transparent pointer-events-none">
+      <div
+        className="h-full bg-gradient-to-r from-neon via-primary to-neon-2 transition-all duration-150 ease-out"
+        style={{ width: `${progress}%` }}
+      />
+    </div>
+  );
+}
+
+/**
+ * Memoized Markdown content body so React never replaces rendered SVGs on parent re-renders
+ */
+const ArticleMarkdownBody = memo(
+  function ArticleMarkdownBody({
+    htmlContent,
+    onOpenFullscreen,
+  }: {
+    htmlContent: string;
+    onOpenFullscreen: (data: FullscreenDiagramData) => void;
+  }) {
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      if (containerRef.current) {
+        renderMermaidBlocksInContainer(containerRef.current, onOpenFullscreen);
+      }
+    });
+
+    return (
+      <div
+        ref={containerRef}
+        className="prose dark:prose-invert max-w-none w-full min-w-0 break-words [overflow-wrap:anywhere] [word-break:break-word] text-[15px] sm:text-base leading-[1.85]
+          prose-strong:text-foreground prose-strong:font-bold prose-strong:tracking-tight
+          prose-a:text-neon prose-a:font-semibold prose-a:no-underline hover:prose-a:underline"
+        dangerouslySetInnerHTML={{ __html: htmlContent }}
+      />
+    );
+  },
+  (prev, next) => prev.htmlContent === next.htmlContent
+);
+
+function SingleBlogPostPage() {
+  const { post, related } = Route.useLoaderData();
+  const [copied, setCopied] = useState(false);
+  const [activeTocId, setActiveTocId] = useState<string>("");
+  const [fullscreenDiagram, setFullscreenDiagram] = useState<FullscreenDiagramData | null>(null);
+
+  const handleOpenFullscreen = useCallback((data: FullscreenDiagramData) => {
+    setFullscreenDiagram(data);
+  }, []);
+
+  if (!post) return null;
 
   // Parse Markdown & Extract Table of Contents
   const { htmlContent, toc } = useMemo(() => {
@@ -346,15 +406,57 @@ function SingleBlogPostPage() {
 
     // Custom Code Block Renderer
     renderer.code = ({ text, lang }: { text: string; lang?: string }) => {
-      const cleanLang = (lang || "code").toLowerCase();
+      const cleanLang = (lang || "code").toLowerCase().trim();
       const encodedCode = encodeURIComponent(text);
+
+      if (cleanLang === "mermaid" || cleanLang.startsWith("mermaid")) {
+        return `<div class="mermaid-block-wrapper my-8 rounded-2xl border border-border bg-[#0a0f1d] overflow-hidden shadow-card group w-full max-w-full min-w-0" data-mermaid-code="${encodedCode}">
+          <div class="flex items-center justify-between px-4 py-2.5 bg-[#0e162b] border-b border-border/80 text-[11px] font-mono text-muted-foreground">
+            <div class="flex items-center gap-2.5">
+              <span class="inline-flex items-center gap-1.5 font-bold text-neon uppercase tracking-wider">
+                <svg class="h-3.5 w-3.5 text-neon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                MERMAID DIAGRAM
+              </span>
+              <div class="flex items-center rounded-lg bg-background/60 p-0.5 border border-border/60 text-[10px]">
+                <button type="button" data-tab="preview" onclick="window.__toggleMermaidTab && window.__toggleMermaidTab(this, 'preview')" class="px-2.5 py-0.5 rounded-md font-medium bg-neon/20 text-neon transition-all cursor-pointer">Preview</button>
+                <button type="button" data-tab="code" onclick="window.__toggleMermaidTab && window.__toggleMermaidTab(this, 'code')" class="px-2.5 py-0.5 rounded-md font-medium text-muted-foreground hover:text-foreground transition-all cursor-pointer">Code</button>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" class="mermaid-fullscreen-btn flex items-center gap-1 hover:text-foreground transition-colors px-2.5 py-1 rounded bg-muted/40 hover:bg-muted/70 text-[10px] font-medium text-muted-foreground cursor-pointer" onclick="window.__openMermaidFullscreenFromEl && window.__openMermaidFullscreenFromEl(this)" title="Expand Fullscreen">
+                <svg class="h-3 w-3 text-neon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                Fullscreen
+              </button>
+              <button type="button" class="mermaid-copy-btn hover:text-foreground transition-colors px-2.5 py-1 rounded bg-muted/40 hover:bg-muted/70 text-[10px] font-medium text-muted-foreground cursor-pointer" onclick="navigator.clipboard.writeText(decodeURIComponent('${encodedCode}')).then(()=>{this.innerText='Copied!';setTimeout(()=>this.innerText='Copy Code',2000)})">
+                Copy Code
+              </button>
+            </div>
+          </div>
+          <div class="mermaid-preview-container relative p-6 bg-[#070b14] flex flex-col items-center justify-center min-h-[160px] cursor-zoom-in group/preview overflow-x-auto select-none" onclick="window.__openMermaidFullscreenFromEl && window.__openMermaidFullscreenFromEl(this)">
+            <div class="mermaid-svg-target w-full flex justify-center py-2 opacity-50 animate-pulse">
+              <div class="flex items-center gap-2 text-xs text-muted-foreground py-6">
+                <span class="h-4 w-4 animate-spin rounded-full border-2 border-neon border-t-transparent"></span>
+                Rendering architecture diagram...
+              </div>
+            </div>
+            <div class="absolute bottom-2.5 right-3 opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-background/90 backdrop-blur border border-border text-[10px] text-neon font-mono shadow-sm pointer-events-none">
+              <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+              Click to view full screen
+            </div>
+          </div>
+          <div class="mermaid-code-container hidden p-4 sm:p-5 overflow-x-auto bg-[#0a0f1d]">
+            <pre class="w-full text-xs sm:text-sm font-mono text-[#e2e8f0]"><code>${escapeHtml(text)}</code></pre>
+          </div>
+        </div>`;
+      }
+
       const isDiagram =
-        cleanLang.includes("ascii") || cleanLang.includes("mermaid") || cleanLang.includes("diagram");
+        cleanLang.includes("ascii") || cleanLang.includes("diagram");
 
       return `<div class="my-8 rounded-2xl border border-border bg-[#0a0f1d] overflow-hidden shadow-card group w-full max-w-full min-w-0">
         <div class="flex items-center justify-between px-4 py-2.5 bg-[#0e162b] border-b border-border/80 text-[11px] font-mono text-muted-foreground">
           <span class="font-bold text-neon uppercase tracking-wider">${cleanLang.toUpperCase()}</span>
-          <button onclick="navigator.clipboard.writeText(decodeURIComponent('${encodedCode}')).then(()=>{this.innerText='Copied!';setTimeout(()=>this.innerText='Copy Code',2000)})" class="hover:text-foreground transition-colors px-2.5 py-1 rounded bg-muted/40 hover:bg-muted/70 text-[10px] font-medium">
+          <button onclick="navigator.clipboard.writeText(decodeURIComponent('${encodedCode}')).then(()=>{this.innerText='Copied!';setTimeout(()=>this.innerText='Copy Code',2000)})" class="hover:text-foreground transition-colors px-2.5 py-1 rounded bg-muted/40 hover:bg-muted/70 text-[10px] font-medium cursor-pointer">
             Copy Code
           </button>
         </div>
@@ -396,6 +498,20 @@ function SingleBlogPostPage() {
     return { htmlContent: rawHtml, toc: headings };
   }, [post.content]);
 
+  // Listen for Fullscreen diagram open events
+  useEffect(() => {
+    const handleFullscreenEvent = (e: any) => {
+      if (e.detail) {
+        setFullscreenDiagram(e.detail);
+      }
+    };
+
+    window.addEventListener("open-mermaid-fullscreen" as any, handleFullscreenEvent);
+    return () => {
+      window.removeEventListener("open-mermaid-fullscreen" as any, handleFullscreenEvent);
+    };
+  }, []);
+
   const postUrl = typeof window !== "undefined" ? window.location.href : `https://mehdigolzari.dev/blog/${post.slug}`;
 
   const handleCopyLink = () => {
@@ -412,13 +528,8 @@ function SingleBlogPostPage() {
 
   return (
     <div className="min-h-screen bg-background w-full overflow-x-hidden">
-      {/* ── TOP READING PROGRESS BAR ── */}
-      <div className="fixed top-0 inset-x-0 z-[60] h-1 bg-transparent pointer-events-none">
-        <div
-          className="h-full bg-gradient-to-r from-neon via-primary to-neon-2 transition-all duration-150 ease-out"
-          style={{ width: `${readingProgress}%` }}
-        />
-      </div>
+      {/* ── TOP READING PROGRESS BAR (ISOLATED COMPONENT) ── */}
+      <ReadingProgressBar />
 
       <article className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full min-w-0">
         {/* Breadcrumb Navigation */}
@@ -502,11 +613,9 @@ function SingleBlogPostPage() {
         <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 w-full min-w-0">
           {/* Main Markdown Body (8 Cols) */}
           <div className="lg:col-span-8 space-y-8 w-full min-w-0 max-w-full">
-            <div
-              className="prose dark:prose-invert max-w-none w-full min-w-0 break-words [overflow-wrap:anywhere] [word-break:break-word] text-[15px] sm:text-base leading-[1.85]
-                prose-strong:text-foreground prose-strong:font-bold prose-strong:tracking-tight
-                prose-a:text-neon prose-a:font-semibold prose-a:no-underline hover:prose-a:underline"
-              dangerouslySetInnerHTML={{ __html: htmlContent }}
+            <ArticleMarkdownBody
+              htmlContent={htmlContent}
+              onOpenFullscreen={handleOpenFullscreen}
             />
 
             {/* ── IN-ARTICLE GO-TO-LAUNCH BLUEPRINT CONTEXTUAL CTA ── */}
@@ -750,6 +859,11 @@ function SingleBlogPostPage() {
             </div>
           </section>
         )}
+        {/* ── FULLSCREEN MERMAID LIGHTBOX MODAL ── */}
+        <MermaidViewerModal
+          data={fullscreenDiagram}
+          onClose={() => setFullscreenDiagram(null)}
+        />
       </article>
     </div>
   );

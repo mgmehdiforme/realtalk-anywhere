@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Shield,
   Sparkles,
@@ -34,6 +34,61 @@ import {
 } from "@/lib/admin-functions";
 import type { BlogPost } from "@/lib/db";
 import { marked } from "marked";
+import {
+  renderMermaidBlocksInContainer,
+  MermaidViewerModal,
+  type FullscreenDiagramData,
+} from "@/components/blog/MermaidViewer";
+
+function parseAdminMarkdown(content: string): string {
+  const renderer = new marked.Renderer();
+  renderer.code = ({ text, lang }: { text: string; lang?: string }) => {
+    const cleanLang = (lang || "code").toLowerCase().trim();
+    const encodedCode = encodeURIComponent(text);
+
+    if (cleanLang === "mermaid" || cleanLang.startsWith("mermaid")) {
+      return `<div class="mermaid-block-wrapper my-6 rounded-2xl border border-border bg-[#0a0f1d] overflow-hidden shadow-card group w-full max-w-full min-w-0" data-mermaid-code="${encodedCode}">
+        <div class="flex items-center justify-between px-4 py-2 bg-[#0e162b] border-b border-border/80 text-[10px] font-mono text-muted-foreground">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-neon uppercase">MERMAID DIAGRAM</span>
+            <div class="flex items-center rounded bg-background/60 p-0.5 border border-border/60 text-[9px]">
+              <button type="button" data-tab="preview" class="px-2 py-0.5 rounded font-medium bg-neon/20 text-neon cursor-pointer">Preview</button>
+              <button type="button" data-tab="code" class="px-2 py-0.5 rounded font-medium text-muted-foreground hover:text-foreground cursor-pointer">Code</button>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" class="mermaid-fullscreen-btn hover:text-foreground transition-colors px-2 py-0.5 rounded bg-muted/40 text-[9px] text-muted-foreground cursor-pointer">
+              Fullscreen
+            </button>
+            <button type="button" class="mermaid-copy-btn hover:text-foreground transition-colors px-2 py-0.5 rounded bg-muted/40 text-[9px] text-muted-foreground cursor-pointer">
+              Copy Code
+            </button>
+          </div>
+        </div>
+        <div class="mermaid-preview-container relative p-4 bg-[#070b14] flex flex-col items-center justify-center min-h-[120px] cursor-zoom-in group/preview overflow-x-auto select-none">
+          <div class="mermaid-svg-target w-full flex justify-center py-2 opacity-50 animate-pulse">
+            <div class="flex items-center gap-2 text-xs text-muted-foreground">Rendering diagram...</div>
+          </div>
+          <div class="absolute bottom-2 right-2 opacity-0 group-hover/preview:opacity-100 transition-opacity px-2 py-0.5 rounded bg-background/90 text-[9px] text-neon font-mono pointer-events-none">
+            Click to expand
+          </div>
+        </div>
+        <div class="mermaid-code-container hidden p-3 overflow-x-auto bg-[#0a0f1d]">
+          <pre class="w-full text-xs font-mono text-[#e2e8f0]"><code>${text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>
+        </div>
+      </div>`;
+    }
+
+    return `<div class="my-4 rounded-xl border border-border bg-[#0a0f1d] overflow-hidden">
+      <div class="flex items-center justify-between px-3 py-1.5 bg-[#0e162b] border-b border-border text-[10px] font-mono text-muted-foreground">
+        <span class="font-bold text-neon uppercase">${cleanLang}</span>
+      </div>
+      <pre class="p-3 overflow-x-auto text-xs font-mono text-[#e2e8f0]"><code>${text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>
+    </div>`;
+  };
+
+  return marked.parse(content || "", { renderer }) as string;
+}
 
 export const Route = createFileRoute("/admin/blog")({
   head: () => ({
@@ -65,6 +120,16 @@ function AdminBlogDashboard() {
   const [editFormData, setEditFormData] = useState<Partial<BlogPost>>({});
   const [savingEdit, setSavingEdit] = useState(false);
   const [editTab, setEditTab] = useState<"edit" | "preview">("edit");
+  const [adminFullscreenDiagram, setAdminFullscreenDiagram] = useState<FullscreenDiagramData | null>(null);
+  const adminPreviewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (editTab === "preview" && adminPreviewRef.current) {
+      renderMermaidBlocksInContainer(adminPreviewRef.current, (data) => {
+        setAdminFullscreenDiagram(data);
+      });
+    }
+  }, [editTab, editFormData.content]);
 
   // Cover Image Regeneration State
   const [imageModalPost, setImageModalPost] = useState<BlogPost | null>(null);
@@ -634,8 +699,9 @@ function AdminBlogDashboard() {
               ) : (
                 <div className="rounded-xl border border-border bg-background p-6 max-h-[50vh] overflow-y-auto prose dark:prose-invert max-w-none text-xs">
                   <div
+                    ref={adminPreviewRef}
                     dangerouslySetInnerHTML={{
-                      __html: marked.parse(editFormData.content || ""),
+                      __html: parseAdminMarkdown(editFormData.content || ""),
                     }}
                   />
                 </div>
@@ -726,6 +792,11 @@ function AdminBlogDashboard() {
           </div>
         </div>
       )}
+      {/* Admin Fullscreen Mermaid Modal */}
+      <MermaidViewerModal
+        data={adminFullscreenDiagram}
+        onClose={() => setAdminFullscreenDiagram(null)}
+      />
     </div>
   );
 }
