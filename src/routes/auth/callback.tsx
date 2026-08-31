@@ -37,7 +37,8 @@ function AuthCallbackPage() {
 
     async function authenticate() {
       try {
-        const res = await authWithGoogle({ data: { code } });
+        const redirectUri = `${window.location.origin}/auth/callback`;
+        const res = await authWithGoogle({ data: { code, redirectUri } });
         if (res.success) {
           if (res.token) {
             document.cookie = `founder_session=${res.token}; Path=/; Max-Age=${30 * 24 * 60 * 60}; SameSite=Lax`;

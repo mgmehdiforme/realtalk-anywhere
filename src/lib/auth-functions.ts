@@ -5,7 +5,11 @@ import { createServerFn } from "@tanstack/react-start";
  */
 export const authWithGoogle = createServerFn()
   .validator(
-    (d: { code?: string; mockUser?: { email: string; name: string; picture: string } }) => d,
+    (d: {
+      code?: string;
+      redirectUri?: string;
+      mockUser?: { email: string; name: string; picture: string };
+    }) => d,
   )
   .handler(async ({ data }) => {
     const { saveUser } = await import("./db");
@@ -41,11 +45,14 @@ export const authWithGoogle = createServerFn()
     }
 
     try {
-      // Exchange code for token
-      // We resolve origin dynamically from request headers
-      const host = process.env.NODE_ENV === "production" ? "mehdigolzari.dev" : "localhost:8080";
-      const protocol = host.startsWith("localhost") ? "http" : "https";
-      const redirectUri = `${protocol}://${host}/auth/callback`;
+      // Resolve redirect URI matching the client origin byte-for-byte
+      let redirectUri = data.redirectUri;
+      if (!redirectUri) {
+        const host =
+          process.env.NODE_ENV === "production" ? "mehdigolzari.dev" : "localhost:8080";
+        const protocol = host.startsWith("localhost") ? "http" : "https";
+        redirectUri = `${protocol}://${host}/auth/callback`;
+      }
 
       const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
         method: "POST",
