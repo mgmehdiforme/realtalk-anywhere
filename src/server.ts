@@ -268,6 +268,63 @@ async function handleCronGenerateRequest(request: Request): Promise<Response | n
   }
 }
 
+/**
+ * Handle Cloud Scheduler Autonomous LinkedIn Engagement Endpoint (/api/linkedin/cron-engage)
+ */
+async function handleLinkedInCronRequest(request: Request): Promise<Response | null> {
+  const url = new URL(request.url);
+  if (url.pathname !== "/api/linkedin/cron-engage" && url.pathname !== "/api/linkedin/cron") return null;
+
+  if (request.method !== "POST" && request.method !== "GET") {
+    return new Response("Method not allowed", { status: 405 });
+  }
+
+  if (!verifyCronSecret(request)) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized: Invalid or missing CRON_SECRET" }),
+      { status: 401, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  try {
+    const isDryRun = url.searchParams.get("dryRun") === "true";
+    const skipDailyLimit = url.searchParams.get("skipDailyLimit") === "true";
+
+    const { executeLinkedInFeedEngagement } = await import("./lib/linkedin-runner");
+    const result = await executeLinkedInFeedEngagement({
+      dryRun: isDryRun,
+      skipDailyLimit: skipDailyLimit,
+    });
+
+    return new Response(
+      JSON.stringify({
+        success: result.success,
+        status: result.status,
+        reason: result.reason,
+        comment: result.comment,
+        targetPost: result.targetPost
+          ? {
+              author: result.targetPost.authorName,
+              postUrl: result.targetPost.postUrl,
+              score: result.log?.relevanceScore,
+            }
+          : undefined,
+        error: result.error,
+      }),
+      { status: result.success ? 200 : 500, headers: { "Content-Type": "application/json" } },
+    );
+  } catch (error: any) {
+    console.error("LinkedIn Autonomous Cron Execution Failed:", error);
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message || "Execution failed",
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
+  }
+}
+
 function resolveCoverUrl(baseUrl: string, coverImage?: string, slug?: string): string {
   const rawCover = coverImage || (slug ? `/api/blog/asset?slug=${slug}` : "/avatar.webp");
   if (rawCover.startsWith("http://") || rawCover.startsWith("https://")) {
@@ -426,6 +483,10 @@ export default {
       // 4. Check Autonomous Cron Endpoint
       const cronResponse = await handleCronGenerateRequest(request);
       if (cronResponse) return cronResponse;
+
+      // 4b. Check Autonomous LinkedIn Engagement Cron Endpoint
+      const linkedInCronResponse = await handleLinkedInCronRequest(request);
+      if (linkedInCronResponse) return linkedInCronResponse;
 
       // 5. Check Sitemap XML
       const sitemapResponse = await handleSitemapRequest(request);

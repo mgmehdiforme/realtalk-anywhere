@@ -15,7 +15,7 @@ export default defineConfig({
   vite: {
     build: {
       rollupOptions: {
-        external: ["vinxi/http"],
+        external: ["vinxi/http", "playwright", "playwright-core", "chromium-bidi"],
       },
     },
   },

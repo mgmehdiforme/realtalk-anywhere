@@ -39,12 +39,37 @@ WORKDIR /app
 ENV NODE_ENV=production
 # Cloud Run injects PORT; default to 3000 for local testing
 ENV PORT=3000
+ENV CHROMIUM_PATH=/usr/bin/chromium
+ENV LINKEDIN_HEADLESS=true
 
-# Copy only the Nitro output (self-contained — no node_modules needed)
+# Install system libraries and utilities for Chromium Playwright execution
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium \
+    tar \
+    gzip \
+    ca-certificates \
+    fonts-liberation \
+    libnss3 \
+    libatk-1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy only the Nitro output (self-contained — no full node_modules needed)
 COPY --from=builder /app/.output ./.output
 
 # Copy PDFKit standard font metrics so standard fonts can resolve in ESM environment
-COPY --from=builder /app/node_modules/pdfkit/js/data /app/node_modules/pdfkit/js/data
+COPY --from=builder /app/node_modules/pdfkit/js/data ./node_modules/pdfkit/js/data
+
+# Copy Playwright runtime modules required for headless browser automation
+COPY --from=builder /app/node_modules/playwright ./node_modules/playwright
+COPY --from=builder /app/node_modules/playwright-core ./node_modules/playwright-core
 
 # Nitro's node-server entry point
 EXPOSE 3000

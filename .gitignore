@@ -30,3 +30,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# LinkedIn Automation Session & Cache
+linkedin-session.json
+.linkedin-profile-cache/
+.linkedin-profile-cache
+linkedin-profile-cache.tar.gz
+prod-db-backup.json
+scratch/
+
+
+
+

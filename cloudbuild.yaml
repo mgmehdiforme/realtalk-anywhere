@@ -39,9 +39,11 @@ steps:
       - --max-instances
       - "10"
       - --memory
-      - "512Mi"
+      - "2Gi"
       - --cpu
-      - "1"
+      - "2"
+      - --timeout
+      - "900s"
       - --add-volume
       - "name=realtalk-data,type=cloud-storage,bucket=mehdigolzari-realtalk-data"
       - --add-volume-mount

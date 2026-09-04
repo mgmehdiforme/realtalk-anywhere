@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "LinkedIn Session Exporter — MehdiGolzari.dev",
+  "version": "1.0.0",
+  "description": "Export active LinkedIn session directly from your running browser to linkedin-session.json",
+  "permissions": [
+    "cookies",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "*://*.linkedin.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Export LinkedIn Session"
+  }
+}

@@ -20,6 +20,7 @@ import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
+import { Route as AdminLinkedinRouteImport } from './routes/admin/linkedin'
 import { Route as AdminBlogRouteImport } from './routes/admin/blog'
 
 const ServicesRoute = ServicesRouteImport.update({
@@ -78,6 +79,11 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/admin/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminLinkedinRoute = AdminLinkedinRouteImport.update({
+  id: '/admin/linkedin',
+  path: '/admin/linkedin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminBlogRoute = AdminBlogRouteImport.update({
   id: '/admin/blog',
   path: '/admin/blog',
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/resume': typeof ResumeRoute
   '/services': typeof ServicesRoute
   '/admin/blog': typeof AdminBlogRoute
+  '/admin/linkedin': typeof AdminLinkedinRoute
   '/admin/login': typeof AdminLoginRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/resume': typeof ResumeRoute
   '/services': typeof ServicesRoute
   '/admin/blog': typeof AdminBlogRoute
+  '/admin/linkedin': typeof AdminLinkedinRoute
   '/admin/login': typeof AdminLoginRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/resume': typeof ResumeRoute
   '/services': typeof ServicesRoute
   '/admin/blog': typeof AdminBlogRoute
+  '/admin/linkedin': typeof AdminLinkedinRoute
   '/admin/login': typeof AdminLoginRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -138,6 +147,7 @@ export interface FileRouteTypes {
     | '/resume'
     | '/services'
     | '/admin/blog'
+    | '/admin/linkedin'
     | '/admin/login'
     | '/auth/callback'
     | '/blog/$slug'
@@ -152,6 +162,7 @@ export interface FileRouteTypes {
     | '/resume'
     | '/services'
     | '/admin/blog'
+    | '/admin/linkedin'
     | '/admin/login'
     | '/auth/callback'
     | '/blog/$slug'
@@ -166,6 +177,7 @@ export interface FileRouteTypes {
     | '/resume'
     | '/services'
     | '/admin/blog'
+    | '/admin/linkedin'
     | '/admin/login'
     | '/auth/callback'
     | '/blog/$slug'
@@ -181,6 +193,7 @@ export interface RootRouteChildren {
   ResumeRoute: typeof ResumeRoute
   ServicesRoute: typeof ServicesRoute
   AdminBlogRoute: typeof AdminBlogRoute
+  AdminLinkedinRoute: typeof AdminLinkedinRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   BlogSlugRoute: typeof BlogSlugRoute
@@ -266,6 +279,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/linkedin': {
+      id: '/admin/linkedin'
+      path: '/admin/linkedin'
+      fullPath: '/admin/linkedin'
+      preLoaderRoute: typeof AdminLinkedinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/blog': {
       id: '/admin/blog'
       path: '/admin/blog'
@@ -285,6 +305,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResumeRoute: ResumeRoute,
   ServicesRoute: ServicesRoute,
   AdminBlogRoute: AdminBlogRoute,
+  AdminLinkedinRoute: AdminLinkedinRoute,
   AdminLoginRoute: AdminLoginRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   BlogSlugRoute: BlogSlugRoute,

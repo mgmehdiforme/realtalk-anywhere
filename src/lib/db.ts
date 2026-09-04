@@ -26,10 +26,44 @@ export interface Blueprint {
   unlockLinkedInUrl?: string | null;
 }
 
+export interface LinkedInEngagementLog {
+  id: string;
+  timestamp: string;
+  authorName: string;
+  authorHeadline?: string;
+  postUrl: string;
+  postSnippet: string;
+  relevanceScore: number;
+  relevanceReason: string;
+  generatedComment?: string;
+  searchQuery?: string;
+  sourceTrend?: string;
+  relevanceAngle?: string;
+  status: "published" | "skipped" | "dry-run" | "failed";
+  error?: string;
+}
+
+export interface LinkedInConfig {
+  sessionState: any | null;
+  lastImportedAt: string | null;
+  accountInfo: {
+    name?: string;
+    headline?: string;
+  } | null;
+  schedule: {
+    enabled: boolean;
+    morningHourUtc: number;
+    afternoonHourUtc: number;
+    maxPerDay: number;
+  };
+  logs: LinkedInEngagementLog[];
+}
+
 export interface DatabaseSchema {
   users: Record<string, User>;
   assessments: Record<string, Blueprint>;
   blogPosts?: Record<string, BlogPost>;
+  linkedin?: LinkedInConfig;
 }
 
 let isInitialized = false;
@@ -50,8 +84,36 @@ async function initDb() {
       if (!dbCache.users) dbCache.users = {};
       if (!dbCache.assessments) dbCache.assessments = {};
       if (!dbCache.blogPosts) dbCache.blogPosts = {};
+      if (!dbCache.linkedin) {
+        dbCache.linkedin = {
+          sessionState: null,
+          lastImportedAt: null,
+          accountInfo: null,
+          schedule: {
+            enabled: true,
+            morningHourUtc: 6,
+            afternoonHourUtc: 12,
+            maxPerDay: 2,
+          },
+          logs: [],
+        };
+      }
     } catch {
       // File doesn't exist, create it
+      if (!dbCache.linkedin) {
+        dbCache.linkedin = {
+          sessionState: null,
+          lastImportedAt: null,
+          accountInfo: null,
+          schedule: {
+            enabled: true,
+            morningHourUtc: 6,
+            afternoonHourUtc: 12,
+            maxPerDay: 2,
+          },
+          logs: [],
+        };
+      }
       await fs.writeFile(DB_PATH, JSON.stringify(dbCache, null, 2), "utf-8");
     }
     isInitialized = true;
@@ -475,3 +537,200 @@ export async function getRelatedBlogPosts(
   scored.sort((a, b) => b.score - a.score);
   return scored.slice(0, limit).map((item) => item.post);
 }
+
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * LINKEDIN ENGAGEMENT & SESSION PERSISTENCE HELPERS
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+export async function getLinkedInConfig(): Promise<LinkedInConfig> {
+  await initDb();
+  if (!dbCache.linkedin) {
+    dbCache.linkedin = {
+      sessionState: null,
+      lastImportedAt: null,
+      accountInfo: null,
+      schedule: {
+        enabled: true,
+        morningHourUtc: 6,
+        afternoonHourUtc: 12,
+        maxPerDay: 2,
+      },
+      logs: [],
+    };
+  }
+  return dbCache.linkedin;
+}
+
+export function extractAndFormatLinkedInCookies(rawCookies: any[]): any[] {
+  if (!rawCookies || !Array.isArray(rawCookies)) return [];
+
+  // 1. Exact extension algorithm: Query only linkedin.com and its subdomains
+  const linkedInOnly = rawCookies.filter((c) => {
+    if (!c || !c.name || !c.value || !c.domain) return false;
+    const dom = c.domain.toLowerCase();
+    return dom === "linkedin.com" || dom === ".linkedin.com" || dom.endsWith(".linkedin.com");
+  });
+
+  // 2. Playwright-compatible formatting matching popup.js exactly
+  const seen = new Set<string>();
+  const result: any[] = [];
+
+  for (const c of linkedInOnly) {
+    const path = c.path || "/";
+    const key = `${c.name}|${c.domain}|${path}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    let sameSite: "None" | "Strict" | "Lax" = "Lax";
+    const rawSameSite = (c.sameSite || "").toLowerCase();
+    if (rawSameSite === "none" || rawSameSite === "no_restriction") sameSite = "None";
+    else if (rawSameSite === "strict") sameSite = "Strict";
+    else sameSite = "Lax";
+
+    result.push({
+      name: c.name,
+      value: c.value,
+      domain: c.domain, // Preserve original browser-assigned domain
+      path: path,
+      expires: c.expires || c.expirationDate || -1,
+      httpOnly: Boolean(c.httpOnly),
+      secure: Boolean(c.secure),
+      sameSite: sameSite,
+    });
+  }
+
+  return result;
+}
+
+// Backward-compatible alias for existing imports
+export const normalizeLinkedInCookies = extractAndFormatLinkedInCookies;
+
+export function mergeLinkedInCookies(existingCookies: any[] = [], updatedCookies: any[] = []): any[] {
+  const existingClean = extractAndFormatLinkedInCookies(existingCookies);
+  const updatedClean = extractAndFormatLinkedInCookies(updatedCookies);
+
+  const cookieMap = new Map<string, any>();
+  for (const c of existingClean) {
+    cookieMap.set(`${c.name}|${c.domain}|${c.path}`, c);
+  }
+  for (const c of updatedClean) {
+    cookieMap.set(`${c.name}|${c.domain}|${c.path}`, c);
+  }
+
+  return Array.from(cookieMap.values());
+}
+
+export async function saveLinkedInSession(
+  sessionState: any,
+  accountInfo?: { name?: string; headline?: string } | null,
+): Promise<LinkedInConfig> {
+  await initDb();
+  if (!dbCache.linkedin) {
+    dbCache.linkedin = {
+      sessionState: null,
+      lastImportedAt: null,
+      accountInfo: null,
+      schedule: {
+        enabled: true,
+        morningHourUtc: 6,
+        afternoonHourUtc: 12,
+        maxPerDay: 2,
+      },
+      logs: [],
+    };
+  }
+
+  const cleanCookies = extractAndFormatLinkedInCookies(sessionState?.cookies || []);
+  const hasLiAt = cleanCookies.some((c) => c.name === "li_at" && c.value);
+
+  if (!hasLiAt && dbCache.linkedin.sessionState?.cookies) {
+    console.warn("[LinkedIn DB] Incoming session missing li_at, preserving existing authenticated session.");
+    return dbCache.linkedin;
+  }
+
+  const finalPayload = {
+    exportedAt: sessionState?.exportedAt || new Date().toISOString(),
+    accountInfo: accountInfo || sessionState?.accountInfo || dbCache.linkedin.accountInfo,
+    cookies: cleanCookies,
+    origins: sessionState?.origins || [
+      {
+        origin: "https://www.linkedin.com",
+        localStorage: [],
+      },
+    ],
+  };
+
+  dbCache.linkedin.sessionState = finalPayload;
+  dbCache.linkedin.lastImportedAt = new Date().toISOString();
+  if (accountInfo) {
+    dbCache.linkedin.accountInfo = accountInfo;
+  }
+
+  await saveToDisk();
+
+  // Keep local linkedin-session.json in sync for Playwright / CLI
+  try {
+    const fs = await import("fs");
+    fs.writeFileSync("linkedin-session.json", JSON.stringify(finalPayload, null, 2), "utf8");
+  } catch (_) {}
+
+  return dbCache.linkedin;
+}
+
+export async function updateLinkedInSchedule(
+  schedule: Partial<LinkedInConfig["schedule"]>,
+): Promise<LinkedInConfig> {
+  await initDb();
+  const current = await getLinkedInConfig();
+  current.schedule = {
+    ...current.schedule,
+    ...schedule,
+  };
+  await saveToDisk();
+  return current;
+}
+
+export async function addLinkedInEngagementLog(
+  log: Omit<LinkedInEngagementLog, "id" | "timestamp">,
+): Promise<LinkedInEngagementLog> {
+  await initDb();
+  const current = await getLinkedInConfig();
+
+  const newLog: LinkedInEngagementLog = {
+    ...log,
+    id: `li-log-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    timestamp: new Date().toISOString(),
+  };
+
+  current.logs.unshift(newLog);
+  // Keep last 150 logs to prevent file bloat
+  if (current.logs.length > 150) {
+    current.logs = current.logs.slice(0, 150);
+  }
+
+  await saveToDisk();
+  return newLog;
+}
+
+export async function clearLinkedInSession(): Promise<LinkedInConfig> {
+  await initDb();
+  const current = await getLinkedInConfig();
+  current.sessionState = null;
+  current.lastImportedAt = null;
+  current.accountInfo = null;
+  await saveToDisk();
+
+  try {
+    const fs = await import("fs");
+    const path = await import("path");
+    const profileDir = path.resolve(process.cwd(), ".linkedin-profile-cache");
+    if (fs.existsSync(profileDir)) {
+      fs.rmSync(profileDir, { recursive: true, force: true });
+    }
+  } catch (_) {}
+
+  return current;
+}
+

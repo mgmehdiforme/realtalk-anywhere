@@ -317,6 +317,12 @@ function AdminBlogDashboard() {
 
           <div className="flex items-center gap-3">
             <Link
+              to="/admin/linkedin"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-neon" /> LinkedIn Engine
+            </Link>
+            <Link
               to="/blog"
               target="_blank"
               className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition"

@@ -100,7 +100,10 @@ function getSecondaryLLMConfig(): { apiKey: string; baseUrl: string; model: stri
     process.env.OPENAI_BASE_URL ||
     "https://dashscope.aliyuncs.com/compatible-mode/v1";
 
-  const model = process.env.QWEN_MODEL || "qwen3.7-plus";
+  let model = process.env.QWEN_MODEL || "qwen-plus";
+  if (model === "qwen3.7-plus" || model.includes("3.7")) {
+    model = "qwen-plus";
+  }
 
   return { apiKey, baseUrl, model };
 }
@@ -194,18 +197,131 @@ export function extractJsonObject<T = any>(raw: string): T {
 }
 
 /**
- * Universal Production LLM caller with multi-provider failover:
- * 1. Google Cloud Vertex AI (Project Credentials & Global Location)
- * 2. Google AI Studio / Gemini API Key
- * 3. Secondary Provider (Qwen / DashScope)
+ * Execute prompt with Qwen (Alibaba DashScope / OpenAI compatible endpoint)
+ * Includes automatic model tier fallback if a specific model is unpurchased
  */
-async function executeUniversalLLMPrompt(
+async function callQwenProvider(
+  systemPrompt: string,
+  userPrompt: string,
+  temperature: number,
+  useSearchGrounding: boolean,
+): Promise<string | null> {
+  const secondary = getSecondaryLLMConfig();
+  if (!secondary) return null;
+
+  const fetchUrl = secondary.baseUrl.endsWith("/chat/completions")
+    ? secondary.baseUrl
+    : `${secondary.baseUrl.replace(/\/$/, "")}/chat/completions`;
+
+  const configuredModel = secondary.model.replace("3.7", "").trim() || "qwen-plus";
+  const candidateModels = Array.from(
+    new Set([
+      configuredModel,
+      "qwen-plus",
+      "qwen-turbo",
+      "qwen-max",
+      "qwen2.5-72b-instruct",
+      "qwen2.5-32b-instruct",
+      "qwen2.5-7b-instruct",
+    ]),
+  ).filter((m) => m && m !== "qwen3.7-plus");
+
+  for (const modelToTry of candidateModels) {
+    try {
+      const requestPayload: Record<string, any> = {
+        model: modelToTry,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature,
+      };
+
+      if (useSearchGrounding) {
+        requestPayload.enable_search = true;
+      }
+
+      // 1. Attempt with response_format json_object
+      let response = await fetch(fetchUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${secondary.apiKey}`,
+        },
+        body: JSON.stringify({
+          ...requestPayload,
+          response_format: { type: "json_object" },
+        }),
+      });
+
+      // 2. Retry without response_format if endpoint doesn't support it
+      if (response.status === 400) {
+        const err400 = await response.clone().text();
+        if (err400.toLowerCase().includes("response_format")) {
+          response = await fetch(fetchUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${secondary.apiKey}`,
+            },
+            body: JSON.stringify(requestPayload),
+          });
+        }
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.choices?.[0]?.message?.content?.trim();
+        if (text) {
+          console.log(`[AI Engine] Qwen successfully responded using model "${modelToTry}".`);
+          return text;
+        }
+      }
+
+      const errText = await response.text();
+      console.warn(`[AI Engine] Qwen (${modelToTry}) returned status ${response.status}: ${errText}`);
+
+      // If model not purchased or not found, try the next candidate model
+      if (
+        response.status === 403 ||
+        response.status === 404 ||
+        errText.includes("AccessDenied") ||
+        errText.includes("ModelNotFound")
+      ) {
+        console.log(`[AI Engine] Model "${modelToTry}" unavailable, trying next candidate model...`);
+        continue;
+      }
+    } catch (err: any) {
+      console.warn(`[AI Engine] Qwen model "${modelToTry}" call failed:`, err?.message);
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Universal Production LLM caller with multi-provider failover:
+ * 1. Qwen (Alibaba DashScope / OpenAI compatible) [Prioritized when AI_PROVIDER=qwen]
+ * 2. Google Cloud Vertex AI (Project Credentials & Global Location)
+ * 3. Google AI Studio / Gemini API Key
+ */
+export async function executeUniversalLLMPrompt(
   systemPrompt: string,
   userPrompt: string,
   temperature = 0.5,
   useSearchGrounding = false,
   modelPreference?: string,
 ): Promise<string> {
+  const preferredProvider = process.env.AI_PROVIDER?.toLowerCase() || "auto";
+
+  // If user explicitly configured AI_PROVIDER=qwen, prioritize Qwen first!
+  if (preferredProvider === "qwen") {
+    console.log("[AI Engine] Prioritizing Qwen as configured by AI_PROVIDER=qwen...");
+    const qwenResult = await callQwenProvider(systemPrompt, userPrompt, temperature, useSearchGrounding);
+    if (qwenResult) return qwenResult;
+    console.warn("[AI Engine] Qwen failed, attempting fallback to Google Vertex / Gemini API...");
+  }
+
   const vertexConfig = getVertexConfig();
   const model =
     modelPreference ||
@@ -336,47 +452,15 @@ async function executeUniversalLLMPrompt(
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // PROVIDER 3: Secondary AI Provider (Qwen / OpenAI Compatible Endpoint)
+  // PROVIDER 3: Secondary AI Provider (Qwen / DashScope Fallback)
   // ───────────────────────────────────────────────────────────────────────────
-  const secondary = getSecondaryLLMConfig();
-  if (secondary) {
-    try {
-      const fetchUrl = secondary.baseUrl.endsWith("/chat/completions")
-        ? secondary.baseUrl
-        : `${secondary.baseUrl.replace(/\/$/, "")}/chat/completions`;
-
-      const response = await fetch(fetchUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${secondary.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: secondary.model,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
-          temperature,
-          response_format: { type: "json_object" },
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const text = data.choices?.[0]?.message?.content?.trim();
-        if (text) return text;
-      } else {
-        const errText = await response.text();
-        console.warn(`[AI Engine] Secondary LLM returned status ${response.status}: ${errText}`);
-      }
-    } catch (secondaryError) {
-      console.warn("[AI Engine] Secondary LLM call failed:", secondaryError);
-    }
+  if (preferredProvider !== "qwen") {
+    const qwenResult = await callQwenProvider(systemPrompt, userPrompt, temperature, useSearchGrounding);
+    if (qwenResult) return qwenResult;
   }
 
   throw new Error(
-    "No AI providers responded successfully. Please verify Vertex AI credentials or ensure GEMINI_API_KEY is configured in your environment.",
+    "No AI providers responded successfully. Please verify Vertex AI credentials, GEMINI_API_KEY, or QWEN_API_KEY in your environment.",
   );
 }
 

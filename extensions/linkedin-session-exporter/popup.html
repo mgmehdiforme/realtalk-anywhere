@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LinkedIn Session Exporter</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body {
+      width: 340px;
+      background-color: #0a0f1d;
+      color: #f1f5f9;
+      padding: 18px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 12px;
+    }
+    .badge-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: #00f0ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #000;
+      font-size: 14px;
+    }
+    .title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .subtitle {
+      font-size: 10px;
+      color: #94a3b8;
+    }
+    .status-card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 20px;
+      margin-bottom: 8px;
+    }
+    .status-active {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .status-inactive {
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .info-row {
+      font-size: 11px;
+      color: #94a3b8;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .info-val {
+      color: #e2e8f0;
+      font-weight: 500;
+      font-family: monospace;
+    }
+    .btn {
+      width: 100%;
+      background: #00f0ff;
+      color: #040812;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+    }
+    .btn:hover {
+      background: #38f8ff;
+      transform: translateY(-1px);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .footer {
+      font-size: 10px;
+      color: #64748b;
+      text-align: center;
+      margin-top: 14px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="badge-icon">LI</div>
+    <div>
+      <div class="title">Session Exporter</div>
+      <div class="subtitle">MehdiGolzari.dev Admin Tool</div>
+    </div>
+  </div>
+
+  <div class="status-card">
+    <div id="statusBadge" class="status-badge status-inactive">
+      <span class="dot"></span>
+      <span id="statusText">Detecting LinkedIn...</span>
+    </div>
+    <div class="info-row">
+      <span>Auth Cookie (li_at):</span>
+      <span id="authCookieVal" class="info-val">Checking...</span>
+    </div>
+    <div class="info-row">
+      <span>Total Cookies:</span>
+      <span id="cookieCountVal" class="info-val">0</span>
+    </div>
+  </div>
+
+  <button id="exportBtn" class="btn" disabled>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="7 10 12 15 17 10"></polyline>
+      <line x1="12" y1="15" x2="12" y2="3"></line>
+    </svg>
+    Export linkedin-session.json
+  </button>
+
+  <div class="footer">
+    Extracts active session cookies directly from this browser without typing your password.
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
