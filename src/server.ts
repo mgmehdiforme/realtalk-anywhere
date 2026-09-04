@@ -4,7 +4,7 @@ import path from "path";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import { verifyCronSecret } from "./lib/admin-auth";
+import { verifyCronSecret, getAdminSessionFromRequest } from "./lib/admin-auth";
 import { generateAutonomousBlogPost } from "./lib/blog-generator";
 import { getAllPublishedSlugs, getBlogPostBySlug, getBlogPosts } from "./lib/db";
 import { pingSearchEngines, INDEXNOW_KEY } from "./lib/seo-ping";
@@ -325,6 +325,84 @@ async function handleLinkedInCronRequest(request: Request): Promise<Response | n
   }
 }
 
+/**
+ * Handle Admin Upload & Replacement of LinkedIn Profile ZIP (/api/admin/linkedin/upload-profile-zip)
+ */
+async function handleLinkedInProfileUploadRequest(request: Request): Promise<Response | null> {
+  const url = new URL(request.url);
+  if (
+    url.pathname !== "/api/admin/linkedin/upload-profile-zip" &&
+    url.pathname !== "/api/admin/linkedin/upload-profile"
+  ) {
+    return null;
+  }
+
+  if (request.method !== "POST") {
+    return new Response("Method not allowed", { status: 405 });
+  }
+
+  const session = getAdminSessionFromRequest(request);
+  if (!session) {
+    return new Response(
+      JSON.stringify({ success: false, error: "Unauthorized: Admin session required" }),
+      { status: 401, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  try {
+    let archiveBuffer: Buffer | null = null;
+    let filename = "linkedin-profile-cache.zip";
+
+    const contentType = request.headers.get("content-type") || "";
+
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await request.formData();
+      const file = (formData.get("file") || formData.get("archive")) as File | null;
+      if (!file) {
+        return new Response(
+          JSON.stringify({ success: false, error: "No file found in form data field 'file'" }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      filename = file.name || filename;
+      const arrayBuffer = await file.arrayBuffer();
+      archiveBuffer = Buffer.from(arrayBuffer);
+    } else {
+      // Direct binary upload
+      const arrayBuffer = await request.arrayBuffer();
+      archiveBuffer = Buffer.from(arrayBuffer);
+      filename = request.headers.get("x-filename") || filename;
+    }
+
+    if (!archiveBuffer || archiveBuffer.length === 0) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Empty archive buffer received" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    const { forceExtractProfileArchive } = await import("./lib/linkedin-runner");
+    const result = await forceExtractProfileArchive({
+      archiveBuffer,
+      filename,
+    });
+
+    return new Response(JSON.stringify(result), {
+      status: result.success ? 200 : 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error: any) {
+    console.error("Profile archive upload failed:", error);
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message || "Failed to process profile archive",
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
+  }
+}
+
 function resolveCoverUrl(baseUrl: string, coverImage?: string, slug?: string): string {
   const rawCover = coverImage || (slug ? `/api/blog/asset?slug=${slug}` : "/avatar.webp");
   if (rawCover.startsWith("http://") || rawCover.startsWith("https://")) {
@@ -487,6 +565,10 @@ export default {
       // 4b. Check Autonomous LinkedIn Engagement Cron Endpoint
       const linkedInCronResponse = await handleLinkedInCronRequest(request);
       if (linkedInCronResponse) return linkedInCronResponse;
+
+      // 4c. Check Admin LinkedIn Profile ZIP Upload Endpoint
+      const linkedInUploadResponse = await handleLinkedInProfileUploadRequest(request);
+      if (linkedInUploadResponse) return linkedInUploadResponse;
 
       // 5. Check Sitemap XML
       const sitemapResponse = await handleSitemapRequest(request);

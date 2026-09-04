@@ -7,7 +7,13 @@ import {
   clearLinkedInSession,
   updateLinkedInSchedule,
 } from "./db";
-import { executeLinkedInFeedEngagement } from "./linkedin-runner";
+import {
+  executeLinkedInFeedEngagement,
+  hasProfileArchiveOrExtracted,
+  forceExtractProfileArchive,
+  type ProfileStatusResult,
+  type ExtractProfileArchiveResult,
+} from "./linkedin-runner";
 
 /**
  * Fetch LinkedIn admin state & recent activity logs
@@ -20,12 +26,22 @@ export const getLinkedInAdminStateAction = createServerFn().handler(async () => 
     return {
       authenticated: false,
       connected: false,
+      profileStatus: {
+        hasArchive: false,
+        hasExtracted: false,
+        hasDefaultProfile: false,
+        extractedFileCount: 0,
+      } as ProfileStatusResult,
       config: null,
       stats: { publishedToday: 0, totalPublished: 0, totalSkipped: 0 },
     };
   }
 
   const config = await getLinkedInConfig();
+  const profileStatus = hasProfileArchiveOrExtracted();
+  const hasStoredCookies = Boolean(config.sessionState && config.sessionState.cookies?.length > 0);
+  const isConnected = hasStoredCookies || profileStatus.hasExtracted || profileStatus.hasArchive;
+
   const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
 
   const publishedToday = (config.logs || []).filter(
@@ -37,10 +53,15 @@ export const getLinkedInAdminStateAction = createServerFn().handler(async () => 
 
   return {
     authenticated: true,
-    connected: !!(config.sessionState && config.sessionState.cookies?.length > 0),
+    connected: isConnected,
+    profileStatus,
     config: {
       lastImportedAt: config.lastImportedAt,
-      accountInfo: config.accountInfo,
+      accountInfo:
+        config.accountInfo ||
+        (profileStatus.hasExtracted
+          ? { name: "Chromium Persistent Profile", headline: "Active Browser Profile" }
+          : null),
       schedule: config.schedule,
       logs: config.logs || [],
     },
@@ -179,4 +200,29 @@ export const updateLinkedInScheduleAction = createServerFn({ method: "POST" })
 
     const updated = await updateLinkedInSchedule(data);
     return { success: true, schedule: updated.schedule };
+  });
+
+/**
+ * Manually trigger extraction of the stored profile archive into active Chromium profile cache
+ */
+export const extractLinkedInProfileArchiveAction = createServerFn({ method: "POST" })
+  .handler(async () => {
+    const request = getRequest();
+    const session = getAdminSessionFromRequest(request);
+
+    if (!session) {
+      throw new Error("Unauthorized admin access");
+    }
+
+    try {
+      const result = await forceExtractProfileArchive();
+      return result;
+    } catch (error: any) {
+      console.error("[LinkedIn Admin Action Error - Extract Archive]:", error);
+      return {
+        success: false,
+        message: error.message || "Failed to extract profile archive",
+        error: error.message,
+      };
+    }
   });

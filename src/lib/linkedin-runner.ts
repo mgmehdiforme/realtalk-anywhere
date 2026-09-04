@@ -658,6 +658,434 @@ async function waitForAndActivateCommentEditor(
   return null;
 }
 
+export interface ExtractProfileArchiveResult {
+  success: boolean;
+  message: string;
+  archivePath?: string;
+  targetDir?: string;
+  fileCount?: number;
+  hasDefaultProfile?: boolean;
+  cookiesFound?: number;
+  error?: string;
+}
+
+export interface ProfileStatusResult {
+  hasArchive: boolean;
+  archivePath?: string;
+  archiveName?: string;
+  archiveSizeBytes?: number;
+  archiveSizeFormatted?: string;
+  archiveType?: "zip" | "tar.gz";
+  hasExtracted: boolean;
+  profileDir?: string;
+  hasDefaultProfile: boolean;
+  extractedFileCount: number;
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+}
+
+/**
+ * Helper to recursively locate the directory containing the 'Default' profile directory
+ * (handles cases where a profile was zipped with or without a root folder, up to maxDepth).
+ */
+export function findChromiumProfileRoot(baseDir: string, maxDepth: number = 3): string {
+  if (fs.existsSync(path.join(baseDir, "Default"))) {
+    return baseDir;
+  }
+
+  function search(currentDir: string, currentDepth: number): string | null {
+    if (currentDepth > maxDepth) return null;
+    try {
+      const entries = fs.readdirSync(currentDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          const cand = path.join(currentDir, entry.name);
+          if (fs.existsSync(path.join(cand, "Default"))) {
+            return cand;
+          }
+          const nested = search(cand, currentDepth + 1);
+          if (nested) return nested;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  const found = search(baseDir, 1);
+  return found || baseDir;
+}
+
+/**
+ * Counts regular files recursively in a directory
+ */
+export function countFilesRecursively(dir: string): number {
+  let count = 0;
+  try {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isFile()) count++;
+      else if (entry.isDirectory()) count += countFilesRecursively(path.join(dir, entry.name));
+    }
+  } catch (_) {}
+  return count;
+}
+
+/**
+ * Scan for archive files (.zip, .tar.gz, .tgz) in storage and data directories
+ */
+export function getProfileArchiveCandidates(): Array<{
+  path: string;
+  name: string;
+  isZip: boolean;
+  sizeBytes: number;
+}> {
+  const searchDirectories = [
+    path.resolve("/app/data"),
+    path.resolve(process.cwd(), "data"),
+    process.cwd(),
+  ];
+
+  const candidates: Array<{ path: string; name: string; isZip: boolean; sizeBytes: number }> = [];
+  const seenPaths = new Set<string>();
+
+  for (const sDir of searchDirectories) {
+    if (!fs.existsSync(sDir)) continue;
+
+    const specificNames = [
+      "linkedin-profile-cache.zip",
+      "profile.zip",
+      ".linkedin-profile-cache.zip",
+      "linkedin-cache.zip",
+      "linkedin-profile-cache.tar.gz",
+      "profile.tar.gz",
+    ];
+
+    for (const name of specificNames) {
+      const candPath = path.join(sDir, name);
+      if (fs.existsSync(candPath) && !seenPaths.has(candPath)) {
+        seenPaths.add(candPath);
+        try {
+          const stat = fs.statSync(candPath);
+          candidates.push({
+            path: candPath,
+            name,
+            isZip: candPath.endsWith(".zip"),
+            sizeBytes: stat.size,
+          });
+        } catch (_) {}
+      }
+    }
+
+    try {
+      const files = fs.readdirSync(sDir);
+      for (const file of files) {
+        const fullP = path.join(sDir, file);
+        if (seenPaths.has(fullP)) continue;
+        if (file.endsWith(".zip")) {
+          seenPaths.add(fullP);
+          const stat = fs.statSync(fullP);
+          candidates.push({ path: fullP, name: file, isZip: true, sizeBytes: stat.size });
+        } else if (file.endsWith(".tar.gz") || file.endsWith(".tgz")) {
+          seenPaths.add(fullP);
+          const stat = fs.statSync(fullP);
+          candidates.push({ path: fullP, name: file, isZip: false, sizeBytes: stat.size });
+        }
+      }
+    } catch (_) {}
+  }
+
+  return candidates;
+}
+
+/**
+ * Cross-platform archive extraction logic
+ */
+export function executeArchiveExtraction(archivePath: string, targetDir: string): void {
+  fs.mkdirSync(targetDir, { recursive: true });
+
+  const isZip = archivePath.endsWith(".zip");
+  const isWindows = process.platform === "win32";
+
+  if (isZip) {
+    if (isWindows) {
+      try {
+        child_process.execSync(`tar.exe -xf "${archivePath}" -C "${targetDir}"`, {
+          stdio: "pipe",
+        });
+        return;
+      } catch (tarErr) {
+        console.warn(
+          "[LinkedIn Runner] Windows tar.exe failed for zip, falling back to PowerShell Expand-Archive:",
+          tarErr,
+        );
+      }
+
+      child_process.execSync(
+        `powershell -NoProfile -NonInteractive -Command "Expand-Archive -LiteralPath '${archivePath}' -DestinationPath '${targetDir}' -Force"`,
+        { stdio: "inherit" },
+      );
+    } else {
+      // Linux / Debian Container
+      try {
+        child_process.execSync(`unzip -q -o "${archivePath}" -d "${targetDir}"`, {
+          stdio: "pipe",
+        });
+        return;
+      } catch (unzipErr) {
+        console.warn("[LinkedIn Runner] unzip failed, falling back to tar -xf:", unzipErr);
+      }
+
+      child_process.execSync(`tar -xf "${archivePath}" -C "${targetDir}"`, {
+        stdio: "inherit",
+      });
+    }
+  } else {
+    // .tar.gz or .tgz
+    const cmd = isWindows ? "tar.exe" : "tar";
+    child_process.execSync(`${cmd} -xzf "${archivePath}" -C "${targetDir}"`, {
+      stdio: "inherit",
+    });
+  }
+}
+
+/**
+ * Checks current profile status (both storage archive and extracted local cache).
+ */
+export function hasProfileArchiveOrExtracted(): ProfileStatusResult {
+  const archives = getProfileArchiveCandidates();
+  const bestArchive = archives.length > 0 ? archives[0] : null;
+
+  const checkDirs = [
+    process.env.LINKEDIN_PROFILE_DIR,
+    path.join(os.tmpdir(), ".linkedin-profile-cache"),
+    path.resolve(process.cwd(), ".linkedin-profile-cache"),
+    path.resolve("/app/.linkedin-profile-cache"),
+  ].filter(Boolean) as string[];
+
+  let extractedDir: string | undefined;
+  let hasDefault = false;
+  let fileCount = 0;
+
+  for (const dir of checkDirs) {
+    if (fs.existsSync(dir)) {
+      const root = findChromiumProfileRoot(dir);
+      if (fs.existsSync(path.join(root, "Default"))) {
+        extractedDir = root;
+        hasDefault = true;
+        fileCount = countFilesRecursively(root);
+        break;
+      }
+    }
+  }
+
+  return {
+    hasArchive: Boolean(bestArchive),
+    archivePath: bestArchive?.path,
+    archiveName: bestArchive?.name,
+    archiveSizeBytes: bestArchive?.sizeBytes,
+    archiveSizeFormatted: bestArchive ? formatBytes(bestArchive.sizeBytes) : undefined,
+    archiveType: bestArchive ? (bestArchive.isZip ? "zip" : "tar.gz") : undefined,
+    hasExtracted: Boolean(extractedDir && hasDefault),
+    profileDir: extractedDir,
+    hasDefaultProfile: hasDefault,
+    extractedFileCount: fileCount,
+  };
+}
+
+/**
+ * Manually forces extraction of the profile archive into the active Chromium cache directory.
+ * If archiveBuffer is provided, writes it first to persistent storage.
+ */
+export async function forceExtractProfileArchive(options?: {
+  archiveBuffer?: Buffer;
+  filename?: string;
+}): Promise<ExtractProfileArchiveResult> {
+  try {
+    let archivePath: string | undefined;
+
+    // 1. If buffer provided (uploaded from UI), save to persistent storage
+    if (options?.archiveBuffer && options.archiveBuffer.length > 0) {
+      const filename = options.filename || "linkedin-profile-cache.zip";
+      const targetStorageDirs = [
+        path.resolve("/app/data"),
+        path.resolve(process.cwd(), "data"),
+      ];
+
+      for (const sDir of targetStorageDirs) {
+        try {
+          fs.mkdirSync(sDir, { recursive: true });
+          const savePath = path.join(sDir, filename);
+          fs.writeFileSync(savePath, options.archiveBuffer);
+          console.log(
+            `[LinkedIn Runner] Saved uploaded archive to ${savePath} (${formatBytes(options.archiveBuffer.length)})`,
+          );
+          if (!archivePath) {
+            archivePath = savePath;
+          }
+        } catch (err: any) {
+          console.warn(`[LinkedIn Runner] Could not write archive to ${sDir}:`, err?.message);
+        }
+      }
+    }
+
+    // 2. If no buffer provided, locate candidate archive in storage
+    if (!archivePath) {
+      const candidates = getProfileArchiveCandidates();
+      if (candidates.length === 0) {
+        return {
+          success: false,
+          message:
+            "No profile archive (.zip or .tar.gz) found in /app/data or ./data. Please upload a profile ZIP first.",
+          error: "Archive not found",
+        };
+      }
+      archivePath = candidates[0].path;
+    }
+
+    // 3. Determine target extraction directory
+    const targetDir =
+      process.env.LINKEDIN_PROFILE_DIR ||
+      (process.platform === "linux"
+        ? path.join(os.tmpdir(), ".linkedin-profile-cache")
+        : path.resolve(process.cwd(), ".linkedin-profile-cache"));
+
+    console.log(`[LinkedIn Runner] Extracting profile archive ${archivePath} into ${targetDir}...`);
+    executeArchiveExtraction(archivePath, targetDir);
+
+    // 4. Verify Chromium profile directory
+    const profileRoot = findChromiumProfileRoot(targetDir);
+    const hasDefault = fs.existsSync(path.join(profileRoot, "Default"));
+    const fileCount = countFilesRecursively(profileRoot);
+
+    console.log(
+      `[LinkedIn Runner] Extraction complete. Profile root: ${profileRoot} (Default folder: ${hasDefault}, files: ${fileCount})`,
+    );
+
+    // 5. Fast non-blocking Playwright check to read and sync cookies into db.json
+    let cookiesFound = 0;
+    try {
+      const { chromium } = await import("playwright");
+      const executablePath =
+        process.env.CHROMIUM_PATH ||
+        (fs.existsSync("/usr/bin/chromium") ? "/usr/bin/chromium" : undefined);
+
+      const inspectionContext = await chromium.launchPersistentContext(profileRoot, {
+        executablePath,
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+        timeout: 10000,
+      });
+
+      const cookies = await inspectionContext.cookies([
+        "https://www.linkedin.com",
+        "https://linkedin.com",
+      ]);
+      cookiesFound = cookies.length;
+      const hasLiAt = cookies.some((c) => c.name === "li_at" && c.value);
+
+      if (hasLiAt) {
+        await saveLinkedInSession(
+          { cookies },
+          { name: "LinkedIn (Extracted Profile)", headline: "Browser Cache Session" },
+        );
+        console.log(
+          `[LinkedIn Runner] ✅ Synchronized ${cookies.length} active session cookies to database.`,
+        );
+      }
+
+      await inspectionContext.close().catch(() => {});
+    } catch (inspectErr: any) {
+      console.log(
+        `[LinkedIn Runner] Note during post-extraction cookie inspection: ${inspectErr?.message}`,
+      );
+    }
+
+    return {
+      success: true,
+      message: `Profile archive (${path.basename(archivePath)}) extracted successfully to ${profileRoot}. Found ${fileCount} files in Chromium profile ${hasDefault ? "(Default directory present)" : ""}. ${cookiesFound > 0 ? `${cookiesFound} cookies synced to database.` : ""}`,
+      archivePath,
+      targetDir: profileRoot,
+      fileCount,
+      hasDefaultProfile: hasDefault,
+      cookiesFound,
+    };
+  } catch (error: any) {
+    console.error("[LinkedIn Runner] Extraction failed:", error);
+    return {
+      success: false,
+      message: `Failed to extract profile archive: ${error.message}`,
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Resolves or bootstraps the persistent Chromium profile directory.
+ */
+export function resolveAndBootstrapProfileDir(): string {
+  if (process.env.LINKEDIN_PROFILE_DIR && fs.existsSync(process.env.LINKEDIN_PROFILE_DIR)) {
+    return findChromiumProfileRoot(process.env.LINKEDIN_PROFILE_DIR);
+  }
+
+  // 1. Local project development path
+  const localProjectCache = path.resolve(process.cwd(), ".linkedin-profile-cache");
+  if (fs.existsSync(path.join(localProjectCache, "Default"))) {
+    return localProjectCache;
+  }
+
+  // 2. Production container ephemeral directory (/tmp/.linkedin-profile-cache)
+  const tmpProfileDir = path.join(os.tmpdir(), ".linkedin-profile-cache");
+  if (fs.existsSync(path.join(tmpProfileDir, "Default"))) {
+    return tmpProfileDir;
+  }
+
+  if (fs.existsSync(tmpProfileDir)) {
+    const foundRoot = findChromiumProfileRoot(tmpProfileDir);
+    if (fs.existsSync(path.join(foundRoot, "Default"))) {
+      return foundRoot;
+    }
+  }
+
+  // 3. Auto-extract from archive candidates in storage
+  const candidates = getProfileArchiveCandidates();
+  for (const archive of candidates) {
+    console.log(
+      `[LinkedIn Runner] Auto-bootstrapping profile from archive: ${archive.path} (${formatBytes(archive.sizeBytes)})`,
+    );
+    try {
+      executeArchiveExtraction(archive.path, tmpProfileDir);
+      const extractedRoot = findChromiumProfileRoot(tmpProfileDir);
+      if (fs.existsSync(path.join(extractedRoot, "Default"))) {
+        console.log(`[LinkedIn Runner] ✅ Successfully bootstrapped profile cache to ${extractedRoot}`);
+        return extractedRoot;
+      }
+    } catch (extractErr: any) {
+      console.error(
+        `[LinkedIn Runner] Auto-bootstrap extraction failed for ${archive.path}:`,
+        extractErr?.message,
+      );
+    }
+  }
+
+  // 4. Container-baked profile cache fallback
+  const containerFallback = path.resolve("/app/.linkedin-profile-cache");
+  if (fs.existsSync(path.join(containerFallback, "Default"))) {
+    console.log(`[LinkedIn Runner] Using container-baked profile cache at ${containerFallback}`);
+    return containerFallback;
+  }
+
+  if (!fs.existsSync(localProjectCache)) {
+    fs.mkdirSync(localProjectCache, { recursive: true });
+  }
+  return localProjectCache;
+}
+
 /**
  * Main Autonomous LinkedIn Feed Scanner & CTO Engagement Engine
  */
@@ -669,10 +1097,20 @@ export async function executeLinkedInFeedEngagement(options: {
 }): Promise<LinkedInRunResult> {
   console.log("=== STARTING AUTONOMOUS LINKEDIN SEARCH ENGAGEMENT RUN ===");
 
-  // 1. Validate Session State
+  // 1. Validate Session & Profile State
   const config = await getLinkedInConfig();
-  if (!config.sessionState || !config.sessionState.cookies || config.sessionState.cookies.length === 0) {
-    const errorMsg = "No valid LinkedIn session found. Please export and upload session JSON from local browser.";
+  const hasStoredCookies = Boolean(
+    config.sessionState?.cookies && config.sessionState.cookies.length > 0,
+  );
+  const profileStatus = hasProfileArchiveOrExtracted();
+  const hasProfileOrFallback =
+    profileStatus.hasExtracted ||
+    profileStatus.hasArchive ||
+    Boolean(process.env.LINKEDIN_PASSWORD);
+
+  if (!hasStoredCookies && !hasProfileOrFallback) {
+    const errorMsg =
+      "No valid LinkedIn session found. Please export and upload session JSON or upload a profile ZIP from the admin UI.";
     console.error(`[LinkedIn Runner] ${errorMsg}`);
     const log = await addLinkedInEngagementLog({
       authorName: "System",
@@ -684,6 +1122,12 @@ export async function executeLinkedInFeedEngagement(options: {
       error: errorMsg,
     });
     return { success: false, status: "failed", error: errorMsg, log };
+  }
+
+  if (!hasStoredCookies && hasProfileOrFallback) {
+    console.log(
+      `[LinkedIn Runner] No JSON session stored in db, but found valid browser profile (${profileStatus.hasExtracted ? "Extracted cache" : "Archive in storage"}). Launching persistent context...`,
+    );
   }
 
   // 2. Check Daily Outreach Quota (Max 2 per day for human safety)
@@ -717,153 +1161,6 @@ export async function executeLinkedInFeedEngagement(options: {
   let page: Page | null = null;
   let trendDiscovery: TrendingLinkedInQuery | null = null;
   let selectedTopic = DEFAULT_FALLBACK_TOPIC;
-
-/**
- * Helper to recursively locate the directory containing the 'Default' profile directory
- * (handles cases where a profile was zipped with or without a root folder).
- */
-function findChromiumProfileRoot(baseDir: string): string {
-  if (fs.existsSync(path.join(baseDir, "Default"))) {
-    return baseDir;
-  }
-
-  try {
-    const entries = fs.readdirSync(baseDir, { withFileTypes: true });
-    for (const entry of entries) {
-      if (entry.isDirectory()) {
-        const candidate = path.join(baseDir, entry.name);
-        if (fs.existsSync(path.join(candidate, "Default"))) {
-          console.log(`[LinkedIn Runner] Located nested profile root at: ${candidate}`);
-          return candidate;
-        }
-      }
-    }
-  } catch (_) {}
-
-  return baseDir;
-}
-
-/**
- * Resolves or bootstraps the persistent Chromium profile directory.
- * Supports:
- *   1. Manually uploaded .zip files (e.g. linkedin-profile-cache.zip, profile.zip, *.zip in data directory)
- *   2. GCS-mounted .tar.gz archives (e.g. linkedin-profile-cache.tar.gz)
- *   3. Container image baked directory (/app/.linkedin-profile-cache)
- *   4. Local project directory (./.linkedin-profile-cache)
- */
-function resolveAndBootstrapProfileDir(): string {
-  if (process.env.LINKEDIN_PROFILE_DIR && fs.existsSync(process.env.LINKEDIN_PROFILE_DIR)) {
-    return findChromiumProfileRoot(process.env.LINKEDIN_PROFILE_DIR);
-  }
-
-  // 1. Local project development path
-  const localProjectCache = path.resolve(process.cwd(), ".linkedin-profile-cache");
-  if (fs.existsSync(path.join(localProjectCache, "Default"))) {
-    return localProjectCache;
-  }
-
-  // 2. Production container ephemeral directory (/tmp/.linkedin-profile-cache)
-  const tmpProfileDir = path.join(os.tmpdir(), ".linkedin-profile-cache");
-  if (fs.existsSync(path.join(tmpProfileDir, "Default"))) {
-    return tmpProfileDir;
-  }
-
-  // Check if an existing subfolder in tmpProfileDir has Default
-  if (fs.existsSync(tmpProfileDir)) {
-    const foundRoot = findChromiumProfileRoot(tmpProfileDir);
-    if (fs.existsSync(path.join(foundRoot, "Default"))) {
-      return foundRoot;
-    }
-  }
-
-  // 3. Scan for archive files (.zip, .tar.gz, .tgz) in /app/data, ./data, or current working directory
-  const searchDirectories = [
-    path.resolve(process.cwd(), "data"),
-    path.resolve("/app/data"),
-    process.cwd(),
-  ];
-
-  const archiveCandidates: Array<{ path: string; isZip: boolean }> = [];
-
-  for (const sDir of searchDirectories) {
-    if (!fs.existsSync(sDir)) continue;
-
-    // Check specific known filenames first
-    const specificNames = [
-      "linkedin-profile-cache.zip",
-      "profile.zip",
-      ".linkedin-profile-cache.zip",
-      "linkedin-cache.zip",
-      "linkedin-profile-cache.tar.gz",
-      "profile.tar.gz",
-    ];
-
-    for (const name of specificNames) {
-      const candPath = path.join(sDir, name);
-      if (fs.existsSync(candPath)) {
-        archiveCandidates.push({ path: candPath, isZip: candPath.endsWith(".zip") });
-      }
-    }
-
-    // Also scan for any other .zip or .tar.gz files in the data directory
-    try {
-      const files = fs.readdirSync(sDir);
-      for (const file of files) {
-        const fullP = path.join(sDir, file);
-        if (file.endsWith(".zip") && !archiveCandidates.some((c) => c.path === fullP)) {
-          archiveCandidates.push({ path: fullP, isZip: true });
-        } else if (
-          (file.endsWith(".tar.gz") || file.endsWith(".tgz")) &&
-          !archiveCandidates.some((c) => c.path === fullP)
-        ) {
-          archiveCandidates.push({ path: fullP, isZip: false });
-        }
-      }
-    } catch (_) {}
-  }
-
-  // Extract the first matching archive
-  for (const archive of archiveCandidates) {
-    console.log(
-      `[LinkedIn Runner] Found profile archive at ${archive.path} (type: ${archive.isZip ? "ZIP" : "TAR.GZ"}). Extracting to ${tmpProfileDir}...`,
-    );
-    fs.mkdirSync(tmpProfileDir, { recursive: true });
-
-    try {
-      if (archive.isZip) {
-        // Extract ZIP archive
-        child_process.execSync(`unzip -q -o "${archive.path}" -d "${tmpProfileDir}"`, {
-          stdio: "inherit",
-        });
-      } else {
-        // Extract TAR.GZ archive
-        child_process.execSync(`tar -xzf "${archive.path}" -C "${os.tmpdir()}"`, {
-          stdio: "inherit",
-        });
-      }
-
-      const extractedRoot = findChromiumProfileRoot(tmpProfileDir);
-      if (fs.existsSync(path.join(extractedRoot, "Default"))) {
-        console.log(`[LinkedIn Runner] ✅ Successfully bootstrapped profile cache from ${archive.path} to ${extractedRoot}`);
-        return extractedRoot;
-      }
-    } catch (extractErr: any) {
-      console.error(`[LinkedIn Runner] Extraction failed for ${archive.path}:`, extractErr?.message);
-    }
-  }
-
-  // 4. Container-baked profile cache fallback
-  const containerFallback = path.resolve("/app/.linkedin-profile-cache");
-  if (fs.existsSync(path.join(containerFallback, "Default"))) {
-    console.log(`[LinkedIn Runner] Using container-baked profile cache at ${containerFallback}`);
-    return containerFallback;
-  }
-
-  if (!fs.existsSync(localProjectCache)) {
-    fs.mkdirSync(localProjectCache, { recursive: true });
-  }
-  return localProjectCache;
-}
 
   try {
     // 3. Launch Persistent Chromium Profile (Retains all browser state natively on disk)
