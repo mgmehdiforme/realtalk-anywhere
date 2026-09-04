@@ -49,16 +49,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gzip \
     ca-certificates \
     fonts-liberation \
-    libnss3 \
-    libatk-1.0-0 \
-    libatk-bridge2.0-0 \
-    libcups2 \
-    libdrm2 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    libgbm1 \
-    libasound2 \
+    fonts-noto-color-emoji \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy only the Nitro output (self-contained — no full node_modules needed)
