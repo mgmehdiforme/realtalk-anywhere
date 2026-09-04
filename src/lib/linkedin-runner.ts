@@ -191,8 +191,170 @@ function isPostAlreadyEngaged(
 }
 
 /**
+ * Attempts automated password login fallback when LinkedIn prompts for credentials/password on an authwall or checkpoint.
+ */
+async function attemptAutomatedLogin(
+  page: Page,
+  context: BrowserContext,
+): Promise<{ success: boolean; reason?: string }> {
+  try {
+    console.log("[LinkedIn Runner] Checking for password login prompt on authwall/checkpoint...");
+
+    // 1. Common LinkedIn password input selectors
+    const passwordSelectors = [
+      "input#password",
+      "input#session_password",
+      "input[name='session_password']",
+      "input[type='password']",
+      "input[name='password']",
+      "input[data-cip-id='password']",
+      "input[autocomplete='current-password']",
+    ];
+
+    let passwordInput: Locator | null = null;
+    for (const sel of passwordSelectors) {
+      const loc = page.locator(sel);
+      if ((await loc.count().catch(() => 0)) > 0 && (await loc.first().isVisible().catch(() => false))) {
+        passwordInput = loc.first();
+        console.log(`[LinkedIn Runner] Found visible password field (${sel})`);
+        break;
+      }
+    }
+
+    // If no password input is visible, an account card, tile, or "Sign in" button might need to be clicked first
+    if (!passwordInput) {
+      const accountTiles = page.locator(
+        ".profile-card, button:has-text('Sign in'), a:has-text('Sign in'), button:has-text('Log in'), .account-card",
+      );
+      if ((await accountTiles.count().catch(() => 0)) > 0 && (await accountTiles.first().isVisible().catch(() => false))) {
+        console.log("[LinkedIn Runner] Clicking account tile / sign-in button to reveal password prompt...");
+        await accountTiles.first().click().catch(() => {});
+        await page.waitForTimeout(2000);
+
+        for (const sel of passwordSelectors) {
+          const loc = page.locator(sel);
+          if ((await loc.count().catch(() => 0)) > 0 && (await loc.first().isVisible().catch(() => false))) {
+            passwordInput = loc.first();
+            console.log(`[LinkedIn Runner] Password field revealed (${sel})`);
+            break;
+          }
+        }
+      }
+    }
+
+    if (!passwordInput) {
+      console.log("[LinkedIn Runner] No password input field detected on current auth page.");
+      return { success: false, reason: "No password input field visible" };
+    }
+
+    // 2. Check if username / email input is visible and empty
+    const usernameSelectors = [
+      "input#username",
+      "input#session_key",
+      "input[name='session_key']",
+      "input[name='username']",
+      "input[type='email']",
+      "input[type='text']",
+    ];
+
+    const targetEmail =
+      process.env.LINKEDIN_USERNAME || "mehdigolzari.official@gmail.com";
+
+    for (const uSel of usernameSelectors) {
+      const uLoc = page.locator(uSel);
+      if ((await uLoc.count().catch(() => 0)) > 0 && (await uLoc.first().isVisible().catch(() => false))) {
+        const val = (await uLoc.first().inputValue().catch(() => "")) || "";
+        if (!val.trim()) {
+          console.log(`[LinkedIn Runner] Filling username (${uSel}) with ${targetEmail}...`);
+          await uLoc.first().fill(targetEmail).catch(() => {});
+          await page.waitForTimeout(400);
+        } else {
+          console.log(`[LinkedIn Runner] Username field already populated: "${val}"`);
+        }
+        break;
+      }
+    }
+
+    // 3. Fill password with provided credential (environment variable or default)
+    const password = process.env.LINKEDIN_PASSWORD || "Parissa.1370";
+    console.log("[LinkedIn Runner] Entering LinkedIn password...");
+    await passwordInput.focus().catch(() => {});
+    await passwordInput.fill(password);
+    await page.waitForTimeout(500);
+
+    // 4. Click submit button or press Enter
+    const submitSelectors = [
+      "button[type='submit']",
+      "button[data-litms-control-urn='login-submit']",
+      "button#login-submit",
+      "button:has-text('Sign in')",
+      "button:has-text('Log in')",
+      "button:has-text('Agree & Join')",
+      "button:has-text('Submit')",
+    ];
+
+    let clicked = false;
+    for (const subSel of submitSelectors) {
+      const subLoc = page.locator(subSel);
+      if ((await subLoc.count().catch(() => 0)) > 0 && (await subLoc.first().isVisible().catch(() => false))) {
+        console.log(`[LinkedIn Runner] Clicking submit button (${subSel})...`);
+        await subLoc.first().click().catch(() => {});
+        clicked = true;
+        break;
+      }
+    }
+
+    if (!clicked) {
+      console.log("[LinkedIn Runner] Pressing Enter on password field...");
+      await passwordInput.press("Enter").catch(() => {});
+    }
+
+    // 5. Wait for response / navigation
+    console.log("[LinkedIn Runner] Awaiting authentication response...");
+    await page.waitForTimeout(6000);
+
+    const postUrl = page.url();
+    const cookies = await context.cookies(["https://www.linkedin.com", "https://linkedin.com"]);
+    const hasLiveAuth = cookies.some((c) => c.name === "li_at" && c.value);
+
+    const isStillAuthwall =
+      postUrl.includes("/login") ||
+      postUrl.includes("/checkpoint") ||
+      postUrl.includes("/uas/login") ||
+      postUrl.includes("/authwall") ||
+      postUrl.includes("challenge");
+
+    if (hasLiveAuth && !isStillAuthwall) {
+      console.log(`[LinkedIn Runner] 🎉 Automated password login successful! Current URL: ${postUrl}`);
+      try {
+        const freshCookies = await context.cookies();
+        if (freshCookies && freshCookies.length > 0) {
+          await saveLinkedInSession({ cookies: freshCookies });
+          console.log(`[LinkedIn Runner] Stored session database auto-synced with ${freshCookies.length} fresh cookies.`);
+        }
+      } catch (saveErr: any) {
+        console.warn("[LinkedIn Runner] Could not auto-sync cookies to database:", saveErr?.message);
+      }
+      return { success: true };
+    }
+
+    if (postUrl.includes("challenge") || postUrl.includes("checkpoint")) {
+      console.warn(`[LinkedIn Runner] LinkedIn presented a security checkpoint/2FA challenge: ${postUrl}`);
+      return { success: false, reason: "Security challenge or 2FA required" };
+    }
+
+    console.warn(`[LinkedIn Runner] Login attempt completed but still on auth page (${postUrl})`);
+    return { success: false, reason: `Still on login page: ${postUrl}` };
+  } catch (err: any) {
+    console.error("[LinkedIn Runner] Automated login attempt encountered error:", err);
+    return { success: false, reason: err.message };
+  }
+}
+
+/**
  * Checks if the browser is redirected to a login wall, authwall, or security checkpoint.
- * If so, keeps the browser open, brings it to front, and waits for the user to log in or pass verification.
+ * If so, attempts automated login fallback first; if that fails and not in headless mode,
+ * keeps the browser open and waits for human interaction.
  */
 async function ensureAuthenticatedOrWaitForLogin(
   page: Page,
@@ -213,9 +375,23 @@ async function ensureAuthenticatedOrWaitForLogin(
     return true;
   }
 
+  console.log(`[LinkedIn Runner] 🔑 Authwall/checkpoint detected at ${currentUrl}. Attempting automated login fallback...`);
+  const autoLoginResult = await attemptAutomatedLogin(page, context);
+  if (autoLoginResult.success) {
+    if (targetUrlToResume && page.url() !== targetUrlToResume) {
+      console.log(`[LinkedIn Runner] Resuming navigation to target: ${targetUrlToResume}`);
+      await page.goto(targetUrlToResume, {
+        waitUntil: "domcontentloaded",
+        timeout: 45000,
+      });
+      await page.waitForTimeout(3500);
+    }
+    return true;
+  }
+
   if (isHeadless) {
     console.error(
-      "[LinkedIn Runner] ⚠️ LinkedIn requires authentication, but the browser was launched in headless mode. Please check 'Show browser window' and run again to log in.",
+      `[LinkedIn Runner] ⚠️ Automated password login failed (${autoLoginResult.reason || "unknown reason"}), and browser is in headless mode. Please verify credentials or checkpoint.`,
     );
     return false;
   }
@@ -543,49 +719,140 @@ export async function executeLinkedInFeedEngagement(options: {
   let selectedTopic = DEFAULT_FALLBACK_TOPIC;
 
 /**
+ * Helper to recursively locate the directory containing the 'Default' profile directory
+ * (handles cases where a profile was zipped with or without a root folder).
+ */
+function findChromiumProfileRoot(baseDir: string): string {
+  if (fs.existsSync(path.join(baseDir, "Default"))) {
+    return baseDir;
+  }
+
+  try {
+    const entries = fs.readdirSync(baseDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const candidate = path.join(baseDir, entry.name);
+        if (fs.existsSync(path.join(candidate, "Default"))) {
+          console.log(`[LinkedIn Runner] Located nested profile root at: ${candidate}`);
+          return candidate;
+        }
+      }
+    }
+  } catch (_) {}
+
+  return baseDir;
+}
+
+/**
  * Resolves or bootstraps the persistent Chromium profile directory.
- * In local dev: uses ./.linkedin-profile-cache.
- * In Cloud Run container:
- *   1. Checks /tmp/.linkedin-profile-cache.
- *   2. If missing, automatically checks /app/data/linkedin-profile-cache.tar.gz (GCS mount)
- *      and extracts it into /tmp/.linkedin-profile-cache (fast local ext4 filesystem).
- *   3. Checks container image fallback at /app/.linkedin-profile-cache.
+ * Supports:
+ *   1. Manually uploaded .zip files (e.g. linkedin-profile-cache.zip, profile.zip, *.zip in data directory)
+ *   2. GCS-mounted .tar.gz archives (e.g. linkedin-profile-cache.tar.gz)
+ *   3. Container image baked directory (/app/.linkedin-profile-cache)
+ *   4. Local project directory (./.linkedin-profile-cache)
  */
 function resolveAndBootstrapProfileDir(): string {
   if (process.env.LINKEDIN_PROFILE_DIR && fs.existsSync(process.env.LINKEDIN_PROFILE_DIR)) {
-    return process.env.LINKEDIN_PROFILE_DIR;
+    return findChromiumProfileRoot(process.env.LINKEDIN_PROFILE_DIR);
   }
 
+  // 1. Local project development path
   const localProjectCache = path.resolve(process.cwd(), ".linkedin-profile-cache");
   if (fs.existsSync(path.join(localProjectCache, "Default"))) {
     return localProjectCache;
   }
 
+  // 2. Production container ephemeral directory (/tmp/.linkedin-profile-cache)
   const tmpProfileDir = path.join(os.tmpdir(), ".linkedin-profile-cache");
   if (fs.existsSync(path.join(tmpProfileDir, "Default"))) {
     return tmpProfileDir;
   }
 
-  const possibleArchives = [
-    path.resolve(process.cwd(), "data", "linkedin-profile-cache.tar.gz"),
-    path.resolve("/app/data", "linkedin-profile-cache.tar.gz"),
-  ];
-
-  for (const archivePath of possibleArchives) {
-    if (fs.existsSync(archivePath)) {
-      console.log(`[LinkedIn Runner] Found GCS persistent profile archive at ${archivePath}. Unpacking to ${os.tmpdir()}...`);
-      try {
-        child_process.execSync(`tar -xzf "${archivePath}" -C "${os.tmpdir()}"`, { stdio: "inherit" });
-        if (fs.existsSync(path.join(tmpProfileDir, "Default"))) {
-          console.log(`[LinkedIn Runner] Successfully unpacked profile cache to ${tmpProfileDir}`);
-          return tmpProfileDir;
-        }
-      } catch (extractErr) {
-        console.error(`[LinkedIn Runner] Failed to extract archive ${archivePath}:`, extractErr);
-      }
+  // Check if an existing subfolder in tmpProfileDir has Default
+  if (fs.existsSync(tmpProfileDir)) {
+    const foundRoot = findChromiumProfileRoot(tmpProfileDir);
+    if (fs.existsSync(path.join(foundRoot, "Default"))) {
+      return foundRoot;
     }
   }
 
+  // 3. Scan for archive files (.zip, .tar.gz, .tgz) in /app/data, ./data, or current working directory
+  const searchDirectories = [
+    path.resolve(process.cwd(), "data"),
+    path.resolve("/app/data"),
+    process.cwd(),
+  ];
+
+  const archiveCandidates: Array<{ path: string; isZip: boolean }> = [];
+
+  for (const sDir of searchDirectories) {
+    if (!fs.existsSync(sDir)) continue;
+
+    // Check specific known filenames first
+    const specificNames = [
+      "linkedin-profile-cache.zip",
+      "profile.zip",
+      ".linkedin-profile-cache.zip",
+      "linkedin-cache.zip",
+      "linkedin-profile-cache.tar.gz",
+      "profile.tar.gz",
+    ];
+
+    for (const name of specificNames) {
+      const candPath = path.join(sDir, name);
+      if (fs.existsSync(candPath)) {
+        archiveCandidates.push({ path: candPath, isZip: candPath.endsWith(".zip") });
+      }
+    }
+
+    // Also scan for any other .zip or .tar.gz files in the data directory
+    try {
+      const files = fs.readdirSync(sDir);
+      for (const file of files) {
+        const fullP = path.join(sDir, file);
+        if (file.endsWith(".zip") && !archiveCandidates.some((c) => c.path === fullP)) {
+          archiveCandidates.push({ path: fullP, isZip: true });
+        } else if (
+          (file.endsWith(".tar.gz") || file.endsWith(".tgz")) &&
+          !archiveCandidates.some((c) => c.path === fullP)
+        ) {
+          archiveCandidates.push({ path: fullP, isZip: false });
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Extract the first matching archive
+  for (const archive of archiveCandidates) {
+    console.log(
+      `[LinkedIn Runner] Found profile archive at ${archive.path} (type: ${archive.isZip ? "ZIP" : "TAR.GZ"}). Extracting to ${tmpProfileDir}...`,
+    );
+    fs.mkdirSync(tmpProfileDir, { recursive: true });
+
+    try {
+      if (archive.isZip) {
+        // Extract ZIP archive
+        child_process.execSync(`unzip -q -o "${archive.path}" -d "${tmpProfileDir}"`, {
+          stdio: "inherit",
+        });
+      } else {
+        // Extract TAR.GZ archive
+        child_process.execSync(`tar -xzf "${archive.path}" -C "${os.tmpdir()}"`, {
+          stdio: "inherit",
+        });
+      }
+
+      const extractedRoot = findChromiumProfileRoot(tmpProfileDir);
+      if (fs.existsSync(path.join(extractedRoot, "Default"))) {
+        console.log(`[LinkedIn Runner] ✅ Successfully bootstrapped profile cache from ${archive.path} to ${extractedRoot}`);
+        return extractedRoot;
+      }
+    } catch (extractErr: any) {
+      console.error(`[LinkedIn Runner] Extraction failed for ${archive.path}:`, extractErr?.message);
+    }
+  }
+
+  // 4. Container-baked profile cache fallback
   const containerFallback = path.resolve("/app/.linkedin-profile-cache");
   if (fs.existsSync(path.join(containerFallback, "Default"))) {
     console.log(`[LinkedIn Runner] Using container-baked profile cache at ${containerFallback}`);

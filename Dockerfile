@@ -47,6 +47,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \
     tar \
     gzip \
+    unzip \
     ca-certificates \
     fonts-liberation \
     fonts-noto-color-emoji \
