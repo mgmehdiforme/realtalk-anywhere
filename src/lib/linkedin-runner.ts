@@ -198,17 +198,47 @@ async function attemptAutomatedLogin(
   context: BrowserContext,
 ): Promise<{ success: boolean; reason?: string }> {
   try {
-    console.log("[LinkedIn Runner] Checking for password login prompt on authwall/checkpoint...");
+    const initialUrl = page.url();
+    console.log(`[LinkedIn Runner] Checking for password login prompt on authwall/checkpoint (current URL: ${initialUrl})...`);
 
-    // 1. Common LinkedIn password input selectors
+    // 1. Check if LinkedIn Fastrack checkpoint (#fastrack-div) is present
+    const fastrackLocator = page.locator("#fastrack-div, form[action*='floe-profile-submit']");
+    const isFastrack = (await fastrackLocator.count().catch(() => 0)) > 0;
+
+    if (isFastrack) {
+      const profileName = (
+        (await page
+          .locator("#fastrack-div .profile__identity, .member__profile .profile__identity")
+          .first()
+          .textContent()
+          .catch(() => "")) || ""
+      ).trim();
+      const profileHandle = (
+        (await page
+          .locator("#fastrack-div .profile__handle, .member__profile .profile__handle")
+          .first()
+          .textContent()
+          .catch(() => "")) || ""
+      ).trim();
+      console.log(`[LinkedIn Runner] 🎯 Detected LinkedIn Fastrack / 'Welcome back' re-auth checkpoint (#fastrack-div)!`);
+      if (profileName || profileHandle) {
+        console.log(`[LinkedIn Runner] Fastrack profile identity: "${profileName}" (${profileHandle})`);
+      }
+    }
+
+    // 2. Selectors for password input field
     const passwordSelectors = [
+      "#fastrack-div input#password",
+      "#fastrack-div input[name='session_password']",
+      "form[action*='floe-profile-submit'] input#password",
+      "form[action*='floe-profile-submit'] input[name='session_password']",
       "input#password",
       "input#session_password",
       "input[name='session_password']",
+      "input[autocomplete*='password']",
       "input[type='password']",
       "input[name='password']",
       "input[data-cip-id='password']",
-      "input[autocomplete='current-password']",
     ];
 
     let passwordInput: Locator | null = null;
@@ -224,18 +254,18 @@ async function attemptAutomatedLogin(
     // If no password input is visible, an account card, tile, or "Sign in" button might need to be clicked first
     if (!passwordInput) {
       const accountTiles = page.locator(
-        ".profile-card, button:has-text('Sign in'), a:has-text('Sign in'), button:has-text('Log in'), .account-card",
+        ".member__profile, .profile__picture, .profile-card, button:has-text('Sign in'), a:has-text('Sign in'), button:has-text('Log in'), .account-card",
       );
       if ((await accountTiles.count().catch(() => 0)) > 0 && (await accountTiles.first().isVisible().catch(() => false))) {
-        console.log("[LinkedIn Runner] Clicking account tile / sign-in button to reveal password prompt...");
+        console.log("[LinkedIn Runner] Clicking account tile / profile card to reveal password prompt...");
         await accountTiles.first().click().catch(() => {});
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1500);
 
         for (const sel of passwordSelectors) {
           const loc = page.locator(sel);
           if ((await loc.count().catch(() => 0)) > 0 && (await loc.first().isVisible().catch(() => false))) {
             passwordInput = loc.first();
-            console.log(`[LinkedIn Runner] Password field revealed (${sel})`);
+            console.log(`[LinkedIn Runner] Password field revealed after tile click (${sel})`);
             break;
           }
         }
@@ -247,50 +277,60 @@ async function attemptAutomatedLogin(
       return { success: false, reason: "No password input field visible" };
     }
 
-    // 2. Check if username / email input is visible and empty
-    const usernameSelectors = [
-      "input#username",
-      "input#session_key",
-      "input[name='session_key']",
-      "input[name='username']",
-      "input[type='email']",
-      "input[type='text']",
-    ];
+    // 3. Username handling:
+    // In Fastrack mode (#fastrack-div), the account session_key is already present as a hidden input.
+    // Only check visible username inputs if NOT fastrack or if a visible username input is truly empty.
+    if (!isFastrack) {
+      const usernameSelectors = [
+        "input#username",
+        "input#session_key",
+        "input[name='session_key']:not([type='hidden'])",
+        "input[name='username']",
+        "input[type='email']",
+      ];
 
-    const targetEmail =
-      process.env.LINKEDIN_USERNAME || "mehdigolzari.official@gmail.com";
+      const targetEmail =
+        process.env.LINKEDIN_USERNAME || "mehdigolzari.official@gmail.com";
 
-    for (const uSel of usernameSelectors) {
-      const uLoc = page.locator(uSel);
-      if ((await uLoc.count().catch(() => 0)) > 0 && (await uLoc.first().isVisible().catch(() => false))) {
-        const val = (await uLoc.first().inputValue().catch(() => "")) || "";
-        if (!val.trim()) {
-          console.log(`[LinkedIn Runner] Filling username (${uSel}) with ${targetEmail}...`);
-          await uLoc.first().fill(targetEmail).catch(() => {});
-          await page.waitForTimeout(400);
-        } else {
-          console.log(`[LinkedIn Runner] Username field already populated: "${val}"`);
+      for (const uSel of usernameSelectors) {
+        const uLoc = page.locator(uSel);
+        if ((await uLoc.count().catch(() => 0)) > 0 && (await uLoc.first().isVisible().catch(() => false))) {
+          const val = (await uLoc.first().inputValue().catch(() => "")) || "";
+          if (!val.trim()) {
+            console.log(`[LinkedIn Runner] Filling username (${uSel}) with ${targetEmail}...`);
+            await uLoc.first().fill(targetEmail).catch(() => {});
+            await page.waitForTimeout(300);
+          } else {
+            console.log(`[LinkedIn Runner] Username field already populated: "${val}"`);
+          }
+          break;
         }
-        break;
       }
     }
 
-    // 3. Fill password with provided credential (environment variable or default)
+    // 4. Fill password with provided credential (environment variable or default)
     const password = process.env.LINKEDIN_PASSWORD || "Parissa.1370";
     console.log("[LinkedIn Runner] Entering LinkedIn password...");
+    await passwordInput.scrollIntoViewIfNeeded().catch(() => {});
+    await passwordInput.click().catch(() => {});
     await passwordInput.focus().catch(() => {});
+    await passwordInput.fill("").catch(() => {});
+    await page.waitForTimeout(150);
     await passwordInput.fill(password);
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(400);
 
-    // 4. Click submit button or press Enter
+    // 5. Submit form
     const submitSelectors = [
-      "button[type='submit']",
+      "#fastrack-div button[data-litms-control-urn='login-submit']",
       "button[data-litms-control-urn='login-submit']",
+      "form[action*='floe-profile-submit'] button[type='submit']",
+      "#fastrack-div button[type='submit']",
+      "button.btn__primary--large[type='submit']",
+      "button.from__button--floating[type='submit']",
       "button#login-submit",
+      "button[type='submit']",
       "button:has-text('Sign in')",
       "button:has-text('Log in')",
-      "button:has-text('Agree & Join')",
-      "button:has-text('Submit')",
     ];
 
     let clicked = false;
@@ -309,42 +349,104 @@ async function attemptAutomatedLogin(
       await passwordInput.press("Enter").catch(() => {});
     }
 
-    // 5. Wait for response / navigation
-    console.log("[LinkedIn Runner] Awaiting authentication response...");
-    await page.waitForTimeout(6000);
+    // 6. Resilient polling waiter for authentication response and redirect (up to 25s)
+    console.log("[LinkedIn Runner] Awaiting authentication response and redirect (polling up to 25s)...");
 
-    const postUrl = page.url();
-    const cookies = await context.cookies(["https://www.linkedin.com", "https://linkedin.com"]);
-    const hasLiveAuth = cookies.some((c) => c.name === "li_at" && c.value);
+    const maxWaitMs = 25000;
+    const pollIntervalMs = 1200;
+    const startTime = Date.now();
 
-    const isStillAuthwall =
-      postUrl.includes("/login") ||
-      postUrl.includes("/checkpoint") ||
-      postUrl.includes("/uas/login") ||
-      postUrl.includes("/authwall") ||
-      postUrl.includes("challenge");
+    while (Date.now() - startTime < maxWaitMs) {
+      await page.waitForTimeout(pollIntervalMs);
 
-    if (hasLiveAuth && !isStillAuthwall) {
-      console.log(`[LinkedIn Runner] 🎉 Automated password login successful! Current URL: ${postUrl}`);
+      // Check A: Password error message displayed by LinkedIn
+      const errorMsgLocator = page.locator(
+        "#error-for-password:not(.hidden__imp), .form__label--error:not(.hidden__imp), div[error-for='password']:not(.hidden__imp)",
+      );
+      if ((await errorMsgLocator.count().catch(() => 0)) > 0) {
+        const isErrVisible = await errorMsgLocator.first().isVisible().catch(() => false);
+        if (isErrVisible) {
+          const errText = ((await errorMsgLocator.first().textContent().catch(() => "")) || "").trim();
+          if (errText) {
+            console.error(`[LinkedIn Runner] ❌ Password login rejected by LinkedIn: "${errText}"`);
+            return { success: false, reason: errText };
+          }
+        }
+      }
+
+      // Check B: Cookies in context for live session
+      const cookies = await context.cookies(["https://www.linkedin.com", "https://linkedin.com"]);
+      const hasLiveAuth = cookies.some((c) => c.name === "li_at" && c.value);
+
+      const currentUrl = page.url();
+      const fastrackStillVisible =
+        (await page.locator("#fastrack-div").count().catch(() => 0)) > 0 &&
+        (await page.locator("#fastrack-div").first().isVisible().catch(() => false));
+
+      const isStillOnCheckpointForm =
+        currentUrl.includes("/checkpoint/lg/floe-profile-submit") ||
+        currentUrl.includes("/checkpoint/lg/login") ||
+        fastrackStillVisible;
+
+      // Check C: Authenticated UI indicators (feed, global nav, or post content)
+      const hasNavOrFeed =
+        (await page
+          .locator(
+            "#global-nav, .global-nav, .feed-shared-update-v2, nav[aria-label*='Primary' i], div[data-view-name*='feed']",
+          )
+          .count()
+          .catch(() => 0)) > 0;
+
+      if (hasLiveAuth && (!isStillOnCheckpointForm || hasNavOrFeed)) {
+        console.log(`[LinkedIn Runner] 🎉 Automated password login successful! Current URL: ${currentUrl}`);
+
+        // Automatically sync fresh cookies to database
+        try {
+          const freshCookies = await context.cookies();
+          if (freshCookies && freshCookies.length > 0) {
+            await saveLinkedInSession(
+              { cookies: freshCookies },
+              { name: "Mehdi Golzari 🔷️", headline: "LinkedIn Automated Session" },
+            );
+            console.log(
+              `[LinkedIn Runner] Stored session database auto-synced with ${freshCookies.length} fresh cookies.`,
+            );
+          }
+        } catch (saveErr: any) {
+          console.warn("[LinkedIn Runner] Could not auto-sync cookies to database:", saveErr?.message);
+        }
+
+        return { success: true };
+      }
+
+      // Check D: Checkpoint / 2FA Challenge detected
+      if (
+        currentUrl.includes("/checkpoint/challenge/") ||
+        currentUrl.includes("/challenge/") ||
+        (await page.locator("input[name='pin'], input#input__email_verification_pin, #captcha-internal").count().catch(() => 0)) > 0
+      ) {
+        console.warn(`[LinkedIn Runner] LinkedIn presented a security checkpoint/2FA challenge: ${currentUrl}`);
+        return { success: false, reason: "Security challenge or 2FA required" };
+      }
+    }
+
+    // Final check after timeout: If li_at cookie is present, consider login successful
+    const finalCookies = await context.cookies(["https://www.linkedin.com", "https://linkedin.com"]);
+    const finalHasLiveAuth = finalCookies.some((c) => c.name === "li_at" && c.value);
+    if (finalHasLiveAuth) {
+      console.log("[LinkedIn Runner] 🎉 Session cookie li_at confirmed valid after submission!");
       try {
         const freshCookies = await context.cookies();
-        if (freshCookies && freshCookies.length > 0) {
-          await saveLinkedInSession({ cookies: freshCookies });
-          console.log(`[LinkedIn Runner] Stored session database auto-synced with ${freshCookies.length} fresh cookies.`);
-        }
-      } catch (saveErr: any) {
-        console.warn("[LinkedIn Runner] Could not auto-sync cookies to database:", saveErr?.message);
-      }
+        await saveLinkedInSession(
+          { cookies: freshCookies },
+          { name: "Mehdi Golzari 🔷️", headline: "LinkedIn Automated Session" },
+        );
+      } catch (_) {}
       return { success: true };
     }
 
-    if (postUrl.includes("challenge") || postUrl.includes("checkpoint")) {
-      console.warn(`[LinkedIn Runner] LinkedIn presented a security checkpoint/2FA challenge: ${postUrl}`);
-      return { success: false, reason: "Security challenge or 2FA required" };
-    }
-
-    console.warn(`[LinkedIn Runner] Login attempt completed but still on auth page (${postUrl})`);
-    return { success: false, reason: `Still on login page: ${postUrl}` };
+    console.warn(`[LinkedIn Runner] Login attempt completed but still on auth page (${page.url()})`);
+    return { success: false, reason: `Still on login page: ${page.url()}` };
   } catch (err: any) {
     console.error("[LinkedIn Runner] Automated login attempt encountered error:", err);
     return { success: false, reason: err.message };
@@ -364,26 +466,36 @@ async function ensureAuthenticatedOrWaitForLogin(
   isHeadless: boolean = false,
 ): Promise<boolean> {
   const currentUrl = page.url();
+  const fastrackPresent =
+    (await page.locator("#fastrack-div, form[action*='floe-profile-submit']").count().catch(() => 0)) > 0;
+
   const isAuthwall =
     currentUrl.includes("/login") ||
     currentUrl.includes("/checkpoint") ||
     currentUrl.includes("/uas/login") ||
     currentUrl.includes("/authwall") ||
-    currentUrl.includes("challenge");
+    currentUrl.includes("challenge") ||
+    fastrackPresent;
 
   if (!isAuthwall) {
     return true;
   }
 
-  console.log(`[LinkedIn Runner] 🔑 Authwall/checkpoint detected at ${currentUrl}. Attempting automated login fallback...`);
+  console.log(`[LinkedIn Runner] 🔑 Authwall/checkpoint detected at ${currentUrl} (fastrack DOM present: ${fastrackPresent}). Attempting automated login fallback...`);
   const autoLoginResult = await attemptAutomatedLogin(page, context);
   if (autoLoginResult.success) {
-    if (targetUrlToResume && page.url() !== targetUrlToResume) {
-      console.log(`[LinkedIn Runner] Resuming navigation to target: ${targetUrlToResume}`);
-      await page.goto(targetUrlToResume, {
+    const destination = targetUrlToResume || "https://www.linkedin.com/feed/";
+    const currentAfterLogin = page.url();
+    if (
+      currentAfterLogin.includes("/checkpoint/") ||
+      currentAfterLogin.includes("/login") ||
+      (targetUrlToResume && currentAfterLogin !== targetUrlToResume)
+    ) {
+      console.log(`[LinkedIn Runner] Resuming navigation to target: ${destination}`);
+      await page.goto(destination, {
         waitUntil: "domcontentloaded",
         timeout: 45000,
-      });
+      }).catch((navErr) => console.warn(`[LinkedIn Runner] Post-login navigation note: ${navErr.message}`));
       await page.waitForTimeout(3500);
     }
     return true;
@@ -432,12 +544,17 @@ async function ensureAuthenticatedOrWaitForLogin(
     const cookies = await context.cookies(["https://www.linkedin.com", "https://linkedin.com"]);
     const hasLiveAuth = cookies.some((c) => c.name === "li_at" && c.value);
 
+    const isStillFastrack =
+      (await page.locator("#fastrack-div").count().catch(() => 0)) > 0 &&
+      (await page.locator("#fastrack-div").first().isVisible().catch(() => false));
+
     const isStillAuthwall =
       liveUrl.includes("/login") ||
-      liveUrl.includes("/checkpoint") ||
+      liveUrl.includes("/checkpoint/lg/login") ||
       liveUrl.includes("/uas/login") ||
       liveUrl.includes("/authwall") ||
-      liveUrl.includes("challenge");
+      liveUrl.includes("challenge") ||
+      isStillFastrack;
 
     if (hasLiveAuth && (!isStillAuthwall || signalTriggered)) {
       console.log(`[LinkedIn Runner] ✅ Login verified! (Active URL: ${liveUrl})`);
@@ -447,7 +564,10 @@ async function ensureAuthenticatedOrWaitForLogin(
       try {
         const freshCookies = await context.cookies();
         if (freshCookies && freshCookies.length > 0) {
-          await saveLinkedInSession({ cookies: freshCookies });
+          await saveLinkedInSession(
+            { cookies: freshCookies },
+            { name: "Mehdi Golzari 🔷️", headline: "LinkedIn Automated Session" },
+          );
           console.log(`[LinkedIn Runner] Stored session database auto-synced with ${freshCookies.length} fresh cookies.`);
         }
       } catch (syncErr: any) {
