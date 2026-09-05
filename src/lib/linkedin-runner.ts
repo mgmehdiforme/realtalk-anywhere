@@ -804,10 +804,44 @@ export function getProfileArchiveCandidates(): Array<{
 }
 
 /**
+ * Completely wipes all files and subdirectories inside a directory.
+ * Ensures no stale lock files, obsolete session cookies, or corrupted cache remain before extraction.
+ */
+export function cleanDirectory(dir: string): void {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    return;
+  }
+
+  console.log(`[LinkedIn Runner] 🧹 Cleaning directory completely: ${dir}`);
+  try {
+    fs.rmSync(dir, { recursive: true, force: true });
+  } catch (rmErr: any) {
+    console.warn(
+      `[LinkedIn Runner] fs.rmSync warning for ${dir}: ${rmErr?.message}. Deleting individual entries...`,
+    );
+    try {
+      const items = fs.readdirSync(dir);
+      for (const item of items) {
+        const itemPath = path.join(dir, item);
+        try {
+          fs.rmSync(itemPath, { recursive: true, force: true });
+        } catch (itemErr: any) {
+          console.warn(`[LinkedIn Runner] Could not remove ${itemPath}:`, itemErr?.message);
+        }
+      }
+    } catch (_) {}
+  }
+
+  fs.mkdirSync(dir, { recursive: true });
+}
+
+/**
  * Cross-platform archive extraction logic
  */
 export function executeArchiveExtraction(archivePath: string, targetDir: string): void {
-  fs.mkdirSync(targetDir, { recursive: true });
+  // Always wipe destination directory clean before unpacking
+  cleanDirectory(targetDir);
 
   const isZip = archivePath.endsWith(".zip");
   const isWindows = process.platform === "win32";
@@ -909,13 +943,38 @@ export async function forceExtractProfileArchive(options?: {
   try {
     let archivePath: string | undefined;
 
-    // 1. If buffer provided (uploaded from UI), save to persistent storage
+    // 1. If buffer provided (uploaded from UI), clean previous archives in storage then save new one
     if (options?.archiveBuffer && options.archiveBuffer.length > 0) {
       const filename = options.filename || "linkedin-profile-cache.zip";
       const targetStorageDirs = [
         path.resolve("/app/data"),
         path.resolve(process.cwd(), "data"),
       ];
+
+      // Remove any prior archives from storage before saving replacement
+      const oldArchiveNames = [
+        "linkedin-profile-cache.zip",
+        "profile.zip",
+        ".linkedin-profile-cache.zip",
+        "linkedin-cache.zip",
+        "linkedin-profile-cache.tar.gz",
+        "profile.tar.gz",
+      ];
+
+      for (const sDir of targetStorageDirs) {
+        if (!fs.existsSync(sDir)) continue;
+        for (const oldName of oldArchiveNames) {
+          const oldPath = path.join(sDir, oldName);
+          if (fs.existsSync(oldPath)) {
+            try {
+              fs.unlinkSync(oldPath);
+              console.log(`[LinkedIn Runner] 🗑️ Removed previous archive: ${oldPath}`);
+            } catch (err: any) {
+              console.warn(`[LinkedIn Runner] Could not remove old archive ${oldPath}:`, err?.message);
+            }
+          }
+        }
+      }
 
       for (const sDir of targetStorageDirs) {
         try {
@@ -948,12 +1007,21 @@ export async function forceExtractProfileArchive(options?: {
       archivePath = candidates[0].path;
     }
 
-    // 3. Determine target extraction directory
+    // 3. Determine target extraction directory and completely wipe any previous cache
     const targetDir =
       process.env.LINKEDIN_PROFILE_DIR ||
       (process.platform === "linux"
         ? path.join(os.tmpdir(), ".linkedin-profile-cache")
         : path.resolve(process.cwd(), ".linkedin-profile-cache"));
+
+    console.log(`[LinkedIn Runner] 🧹 Cleaning target directory before extraction: ${targetDir}`);
+    cleanDirectory(targetDir);
+
+    // Also clean /tmp cache if targetDir is different
+    const tmpCache = path.join(os.tmpdir(), ".linkedin-profile-cache");
+    if (targetDir !== tmpCache && fs.existsSync(tmpCache)) {
+      cleanDirectory(tmpCache);
+    }
 
     console.log(`[LinkedIn Runner] Extracting profile archive ${archivePath} into ${targetDir}...`);
     executeArchiveExtraction(archivePath, targetDir);

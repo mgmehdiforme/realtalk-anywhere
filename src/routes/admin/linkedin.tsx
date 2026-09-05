@@ -124,6 +124,14 @@ function AdminLinkedInDashboard() {
   };
 
   const handleExtractArchive = async () => {
+    if (
+      !confirm(
+        "This will completely wipe any existing profile cache files and re-extract a fresh copy from the storage archive. Continue?",
+      )
+    ) {
+      return;
+    }
+
     setExtractingArchive(true);
     try {
       const res = await extractLinkedInProfileArchiveAction();
@@ -155,6 +163,15 @@ function AdminLinkedInDashboard() {
       !file.name.endsWith(".tgz")
     ) {
       alert("Please select a valid .zip or .tar.gz archive file.");
+      return;
+    }
+
+    if (
+      !confirm(
+        `This will completely wipe all existing profile files and previous archives, then replace with "${file.name}". Continue?`,
+      )
+    ) {
+      if (zipFileInputRef.current) zipFileInputRef.current.value = "";
       return;
     }
 
@@ -467,7 +484,7 @@ function AdminLinkedInDashboard() {
                 )}
               </div>
               <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                Persistent Chromium browser profile cache used by Playwright. Upload a new <code className="bg-muted px-1 rounded text-[10px]">.zip</code> to replace it, or extract the existing archive from Cloud Storage into local <code className="bg-muted px-1 rounded text-[10px]">/tmp</code> cache.
+                Persistent Chromium browser profile cache used by Playwright. All existing profile files and caches are completely wiped before extracting or replacing to prevent session corruption and lock conflicts.
               </p>
             </div>
 

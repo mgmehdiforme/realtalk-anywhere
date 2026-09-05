@@ -990,6 +990,35 @@
     },
     "logs": [
       {
+        "authorName": "Search Engine",
+        "postUrl": "https://www.linkedin.com/search/results/content/",
+        "postSnippet": "Failed execution exception",
+        "searchQuery": "AI agents in production",
+        "sourceTrend": "Founders and technical leads are moving past demo-stage LLM prototypes and running into severe operational bottlenecks with multi-step agents in live production. Key friction points include context window bloat and unauthenticated tool execution in Model Context Protocol (MCP) setups, non-deterministic cascading errors in multi-agent loops, and a lack of auditability and state recovery in long-running workflows.",
+        "relevanceAngle": "Early-stage founders building AI products often lack the senior systems architecture background to design resilient, deterministic state machines and isolation boundaries around probabilistic models. A Fractional CTO helps them transition from fragile prototype scripts to robust, observable, and cost-controlled production systems that pass investor diligence.",
+        "relevanceScore": 0,
+        "relevanceReason": "Execution exception",
+        "status": "failed",
+        "error": "page.goto: Target page, context or browser has been closed",
+        "id": "li-log-1788566453173-giwcn",
+        "timestamp": "2026-09-05T00:00:53.173Z"
+      },
+      {
+        "authorName": "Linas Beliūnas",
+        "authorHeadline": "• 2nd | 🔔linas.substack.com🔔 Daily Intelligence on Finance & AI | Scouting FinTech & AI Startups 🦄 | Visit my website",
+        "postUrl": "https://www.linkedin.com/search/results/content/?keywords=AI%20agents%20in%20production&datePosted=%22past-week%22",
+        "postSnippet": "🔔linas.substack.com🔔 Daily Intelligence on Finance & AI | Scouting FinTech & AI Startups 🦄 Visit my website 1d • Edited • Follow Instead of watching another Netflix series tonight, watch this 20-minute talk from UC Berkeley’s Frank Coyle on why ag",
+        "searchQuery": "AI agents in production",
+        "sourceTrend": "Founders and technical leads are grappling with high production failure rates for autonomous AI agents, where systems pass demo evals but break due to silent tool-calling errors, lack of deterministic guardrails, non-deterministic state drift, and context window bloat.",
+        "relevanceAngle": "Early-stage founders burn capital trying to fix non-deterministic prompt chains; a Fractional CTO implements deterministic finite-state architectures, rigorous schema validation, and observability guardrails to transition fragile agent prototypes into reliable, enterprise-grade software.",
+        "relevanceScore": 88,
+        "relevanceReason": "Directly tackles AI agent reliability failures and wrapping probabilistic LLMs in deterministic domain logic/ontologies to prevent production bugs. With over 500 reactions and 65 comments, it provides high visibility for Mehdi to share pragmatic architectural patterns for agentic guardrails and state management.",
+        "generatedComment": "Spot on, Linas! 🎯\n\nThe biggest trap for AI founders today is expecting raw LLMs to handle critical business logic out of the box.\n\nAdding clear, simple domain guardrails before adding more agent complexity saves months of debugging and protects customer trust. 💡 Ship reliable value first, get fancy later! 🚀",
+        "status": "published",
+        "id": "li-log-1788566332902-axlhp",
+        "timestamp": "2026-09-04T23:58:52.902Z"
+      },
+      {
         "authorName": "Mohammad Syed",
         "authorHeadline": "• 2nd | Founder & Principal Architect | AI/ML Architecture - AI Security - Cybersecurity | Securing AWS/Azure/GCP | 4d •",
         "postUrl": "https://www.linkedin.com/search/results/content/?keywords=MCP%20in%20production&datePosted=%22past-week%22",
