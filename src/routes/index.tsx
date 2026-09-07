@@ -29,6 +29,7 @@ import {
   ArrowUpRight,
   Layers,
   Tag as TagIcon,
+  Workflow,
 } from "lucide-react";
 import { DemoButton } from "@/lib/demo-modal";
 import avatarAsset from "@/assets/avatar.png.asset.json";
@@ -78,6 +79,11 @@ const SERVICES = [
     icon: Brain,
     title: "AI MVP Development",
     body: "Modern LLM products done right — AI assistants, dashboards, document processing, workflow automation.",
+  },
+  {
+    icon: Workflow,
+    title: "B2B AI Workflow Automation",
+    body: "Turn repetitive manual operations into autonomous pipelines. PDF/invoice extraction, private RAG, and smart qualification agents.",
   },
   {
     icon: Handshake,
@@ -365,29 +371,103 @@ function Landing() {
         </div>
       </section>
 
-      {/* NATIVE LANGUAGE CONVERSATIONS */}
+      {/* 48-HOUR TECHNICAL DIAGNOSTIC WEDGE OFFER */}
+      <section className="relative border-b border-border bg-card/20 py-12 sm:py-16 overflow-hidden">
+        <div className="absolute inset-0 grid-bg opacity-20 pointer-events-none" aria-hidden />
+        <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
+          <div className="relative overflow-hidden rounded-3xl border border-neon/50 bg-gradient-to-br from-card via-card to-neon/5 p-8 sm:p-10 shadow-neon">
+            <div
+              className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-neon/15 blur-3xl pointer-events-none"
+              aria-hidden
+            />
+            <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+              <div className="max-w-3xl">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-neon/10 border border-neon/30 px-3 py-1 text-xs font-bold uppercase tracking-wider text-neon">
+                    <Zap className="h-3.5 w-3.5" /> High-Impact Wedge Sprint
+                  </span>
+                  <span className="rounded-full border border-border bg-background/80 px-3 py-1 text-xs font-mono font-semibold text-foreground">
+                    Fixed Price: $490 · 2 Business Days Delivery
+                  </span>
+                </div>
+
+                <h2 className="mt-4 font-display text-2xl sm:text-3xl font-bold">
+                  ⚡ 48-Hour Technical Diagnostic & Performance Sprint
+                </h2>
+                <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">
+                  Got a slow database, rising cloud bills, or technical debt blocking your launch?
+                  Get a surgical 48-hour diagnostic before committing to a full build contract:
+                </p>
+
+                <ul className="mt-5 grid gap-2.5 sm:grid-cols-2 text-sm">
+                  {[
+                    "Deep SQL & PostgreSQL query analysis (EXPLAIN ANALYZE breakdown)",
+                    "Identification of memory leaks, unindexed joins, and latency bottlenecks",
+                    "Security posture & OWASP Top 10 vulnerability scan",
+                    "Deliverable: Prioritized remediation report + 3 ready-to-merge PRs or SQL migration scripts",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2.5 text-foreground/90">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-neon" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="shrink-0 flex flex-col items-center sm:items-start lg:items-center justify-center gap-3">
+                <div className="text-center lg:text-right">
+                  <div className="font-mono text-3xl font-bold text-neon-gradient">$490</div>
+                  <div className="text-xs text-muted-foreground">One-time fixed investment</div>
+                </div>
+                <DemoButton
+                  customMessage="Hi Mehdi, I checked your website and would like to book the 48-Hour Technical Diagnostic & Performance Sprint ($490)."
+                  offerTag="48-Hour Technical Diagnostic ($490)"
+                  className="w-full sm:w-auto px-6 py-3.5 text-sm font-bold shadow-neon"
+                >
+                  Book Your 48-Hour Sprint →
+                </DemoButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* DIRECT FLUENT COMMUNICATION & PROPRIETARY SHOWCASE */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 grid-bg opacity-25" aria-hidden />
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 py-20 sm:px-8 lg:grid-cols-2">
           <div>
             <div className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-neon-gradient">
-              <Globe className="h-3.5 w-3.5" /> No borders. No language wall.
+              <ShieldCheck className="h-3.5 w-3.5" /> Direct Global Communication · No Middlemen
             </div>
             <h2 className="mt-3 font-display text-3xl font-semibold sm:text-4xl">
-              I meet you in <span className="text-neon-gradient">your native language</span> —
-              wherever you are.
+              Direct, Fluent Communication —{" "}
+              <span className="text-neon-gradient">Powered by Pragmatic Engineering</span>.
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Calls, Google Meet, WhatsApp voice — I run them in your country's language, in real
-              time. Powered by a translation product I designed and use myself, so the conversation
-              feels natural, not robotic.
+              I work directly with founders across North America, Europe, and globally in fluent
+              English. No project managers, no diluted technical requirements, and no communication
+              lag.
             </p>
+
+            {/* Proprietary Engineering Showcase Highlight Box */}
+            <div className="mt-5 rounded-2xl border border-neon/30 bg-neon/5 p-4 sm:p-5 backdrop-blur">
+              <div className="text-xs font-semibold uppercase tracking-wider text-neon flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5" /> Proprietary Engineering Showcase
+              </div>
+              <p className="mt-1.5 text-xs sm:text-sm text-foreground/85 leading-relaxed">
+                Need multilingual operational support for your global customer base? I also designed
+                and deployed an enterprise real-time voice translation pipeline that bridges
+                conversations across 10+ languages with sub-second latency.
+              </p>
+            </div>
+
             <ul className="mt-6 space-y-2.5 text-sm">
               {[
-                "Real-time voice translation on any call platform",
-                "Built with my own AI tool — used daily, not theoretical",
-                "Discovery calls in English, Spanish, French, German, Arabic, Portuguese, Japanese, Chinese…",
-                "You speak normally. I understand you. We move forward.",
+                "Fluent English collaboration with US, UK, EU, and international startup founders",
+                "Direct engineering contact — work directly with the architect writing your code",
+                "Enterprise-grade voice & AI pipelines demonstrated in live production",
+                "Fast async updates, transparent decision logs, and zero agency fluff",
               ].map((t) => (
                 <li key={t} className="flex items-start gap-2.5 text-foreground/90">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-neon" />
@@ -568,6 +648,167 @@ function Landing() {
         </div>
       </section>
 
+      {/* CASE STUDIES & MEASURABLE PROOF */}
+      <section className="relative border-b border-border bg-card/20 py-20 sm:py-24 overflow-hidden">
+        <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <div className="text-xs font-semibold uppercase tracking-widest text-neon-gradient">
+              Proven Impact
+            </div>
+            <h2 className="mt-3 font-display text-3xl font-semibold sm:text-4xl">
+              Real Engineering Problems.{" "}
+              <span className="text-neon-gradient">Measured in Numbers</span>.
+            </h2>
+            <p className="mt-3 text-muted-foreground">
+              Tangible business and operational outcomes delivered for real companies and
+              high-volume platforms.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-8 lg:grid-cols-2">
+            {/* Case Study 1 */}
+            <div className="flex flex-col justify-between rounded-3xl border border-border bg-card p-7 sm:p-8 shadow-card relative overflow-hidden transition hover:border-neon/40">
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="rounded-full border border-neon/30 bg-neon/10 px-3 py-1 text-xs font-mono font-semibold text-neon">
+                    AI Workflow Automation
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    High-Volume Wholesale Supplier
+                  </span>
+                </div>
+                <h3 className="mt-4 font-display text-xl font-bold">
+                  B2B Automated Invoice & Logistics Ingestion Pipeline
+                </h3>
+
+                <div className="mt-6 space-y-4 text-sm">
+                  <div className="rounded-xl border border-border/80 bg-background/50 p-4">
+                    <div className="font-mono text-xs font-semibold uppercase tracking-wider text-rose-400">
+                      The Problem
+                    </div>
+                    <p className="mt-1.5 text-muted-foreground leading-relaxed">
+                      Operations team spent 25 hours/week manually keying messy supplier PDF
+                      invoices into their database, leading to an unacceptable 6% clerical error
+                      rate and delayed warehouse fulfillment.
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-border/80 bg-background/50 p-4">
+                    <div className="font-mono text-xs font-semibold uppercase tracking-wider text-neon">
+                      The Engineering Solution
+                    </div>
+                    <p className="mt-1.5 text-muted-foreground leading-relaxed">
+                      Built a serverless Python pipeline leveraging GPT-4o Vision and strict
+                      Pydantic schema validation. Invoices dropped into an inbox are parsed,
+                      cross-checked against purchase orders, and committed into PostgreSQL in under
+                      4 seconds.
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-border/80 bg-background/50 p-4">
+                    <div className="font-mono text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                      The Measurable Result
+                    </div>
+                    <p className="mt-1.5 text-muted-foreground leading-relaxed">
+                      100% manual entry eliminated with 0% schema error rate across 4,000+ invoices,
+                      saving over $2,200/month in operational overhead.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-5 border-t border-border grid grid-cols-3 gap-2 text-center">
+                <div className="p-2 rounded-xl bg-background/60 border border-border">
+                  <div className="font-mono text-lg sm:text-xl font-bold text-neon">100%</div>
+                  <div className="text-[10px] text-muted-foreground">Manual Work Cut</div>
+                </div>
+                <div className="p-2 rounded-xl bg-background/60 border border-border">
+                  <div className="font-mono text-lg sm:text-xl font-bold text-neon">&lt; 4s</div>
+                  <div className="text-[10px] text-muted-foreground">Ingest Latency</div>
+                </div>
+                <div className="p-2 rounded-xl bg-background/60 border border-border">
+                  <div className="font-mono text-lg sm:text-xl font-bold text-emerald-400">
+                    $2.2k/mo
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">Direct Savings</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Case Study 2 */}
+            <div className="flex flex-col justify-between rounded-3xl border border-border bg-card p-7 sm:p-8 shadow-card relative overflow-hidden transition hover:border-neon/40">
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="rounded-full border border-neon/30 bg-neon/10 px-3 py-1 text-xs font-mono font-semibold text-neon">
+                    Architecture & Scale Rescue
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Early-Stage SaaS Marketplace
+                  </span>
+                </div>
+                <h3 className="mt-4 font-display text-xl font-bold">
+                  Database Scalability & Concurrency Rescue Under Heavy Traffic
+                </h3>
+
+                <div className="mt-6 space-y-4 text-sm">
+                  <div className="rounded-xl border border-border/80 bg-background/50 p-4">
+                    <div className="font-mono text-xs font-semibold uppercase tracking-wider text-rose-400">
+                      The Problem
+                    </div>
+                    <p className="mt-1.5 text-muted-foreground leading-relaxed">
+                      Database CPU pegged at 100% with just 40 concurrent users, generating
+                      recurring 504 Gateway Timeouts during customer checkout and threatening a
+                      major partner launch.
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-border/80 bg-background/50 p-4">
+                    <div className="font-mono text-xs font-semibold uppercase tracking-wider text-neon">
+                      The Engineering Solution
+                    </div>
+                    <p className="mt-1.5 text-muted-foreground leading-relaxed">
+                      Executed surgical EXPLAIN ANALYZE profiling, resolved hidden Prisma ORM N+1
+                      query loops, added composite indexes on hot join keys, and introduced an
+                      in-memory Redis caching tier.
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-border/80 bg-background/50 p-4">
+                    <div className="font-mono text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                      The Measurable Result
+                    </div>
+                    <p className="mt-1.5 text-muted-foreground leading-relaxed">
+                      Query latency plummeted from 3,800 ms to 42 ms. Database CPU utilization
+                      dropped by 70% while effortlessly sustaining 500+ concurrent checkout
+                      sessions.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-5 border-t border-border grid grid-cols-3 gap-2 text-center">
+                <div className="p-2 rounded-xl bg-background/60 border border-border">
+                  <div className="font-mono text-lg sm:text-xl font-bold text-neon">
+                    3.8s ➔ 42ms
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">Query Latency</div>
+                </div>
+                <div className="p-2 rounded-xl bg-background/60 border border-border">
+                  <div className="font-mono text-lg sm:text-xl font-bold text-neon">-70%</div>
+                  <div className="text-[10px] text-muted-foreground">Database CPU</div>
+                </div>
+                <div className="p-2 rounded-xl bg-background/60 border border-border">
+                  <div className="font-mono text-lg sm:text-xl font-bold text-emerald-400">
+                    500+
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">Concurrent Users</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* SERVICES */}
       <section id="services" className="mx-auto max-w-7xl px-5 py-20 sm:px-8">
         <div className="mx-auto max-w-2xl text-center">
@@ -578,7 +819,8 @@ function Landing() {
             Enterprise-level engineering. Founder-level access.
           </h2>
           <p className="mt-3 text-muted-foreground">
-            Six ways founders work with me — from first MVP to growth-stage CTO support.
+            Seven ways founders work with me — from first MVP and AI automation to growth-stage CTO
+            support.
           </p>
         </div>
 
@@ -987,7 +1229,8 @@ function Landing() {
                   <span className="text-neon-gradient">Playbooks for Founders</span>
                 </h2>
                 <p className="mt-3.5 text-base text-muted-foreground leading-relaxed">
-                  Deep dives on deterministic AI state machines, 0-to-1 MVP architecture, avoiding costly dev agency traps, and fractional CTO execution.
+                  Deep dives on deterministic AI state machines, 0-to-1 MVP architecture, avoiding
+                  costly dev agency traps, and fractional CTO execution.
                 </p>
               </div>
               <div className="shrink-0">
@@ -1039,11 +1282,14 @@ function Landing() {
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {new Date(post.publishedAt || post.createdAt).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
+                            {new Date(post.publishedAt || post.createdAt).toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              },
+                            )}
                           </span>
                           <span>•</span>
                           <span className="flex items-center gap-1">
@@ -1096,7 +1342,8 @@ function Landing() {
                   Looking for senior engineering leadership for your MVP?
                 </h4>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  Get direct 1-on-1 architecture reviews and fractional co-founder execution without the overhead of full-time hiring.
+                  Get direct 1-on-1 architecture reviews and fractional co-founder execution without
+                  the overhead of full-time hiring.
                 </p>
               </div>
               <div className="shrink-0 flex items-center gap-3">

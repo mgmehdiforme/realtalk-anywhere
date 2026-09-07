@@ -13,23 +13,25 @@ import {
   Target,
   ShieldCheck,
   Cpu,
+  Workflow,
+  Zap,
 } from "lucide-react";
 import { DemoButton } from "@/lib/demo-modal";
 
 export const Route = createFileRoute("/services")({
   head: () => ({
     meta: [
-      { title: "Offers — Ways to Work Together | MehdiGolzari.dev" },
+      { title: "Offers & Services — Ways to Work Together | MehdiGolzari.dev" },
       {
         name: "description",
         content:
-          "Six ways founders work with me directly: SaaS MVP, AI MVP, technical partnership, SaaS rescue, product scaling, and fractional CTO — with transparent monthly pricing.",
+          "Seven ways founders work with me directly: SaaS MVP, AI MVP, B2B AI automation, technical partnership, SaaS rescue, product scaling, fractional CTO, and 48-hour diagnostics — with transparent pricing.",
       },
-      { property: "og:title", content: "Offers — MehdiGolzari.dev" },
+      { property: "og:title", content: "Offers & Services — MehdiGolzari.dev" },
       {
         property: "og:description",
         content:
-          "Direct engineering offers for founders: MVPs, AI products, scaling, rescue and fractional CTO — transparent pricing.",
+          "Direct engineering offers for founders: MVPs, AI workflows, scaling, rescue, 48-hour diagnostics and fractional CTO — transparent pricing.",
       },
     ],
   }),
@@ -91,6 +93,29 @@ const SERVICES: Service[] = [
     timeline: "3–8 weeks for a focused AI MVP.",
     outcome:
       "An AI feature or product that's accurate, observable, and safe to put in front of users.",
+    frameworkPhases: ["Discover", "Validate", "Blueprint", "Build", "Launch"],
+  },
+  {
+    icon: Workflow,
+    tag: "Automate",
+    title: "B2B AI Workflow Automation & Custom Wrappers",
+    pitch: "Turn manual operations into autonomous, zero-error background pipelines.",
+    overview:
+      "We eliminate repetitive human data entry and bridge legacy operational software with modern AI: automated document & PDF extraction directly into your database or ERP, private RAG assistants trained on internal SOPs, and smart lead qualification agents.",
+    deliverables: [
+      "Automated document & PDF extraction directly into database or ERP",
+      "Private RAG assistants trained on internal SOPs and technical manuals",
+      "Lead intake & smart WhatsApp/CRM qualification agents",
+      "Custom API integrations, webhooks & error retry loops",
+      "Structured schema validation (Pydantic / Zod)",
+      "Cost observability, prompt guardrails & fallback logic",
+      "Fixed delivery within 5 to 7 business days",
+    ],
+    idealFor:
+      "Operations teams, B2B founders, and agencies drowning in repetitive manual data entry.",
+    timeline: "5–10 business days for turnkey pipelines.",
+    outcome:
+      "Autonomous background workflows that run with zero clerical errors and save 20+ hours every week.",
     frameworkPhases: ["Discover", "Validate", "Blueprint", "Build", "Launch"],
   },
   {
@@ -191,8 +216,9 @@ function ServicesPage() {
             Ways to <span className="text-neon-gradient">work together</span>.
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Six focused offers — from launching an MVP to acting as your fractional CTO. Every one
-            of them means you work directly with me. No sales team. No project manager in between.
+            Seven focused offers — from launching an MVP and automating operations to acting as your
+            fractional CTO. Every one of them means you work directly with me. No sales team. No
+            project manager in between.
           </p>
           <div className="mt-7 flex justify-center">
             <DemoButton className="px-6 py-3.5 text-base">
@@ -203,6 +229,62 @@ function ServicesPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-20">
+        {/* 48-HOUR TECHNICAL DIAGNOSTIC & PERFORMANCE SPRINT */}
+        <div className="mb-16 relative overflow-hidden rounded-3xl border border-neon/50 bg-gradient-to-br from-card via-card to-neon/5 p-8 sm:p-10 shadow-neon">
+          <div
+            className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-neon/15 blur-3xl pointer-events-none"
+            aria-hidden
+          />
+          <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+            <div className="max-w-3xl">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-neon/10 border border-neon/30 px-3 py-1 text-xs font-bold uppercase tracking-wider text-neon">
+                  <Zap className="h-3.5 w-3.5" /> High-Impact Wedge Sprint
+                </span>
+                <span className="rounded-full border border-border bg-background/80 px-3 py-1 text-xs font-mono font-semibold text-foreground">
+                  Fixed Price: $490 · 2 Business Days Delivery
+                </span>
+              </div>
+
+              <h2 className="mt-4 font-display text-2xl sm:text-3xl font-bold">
+                ⚡ 48-Hour Technical Diagnostic & Performance Sprint
+              </h2>
+              <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">
+                Got a slow database, rising cloud bills, or technical debt blocking your launch? Get
+                a surgical 48-hour diagnostic before committing to a full build contract:
+              </p>
+
+              <ul className="mt-5 grid gap-2.5 sm:grid-cols-2 text-sm">
+                {[
+                  "Deep SQL & PostgreSQL query analysis (EXPLAIN ANALYZE breakdown)",
+                  "Identification of memory leaks, unindexed joins, and latency bottlenecks",
+                  "Security posture & OWASP Top 10 vulnerability scan",
+                  "Deliverable: Prioritized remediation report + 3 ready-to-merge PRs or SQL migration scripts",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-foreground/90">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-neon" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="shrink-0 flex flex-col items-center sm:items-start lg:items-center justify-center gap-3">
+              <div className="text-center lg:text-right">
+                <div className="font-mono text-3xl font-bold text-neon-gradient">$490</div>
+                <div className="text-xs text-muted-foreground">One-time fixed investment</div>
+              </div>
+              <DemoButton
+                customMessage="Hi Mehdi, I checked your website and would like to book the 48-Hour Technical Diagnostic & Performance Sprint ($490)."
+                offerTag="48-Hour Technical Diagnostic ($490)"
+                className="w-full sm:w-auto px-6 py-3.5 text-sm font-bold shadow-neon"
+              >
+                Book Your 48-Hour Sprint →
+              </DemoButton>
+            </div>
+          </div>
+        </div>
+
         <div className="grid gap-6 md:grid-cols-2">
           {SERVICES.map(
             ({

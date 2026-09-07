@@ -4,10 +4,17 @@ import { Link } from "@tanstack/react-router";
 
 const PHONE = "905019390465";
 const EMAIL = "MehdiGolzari.official@gmail.com";
-const MESSAGE =
-  "Hi Mehdi! I'd like to book a free discovery call to discuss building/scaling my SaaS or AI product.";
+const DEFAULT_MESSAGE =
+  "Hi Mehdi, I checked your website and would like to discuss an MVP Build / Technical Partnership.";
 
-const Ctx = createContext<{ open: () => void } | null>(null);
+type ModalOpenOptions = {
+  message?: string;
+  tag?: string;
+};
+
+const Ctx = createContext<{
+  open: (options?: ModalOpenOptions | string | unknown) => void;
+} | null>(null);
 
 export function useDemoModal() {
   const ctx = useContext(Ctx);
@@ -17,12 +24,33 @@ export function useDemoModal() {
 
 export function DemoModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setOpen] = useState(false);
+  const [activeMessage, setActiveMessage] = useState(DEFAULT_MESSAGE);
+  const [activeTag, setActiveTag] = useState("Free discovery call");
 
-  const waHref = `https://wa.me/${PHONE}?text=${encodeURIComponent(MESSAGE)}`;
-  const mailHref = `mailto:${EMAIL}?subject=${encodeURIComponent("Discovery Call Request — MehdiGolzari.dev")}&body=${encodeURIComponent(MESSAGE)}`;
+  const openModal = (options?: ModalOpenOptions | string | unknown) => {
+    if (typeof options === "string") {
+      setActiveMessage(options || DEFAULT_MESSAGE);
+      setActiveTag("Free discovery call");
+    } else if (
+      options &&
+      typeof options === "object" &&
+      ("message" in options || "tag" in options)
+    ) {
+      const opts = options as ModalOpenOptions;
+      setActiveMessage(opts.message || DEFAULT_MESSAGE);
+      setActiveTag(opts.tag || "Free discovery call");
+    } else {
+      setActiveMessage(DEFAULT_MESSAGE);
+      setActiveTag("Free discovery call");
+    }
+    setOpen(true);
+  };
+
+  const waHref = `https://wa.me/${PHONE}?text=${encodeURIComponent(activeMessage)}`;
+  const mailHref = `mailto:${EMAIL}?subject=${encodeURIComponent("Discovery Request — MehdiGolzari.dev")}&body=${encodeURIComponent(activeMessage)}`;
 
   return (
-    <Ctx.Provider value={{ open: () => setOpen(true) }}>
+    <Ctx.Provider value={{ open: openModal }}>
       {children}
       {isOpen && (
         <div
@@ -43,7 +71,7 @@ export function DemoModalProvider({ children }: { children: ReactNode }) {
             </button>
 
             <div className="mb-1 text-xs font-medium uppercase tracking-widest text-neon-gradient">
-              Free discovery call
+              {activeTag}
             </div>
             <h2 className="text-2xl font-semibold">Talk directly to the engineer</h2>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -85,7 +113,7 @@ export function DemoModalProvider({ children }: { children: ReactNode }) {
             </div>
 
             <div className="rounded-xl border border-border bg-background/60 p-3.5 font-mono text-[11px] leading-relaxed text-foreground/80">
-              "{MESSAGE}"
+              "{activeMessage}"
             </div>
 
             <div className="mt-4 flex flex-col gap-4">
@@ -123,10 +151,14 @@ export function DemoModalProvider({ children }: { children: ReactNode }) {
 export function DemoButton({
   className = "",
   children = "Book Discovery Call",
+  customMessage,
+  offerTag,
   onClick,
 }: {
   className?: string;
   children?: ReactNode;
+  customMessage?: string;
+  offerTag?: string;
   onClick?: () => void;
 }) {
   const { open } = useDemoModal();
@@ -134,7 +166,11 @@ export function DemoButton({
     <button
       onClick={() => {
         onClick?.();
-        open();
+        if (customMessage || offerTag) {
+          open({ message: customMessage, tag: offerTag });
+        } else {
+          open();
+        }
       }}
       className={
         "inline-flex items-center justify-center rounded-xl bg-neon px-5 py-3 text-sm font-semibold text-primary-foreground shadow-neon transition hover:brightness-110 " +

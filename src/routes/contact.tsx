@@ -1,11 +1,38 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MessageCircle, Mail, MapPin, Linkedin, ArrowRight, Sparkles } from "lucide-react";
 
+import { useState } from "react";
+
 const PHONE_DISPLAY = "+90 501 939 0465";
 const PHONE = "905019390465";
 const EMAIL = "MehdiGolzari.official@gmail.com";
-const MESSAGE =
-  "Hi Mehdi! I'd like to book a free discovery call to discuss building/scaling my SaaS or AI product.";
+
+const TOPICS = [
+  {
+    id: "mvp",
+    label: "🚀 SaaS / AI MVP Build",
+    message:
+      "Hi Mehdi, I checked your website and would like to discuss an MVP build for my product idea.",
+  },
+  {
+    id: "diagnostic",
+    label: "⚡ 48-Hour Technical Diagnostic ($490)",
+    message:
+      "Hi Mehdi, I checked your website and would like to book the 48-Hour Technical Diagnostic & Performance Sprint ($490).",
+  },
+  {
+    id: "automation",
+    label: "🤖 B2B AI Automation & Workflows",
+    message:
+      "Hi Mehdi, I checked your website and would like to discuss B2B AI Workflow Automation and custom wrappers.",
+  },
+  {
+    id: "fractional",
+    label: "🧭 Fractional CTO & Scaling",
+    message:
+      "Hi Mehdi, I checked your website and would like to discuss Fractional CTO support and architecture leadership.",
+  },
+];
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -27,8 +54,13 @@ export const Route = createFileRoute("/contact")({
 });
 
 function ContactPage() {
-  const waHref = `https://wa.me/${PHONE}?text=${encodeURIComponent(MESSAGE)}`;
-  const mailHref = `mailto:${EMAIL}?subject=${encodeURIComponent("Hello Mehdi")}&body=${encodeURIComponent(MESSAGE)}`;
+  const [selectedTopic, setSelectedTopic] = useState(0);
+  const activeMessage = TOPICS[selectedTopic].message;
+
+  const waHref = `https://wa.me/${PHONE}?text=${encodeURIComponent(activeMessage)}`;
+  const mailHref = `mailto:${EMAIL}?subject=${encodeURIComponent(
+    `Inquiry: ${TOPICS[selectedTopic].label.replace(/^[^\w]+/, "").trim()} — MehdiGolzari.dev`,
+  )}&body=${encodeURIComponent(activeMessage)}`;
 
   const channels = [
     {
@@ -60,17 +92,39 @@ function ContactPage() {
       <div className="mx-auto max-w-5xl px-5 py-16 sm:px-8 sm:py-24">
         <div className="mx-auto max-w-2xl text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5 text-neon" /> Free 30-min discovery call
+            <Sparkles className="h-3.5 w-3.5 text-neon" /> Direct Founder-to-Engineer Access
           </div>
           <h1 className="mt-5 font-display text-4xl font-semibold leading-tight sm:text-5xl">
             Let's <span className="text-neon-gradient">talk</span>.
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            Pick whichever channel is easiest. Your message is already written — just hit send.
+            Select what you'd like to discuss. Your message is pre-written — just hit send.
           </p>
         </div>
 
-        <div className="mx-auto mt-12 grid max-w-3xl gap-4">
+        {/* Topic Selector Chips */}
+        <div className="mx-auto mt-10 max-w-3xl">
+          <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground text-center mb-3">
+            Select Your Project Scope
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {TOPICS.map((topic, idx) => (
+              <button
+                key={topic.id}
+                onClick={() => setSelectedTopic(idx)}
+                className={`rounded-xl px-4 py-2 text-xs font-medium transition-all ${
+                  selectedTopic === idx
+                    ? "bg-neon text-primary-foreground shadow-neon font-semibold scale-102"
+                    : "border border-border bg-card/70 text-foreground/80 hover:bg-card hover:border-neon/40"
+                }`}
+              >
+                {topic.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mx-auto mt-8 grid max-w-3xl gap-4">
           {channels.map(({ icon: Icon, label, value, href, hint, primary }) => (
             <a
               key={label}
@@ -115,7 +169,7 @@ function ContactPage() {
             Pre-filled message
           </div>
           <div className="mt-3 rounded-xl border border-border bg-background/60 p-4 font-mono text-sm leading-relaxed text-foreground/90">
-            "{MESSAGE}"
+            "{activeMessage}"
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
             Clicking WhatsApp or Email above sends this message to Mehdi automatically.
