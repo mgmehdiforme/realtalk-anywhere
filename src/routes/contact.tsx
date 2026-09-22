@@ -15,12 +15,6 @@ const TOPICS = [
       "Hi Mehdi, I checked your website and would like to discuss an MVP build for my product idea.",
   },
   {
-    id: "diagnostic",
-    label: "⚡ 48-Hour Technical Diagnostic ($490)",
-    message:
-      "Hi Mehdi, I checked your website and would like to book the 48-Hour Technical Diagnostic & Performance Sprint ($490).",
-  },
-  {
     id: "automation",
     label: "🤖 B2B AI Automation & Workflows",
     message:
@@ -112,11 +106,10 @@ function ContactPage() {
               <button
                 key={topic.id}
                 onClick={() => setSelectedTopic(idx)}
-                className={`rounded-xl px-4 py-2 text-xs font-medium transition-all ${
-                  selectedTopic === idx
+                className={`rounded-xl px-4 py-2 text-xs font-medium transition-all ${selectedTopic === idx
                     ? "bg-neon text-primary-foreground shadow-neon font-semibold scale-102"
                     : "border border-border bg-card/70 text-foreground/80 hover:bg-card hover:border-neon/40"
-                }`}
+                  }`}
               >
                 {topic.label}
               </button>

@@ -371,67 +371,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* 48-HOUR TECHNICAL DIAGNOSTIC WEDGE OFFER */}
-      <section className="relative border-b border-border bg-card/20 py-12 sm:py-16 overflow-hidden">
-        <div className="absolute inset-0 grid-bg opacity-20 pointer-events-none" aria-hidden />
-        <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
-          <div className="relative overflow-hidden rounded-3xl border border-neon/50 bg-gradient-to-br from-card via-card to-neon/5 p-8 sm:p-10 shadow-neon">
-            <div
-              className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-neon/15 blur-3xl pointer-events-none"
-              aria-hidden
-            />
-            <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
-              <div className="max-w-3xl">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-neon/10 border border-neon/30 px-3 py-1 text-xs font-bold uppercase tracking-wider text-neon">
-                    <Zap className="h-3.5 w-3.5" /> High-Impact Wedge Sprint
-                  </span>
-                  <span className="rounded-full border border-border bg-background/80 px-3 py-1 text-xs font-mono font-semibold text-foreground">
-                    Fixed Price: $490 · 2 Business Days Delivery
-                  </span>
-                </div>
-
-                <h2 className="mt-4 font-display text-2xl sm:text-3xl font-bold">
-                  ⚡ 48-Hour Technical Diagnostic & Performance Sprint
-                </h2>
-                <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  Got a slow database, rising cloud bills, or technical debt blocking your launch?
-                  Get a surgical 48-hour diagnostic before committing to a full build contract:
-                </p>
-
-                <ul className="mt-5 grid gap-2.5 sm:grid-cols-2 text-sm">
-                  {[
-                    "Deep SQL & PostgreSQL query analysis (EXPLAIN ANALYZE breakdown)",
-                    "Identification of memory leaks, unindexed joins, and latency bottlenecks",
-                    "Security posture & OWASP Top 10 vulnerability scan",
-                    "Deliverable: Prioritized remediation report + 3 ready-to-merge PRs or SQL migration scripts",
-                  ].map((item) => (
-                    <li key={item} className="flex items-start gap-2.5 text-foreground/90">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-neon" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="shrink-0 flex flex-col items-center sm:items-start lg:items-center justify-center gap-3">
-                <div className="text-center lg:text-right">
-                  <div className="font-mono text-3xl font-bold text-neon-gradient">$490</div>
-                  <div className="text-xs text-muted-foreground">One-time fixed investment</div>
-                </div>
-                <DemoButton
-                  customMessage="Hi Mehdi, I checked your website and would like to book the 48-Hour Technical Diagnostic & Performance Sprint ($490)."
-                  offerTag="48-Hour Technical Diagnostic ($490)"
-                  className="w-full sm:w-auto px-6 py-3.5 text-sm font-bold shadow-neon"
-                >
-                  Book Your 48-Hour Sprint →
-                </DemoButton>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* DIRECT FLUENT COMMUNICATION & PROPRIETARY SHOWCASE */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 grid-bg opacity-25" aria-hidden />
