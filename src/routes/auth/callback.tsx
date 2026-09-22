@@ -43,8 +43,18 @@ function AuthCallbackPage() {
           if (res.token) {
             document.cookie = `founder_session=${res.token}; Path=/; Max-Age=${30 * 24 * 60 * 60}; SameSite=Lax`;
           }
-          // Redirect to blueprint builder
-          navigate({ to: "/blueprint" });
+          // Redirect to blueprint builder with preserved deep-link prefill parameters
+          let searchObj: Record<string, string> | undefined = undefined;
+          try {
+            const prefill = sessionStorage.getItem("blueprint_prefill");
+            if (prefill) {
+              const params = new URLSearchParams(prefill);
+              searchObj = Object.fromEntries(params.entries());
+              sessionStorage.removeItem("blueprint_prefill");
+            }
+          } catch {}
+
+          navigate({ to: "/blueprint", search: searchObj });
         } else {
           setError(res.error || "Authentication failed.");
         }

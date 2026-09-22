@@ -26,9 +26,30 @@ const TOPICS = [
     message:
       "Hi Mehdi, I checked your website and would like to discuss Fractional CTO support and architecture leadership.",
   },
+  {
+    id: "triage",
+    label: "⚡ 30-Min Architecture Triage",
+    message:
+      "Hi Mehdi, I would like to book a 30-minute Architecture Triage call to review our technical stack and roadmap.",
+  },
 ];
 
+export interface ContactSearchSchema {
+  topic?: string;
+  article?: string;
+  title?: string;
+  source?: string;
+  notes?: string;
+}
+
 export const Route = createFileRoute("/contact")({
+  validateSearch: (search: Record<string, unknown>): ContactSearchSchema => ({
+    topic: typeof search.topic === "string" ? search.topic : undefined,
+    article: typeof search.article === "string" ? search.article : undefined,
+    title: typeof search.title === "string" ? search.title : undefined,
+    source: typeof search.source === "string" ? search.source : undefined,
+    notes: typeof search.notes === "string" ? search.notes : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Contact Mehdi Golzari — Book a Discovery Call" },
@@ -48,12 +69,30 @@ export const Route = createFileRoute("/contact")({
 });
 
 function ContactPage() {
-  const [selectedTopic, setSelectedTopic] = useState(0);
-  const activeMessage = TOPICS[selectedTopic].message;
+  const search = Route.useSearch();
+
+  // Pick initial topic index from search param if available
+  const initialTopicIndex = () => {
+    if (search.topic) {
+      const idx = TOPICS.findIndex((t) => t.id === search.topic);
+      if (idx !== -1) return idx;
+    }
+    return 0;
+  };
+
+  const [selectedTopic, setSelectedTopic] = useState(initialTopicIndex);
+  const [customCleared, setCustomCleared] = useState(false);
+
+  // If user arrived from an article with a title and hasn't cleared context, personalize active message
+  const activeTopicObj = TOPICS[selectedTopic] || TOPICS[0];
+  const activeMessage =
+    !customCleared && search.title && activeTopicObj.id === "triage"
+      ? `Hi Mehdi, I was reading your article "${search.title}" and would like to book a 30-minute Architecture Triage call for our stack.`
+      : activeTopicObj.message;
 
   const waHref = `https://wa.me/${PHONE}?text=${encodeURIComponent(activeMessage)}`;
   const mailHref = `mailto:${EMAIL}?subject=${encodeURIComponent(
-    `Inquiry: ${TOPICS[selectedTopic].label.replace(/^[^\w]+/, "").trim()} — MehdiGolzari.dev`,
+    `Inquiry: ${activeTopicObj.label.replace(/^[^\w]+/, "").trim()} — MehdiGolzari.dev`,
   )}&body=${encodeURIComponent(activeMessage)}`;
 
   const channels = [
@@ -95,6 +134,35 @@ function ContactPage() {
             Select what you'd like to discuss. Your message is pre-written — just hit send.
           </p>
         </div>
+
+        {/* Contextual Link Banner when coming from an article */}
+        {search.title && !customCleared && (
+          <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-neon/40 bg-neon/5 p-4 shadow-sm backdrop-blur sm:flex sm:items-center sm:justify-between sm:gap-4">
+            <div className="flex items-start gap-3">
+              <div className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-neon/15 text-neon">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-neon uppercase tracking-wider">
+                  Article Context Linked
+                </div>
+                <div className="mt-0.5 text-sm font-medium text-foreground">
+                  Inquiring about: <span className="font-semibold text-neon-gradient">"{search.title}"</span>
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  Pre-set to 30-Min Architecture Triage. Pre-filled messages updated below.
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => setCustomCleared(true)}
+              type="button"
+              className="mt-3 sm:mt-0 shrink-0 rounded-xl border border-border bg-card/80 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-card hover:text-foreground transition"
+            >
+              Reset to default
+            </button>
+          </div>
+        )}
 
         {/* Topic Selector Chips */}
         <div className="mx-auto mt-10 max-w-3xl">

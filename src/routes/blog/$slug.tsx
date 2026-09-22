@@ -6,7 +6,10 @@ import {
   MermaidViewerModal,
   type FullscreenDiagramData,
 } from "@/components/blog/MermaidViewer";
+import { ArchitectureTriageBar } from "@/components/blog/ArchitectureTriageBar";
 import {
+  HelpCircle,
+  ChevronDown,
   Clock,
   ArrowLeft,
   Share2,
@@ -23,9 +26,11 @@ import {
   Calendar,
   ExternalLink,
   ChevronRight,
+  FileDown,
 } from "lucide-react";
+import { DownloadBriefModal } from "@/components/blog/DownloadBriefModal";
 import { getBlogPostBySlug, getRelatedBlogPosts } from "@/lib/db";
-import type { BlogPost } from "@/lib/blog-types";
+import type { BlogPost, BlogPostFaqItem } from "@/lib/blog-types";
 import { marked } from "marked";
 import katex from "katex";
 
@@ -59,7 +64,8 @@ export const Route = createFileRoute("/blog/$slug")({
     }
 
     const canonicalUrl = `https://mehdigolzari.dev/blog/${post.slug}`;
-    const rawCover = post.coverImage || `/api/blog/asset?slug=${post.slug}`;
+    const ogImageUrl = `https://mehdigolzari.dev/api/og?slug=${post.slug}`;
+    const rawCover = post.coverImage || ogImageUrl;
     const coverUrl = rawCover.startsWith("http")
       ? rawCover
       : `https://mehdigolzari.dev${rawCover.startsWith("/") ? rawCover : `/${rawCover}`}`;
@@ -71,7 +77,7 @@ export const Route = createFileRoute("/blog/$slug")({
       "@type": "TechArticle",
       headline: post.title,
       description: post.excerpt,
-      image: [coverUrl],
+      image: [ogImageUrl, coverUrl],
       datePublished: post.publishedAt || post.createdAt,
       dateModified: post.updatedAt || post.publishedAt || post.createdAt,
       inLanguage: "en-US",
@@ -138,13 +144,19 @@ export const Route = createFileRoute("/blog/$slug")({
         { property: "og:description", content: post.excerpt },
         { property: "og:type", content: "article" },
         { property: "og:url", content: canonicalUrl },
-        { property: "og:image", content: coverUrl },
+        { property: "og:image", content: ogImageUrl },
+        { property: "og:image:secure_url", content: ogImageUrl },
+        { property: "og:image:type", content: "image/png" },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:alt", content: post.title },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:site", content: "@mehdigolzaridev" },
         { name: "twitter:creator", content: "@mehdigolzaridev" },
         { name: "twitter:title", content: post.title },
         { name: "twitter:description", content: post.excerpt },
-        { name: "twitter:image", content: coverUrl },
+        { name: "twitter:image", content: ogImageUrl },
+        { name: "twitter:image:alt", content: post.title },
         { name: "article:published_time", content: post.publishedAt || post.createdAt },
         { name: "article:modified_time", content: post.updatedAt || post.publishedAt || post.createdAt },
         { name: "article:author", content: "Mehdi Golzari" },
@@ -172,6 +184,25 @@ export const Route = createFileRoute("/blog/$slug")({
           type: "application/ld+json",
           children: JSON.stringify(jsonLdBreadcrumbs),
         },
+        ...(Array.isArray(post.faqs) && post.faqs.length > 0
+          ? [
+              {
+                type: "application/ld+json",
+                children: JSON.stringify({
+                  "@context": "https://schema.org",
+                  "@type": "FAQPage",
+                  mainEntity: post.faqs.map((faq) => ({
+                    "@type": "Question",
+                    name: faq.question,
+                    acceptedAnswer: {
+                      "@type": "Answer",
+                      text: faq.answer,
+                    },
+                  })),
+                }),
+              },
+            ]
+          : []),
       ],
     };
   },
@@ -278,11 +309,88 @@ const ArticleMarkdownBody = memo(
   (prev, next) => prev.htmlContent === next.htmlContent
 );
 
+/**
+ * Interactive, accessible FAQ Accordion for Founder Q&A and Search Rich Snippets
+ */
+function ArticleFaqAccordion({ faqs }: { faqs?: BlogPostFaqItem[] }) {
+  if (!faqs || faqs.length === 0) return null;
+
+  const [openMap, setOpenMap] = useState<Record<number, boolean>>({ 0: true });
+
+  const toggle = (idx: number) => {
+    setOpenMap((prev) => ({
+      ...prev,
+      [idx]: !prev[idx],
+    }));
+  };
+
+  return (
+    <section id="faq" className="mt-14 scroll-mt-24 space-y-6 pt-10 border-t border-border/80">
+      <div className="space-y-1.5">
+        <div className="inline-flex items-center gap-2 rounded-full bg-neon/15 px-3 py-1 font-mono text-[10px] font-bold text-neon uppercase tracking-wider border border-neon/30">
+          <HelpCircle className="h-3.5 w-3.5" /> Founder Architectural FAQs
+        </div>
+        <h2 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+          Frequently Asked Questions
+        </h2>
+        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+          Pragmatic answers to critical architectural decisions, cost trade-offs, and technical leadership questions.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {faqs.map((item, idx) => {
+          const isOpen = Boolean(openMap[idx]);
+          return (
+            <div
+              key={idx}
+              className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
+                isOpen
+                  ? "border-neon/40 bg-card shadow-card"
+                  : "border-border/80 bg-card/50 hover:border-border hover:bg-card/80"
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => toggle(idx)}
+                aria-expanded={isOpen}
+                aria-controls={`faq-answer-${idx}`}
+                className="w-full flex items-center justify-between gap-4 p-4 sm:p-5 text-left transition-colors cursor-pointer select-none"
+              >
+                <span className="font-display font-bold text-sm sm:text-base text-foreground leading-snug">
+                  {item.question}
+                </span>
+                <span
+                  className={`p-1 rounded-lg shrink-0 transition-transform duration-200 ${
+                    isOpen ? "rotate-180 bg-neon/15 text-neon" : "text-muted-foreground bg-muted/40"
+                  }`}
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </span>
+              </button>
+
+              {isOpen && (
+                <div
+                  id={`faq-answer-${idx}`}
+                  className="px-4 pb-5 sm:px-5 sm:pb-6 text-xs sm:text-sm text-foreground/85 leading-relaxed border-t border-border/40 pt-3"
+                >
+                  <p>{item.answer}</p>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function SingleBlogPostPage() {
   const { post, related } = Route.useLoaderData();
   const [copied, setCopied] = useState(false);
   const [activeTocId, setActiveTocId] = useState<string>("");
   const [fullscreenDiagram, setFullscreenDiagram] = useState<FullscreenDiagramData | null>(null);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 
   const handleOpenFullscreen = useCallback((data: FullscreenDiagramData) => {
     setFullscreenDiagram(data);
@@ -518,8 +626,18 @@ function SingleBlogPostPage() {
 
     const preprocessedContent = renderMathInMarkdown(post.content);
     const rawHtml = marked.parse(preprocessedContent, { renderer }) as string;
-    return { htmlContent: rawHtml, toc: headings };
-  }, [post.content]);
+
+    const headingsWithFaq = [...headings];
+    if (Array.isArray(post.faqs) && post.faqs.length > 0) {
+      headingsWithFaq.push({
+        id: "faq",
+        text: "Frequently Asked Questions",
+        level: 2,
+      });
+    }
+
+    return { htmlContent: rawHtml, toc: headingsWithFaq };
+  }, [post.content, post.faqs]);
 
   // Listen for Fullscreen diagram open events
   useEffect(() => {
@@ -618,11 +736,13 @@ function SingleBlogPostPage() {
           <div className="flex flex-wrap items-center gap-2">
             {post.category && (
               <Link
-                to="/blog"
-                search={{ category: post.category }}
-                className="rounded-full bg-neon/15 px-3 py-1 font-mono text-[10px] font-bold text-neon uppercase tracking-wider border border-neon/30 hover:bg-neon hover:text-primary-foreground transition"
+                to="/blog/pillar/$pillarId"
+                params={{ pillarId: post.category }}
+                className="rounded-full bg-neon/15 px-3 py-1 font-mono text-[10px] font-bold text-neon uppercase tracking-wider border border-neon/30 hover:bg-neon hover:text-primary-foreground transition inline-flex items-center gap-1.5"
+                title={`Explore ${post.category.replace(/-/g, " ")} Architecture Hub`}
               >
-                {post.category.replace(/-/g, " ")}
+                <span>{post.category.replace(/-/g, " ")}</span>
+                <span className="text-neon/70 group-hover:text-primary-foreground">Hub →</span>
               </Link>
             )}
             {(post.tags || []).map((tag) => (
@@ -656,7 +776,7 @@ function SingleBlogPostPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 text-[11px] font-mono">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[11px] font-mono">
               <span className="flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5 text-neon" /> {formattedDate}
               </span>
@@ -664,6 +784,15 @@ function SingleBlogPostPage() {
               <span className="flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5 text-neon" /> {post.readTimeMinutes || 6} min read
               </span>
+              <button
+                type="button"
+                onClick={() => setIsDownloadModalOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-neon/40 bg-neon/10 px-2.5 py-1 text-[11px] font-mono font-bold text-neon hover:bg-neon/20 hover:border-neon transition cursor-pointer"
+                title="Download 2-Page Executive Architecture Brief (PDF)"
+              >
+                <FileDown className="h-3.5 w-3.5" />
+                <span>Executive Brief (PDF)</span>
+              </button>
             </div>
           </div>
         </header>
@@ -686,6 +815,9 @@ function SingleBlogPostPage() {
               onOpenFullscreen={handleOpenFullscreen}
             />
 
+            {/* ── FAQ ACCORDION SECTION (FOR FOUNDERS & SEARCH RICH SNIPPETS) ── */}
+            <ArticleFaqAccordion faqs={post.faqs} />
+
             {/* ── IN-ARTICLE GO-TO-LAUNCH BLUEPRINT CONTEXTUAL CTA ── */}
             <div className="mt-12 rounded-3xl border-2 border-neon/40 bg-gradient-to-br from-card via-card/95 to-neon/15 p-8 shadow-card relative overflow-hidden space-y-4">
               <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-neon/15 blur-2xl" />
@@ -693,20 +825,56 @@ function SingleBlogPostPage() {
                 <Sparkles className="h-3 w-3" /> Founder-to-Launch Framework™
               </div>
               <h3 className="font-display text-xl font-bold text-foreground">
-                Want to stress-test your SaaS MVP architecture?
+                Want to stress-test your {post.category === "ai-engineering" ? "AI MVP" : "SaaS MVP"} architecture?
               </h3>
               <p className="text-xs text-muted-foreground leading-relaxed max-w-xl">
                 Avoid premature technical debt and validate your product boundaries before writing
-                code. Build your customized Go-to-Launch Blueprint™ free in under 10 minutes.
+                code. Build your customized Go-to-Launch Blueprint™ free in under 10 minutes with pre-configured architecture presets.
               </p>
               <div className="pt-2">
                 <Link
                   to="/blueprint"
+                  search={{
+                    pillar: post.category,
+                    tag: post.tags?.[0],
+                    sourceSlug: post.slug,
+                  }}
                   className="inline-flex items-center gap-2 rounded-xl bg-neon px-5 py-3 text-xs font-bold text-primary-foreground shadow-neon transition hover:brightness-110"
                 >
-                  Generate My Execution Blueprint ⚡
+                  {post.category === "ai-engineering"
+                    ? "Generate AI Architecture Blueprint ⚡"
+                    : post.category === "fractional-cto"
+                      ? "Generate Technical Partner Blueprint ⚡"
+                      : post.category === "due-diligence"
+                        ? "Generate Code Audit & Seed Blueprint ⚡"
+                        : post.category === "startup-economics"
+                          ? "Generate Lean Runway Blueprint ⚡"
+                          : "Generate Scale-Ready MVP Blueprint ⚡"}
                 </Link>
               </div>
+            </div>
+
+            {/* ── DOWNLOADABLE EXECUTIVE BRIEF PDF CARD ── */}
+            <div className="mt-8 rounded-3xl border border-neon/30 bg-[#090d18] p-6 sm:p-8 shadow-card relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+              <div className="space-y-2 max-w-lg">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-neon/15 px-2.5 py-0.5 font-mono text-[10px] font-bold text-neon uppercase tracking-wider">
+                  <FileDown className="h-3 w-3" /> Offline Executive Summary
+                </div>
+                <h3 className="font-display text-lg sm:text-xl font-bold text-foreground">
+                  Need to review this architecture with your co-founder or team?
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Download the 2-page Executive Architecture Brief with non-negotiable engineering directives, FAQ highlights, and a founder pre-development due diligence checklist.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsDownloadModalOpen(true)}
+                className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-neon px-5 py-3 font-display text-xs font-bold text-primary-foreground shadow-neon hover:bg-neon/90 hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer"
+              >
+                <FileDown className="h-4 w-4" />
+                <span>Download Executive Brief (PDF)</span>
+              </button>
             </div>
 
             {/* ── AUTHOR SIGNATURE BIO BOX ── */}
@@ -803,10 +971,36 @@ function SingleBlogPostPage() {
                 </p>
                 <Link
                   to="/blueprint"
+                  search={{
+                    pillar: post.category,
+                    tag: post.tags?.[0],
+                    sourceSlug: post.slug,
+                  }}
                   className="block text-center rounded-xl bg-neon px-3 py-2 text-xs font-bold text-primary-foreground shadow-neon hover:brightness-110 transition"
                 >
                   Generate Free Blueprint →
                 </Link>
+              </div>
+
+              {/* Executive Brief PDF Sticky Card */}
+              <div className="rounded-2xl border border-neon/30 bg-card p-5 shadow-card space-y-3">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-neon/10 px-2 py-0.5 font-mono text-[10px] font-bold text-neon uppercase tracking-wider">
+                  <FileDown className="h-3 w-3" /> Offline PDF Brief
+                </div>
+                <h4 className="font-display text-sm font-bold text-foreground">
+                  Executive Architecture Brief
+                </h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Download a printable 2-page executive summary & pre-launch due diligence checklist.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsDownloadModalOpen(true)}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-neon/40 bg-neon/10 px-3 py-2 text-xs font-bold text-neon hover:bg-neon hover:text-primary-foreground transition cursor-pointer"
+                >
+                  <FileDown className="h-3.5 w-3.5" />
+                  <span>Download Free PDF</span>
+                </button>
               </div>
 
               {/* Fractional CTO Advisory Card */}
@@ -931,6 +1125,25 @@ function SingleBlogPostPage() {
         <MermaidViewerModal
           data={fullscreenDiagram}
           onClose={() => setFullscreenDiagram(null)}
+        />
+
+        {/* ── SCROLL-TRIGGERED ARCHITECTURE TRIAGE CONSULTATION FLOATING BAR ── */}
+        <ArchitectureTriageBar
+          postTitle={post.title}
+          postSlug={post.slug}
+          category={post.category}
+          tags={post.tags}
+        />
+
+        {/* ── DOWNLOAD EXECUTIVE BRIEF MODAL ── */}
+        <DownloadBriefModal
+          isOpen={isDownloadModalOpen}
+          onClose={() => setIsDownloadModalOpen(false)}
+          post={{
+            slug: post.slug,
+            title: post.title,
+            category: post.category,
+          }}
         />
       </article>
     </div>

@@ -38,6 +38,11 @@ export const BLOG_PILLAR_CATEGORIES = [
 
 export type BlogPillarId = (typeof BLOG_PILLAR_CATEGORIES)[number]["id"];
 
+export interface BlogPostFaqItem {
+  question: string;
+  answer: string;
+}
+
 export interface BlogPost {
   id: string;
   slug: string;
@@ -57,6 +62,7 @@ export interface BlogPost {
   };
   sourceTrend?: string;
   relatedSlugs?: string[];
+  faqs?: BlogPostFaqItem[];
   publishedAt: string;
   createdAt: string;
   updatedAt: string;
@@ -74,7 +80,22 @@ export interface BlogInventoryItem {
 export interface GetBlogPostsOptions {
   status?: "published" | "draft" | "archived" | "all";
   tag?: string;
+  category?: string;
+  pillar?: string;
   search?: string;
   limit?: number;
   offset?: number;
 }
+
+export interface ArticleLeadRecord {
+  id: string;
+  email: string;
+  name?: string;
+  role?: string;
+  articleSlug: string;
+  articleTitle: string;
+  pillar?: string;
+  createdAt: string;
+  source: string;
+}
+

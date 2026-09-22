@@ -22,6 +22,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminLinkedinRouteImport } from './routes/admin/linkedin'
 import { Route as AdminBlogRouteImport } from './routes/admin/blog'
+import { Route as BlogPillarPillarIdRouteImport } from './routes/blog/pillar/$pillarId'
 
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
@@ -89,6 +90,11 @@ const AdminBlogRoute = AdminBlogRouteImport.update({
   path: '/admin/blog',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogPillarPillarIdRoute = BlogPillarPillarIdRouteImport.update({
+  id: '/blog/pillar/$pillarId',
+  path: '/blog/pillar/$pillarId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/': typeof BlogIndexRoute
+  '/blog/pillar/$pillarId': typeof BlogPillarPillarIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -119,6 +126,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog': typeof BlogIndexRoute
+  '/blog/pillar/$pillarId': typeof BlogPillarPillarIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -135,6 +143,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/': typeof BlogIndexRoute
+  '/blog/pillar/$pillarId': typeof BlogPillarPillarIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/'
+    | '/blog/pillar/$pillarId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog'
+    | '/blog/pillar/$pillarId'
   id:
     | '__root__'
     | '/'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/'
+    | '/blog/pillar/$pillarId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -198,6 +210,7 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   BlogSlugRoute: typeof BlogSlugRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  BlogPillarPillarIdRoute: typeof BlogPillarPillarIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -293,6 +306,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBlogRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/pillar/$pillarId': {
+      id: '/blog/pillar/$pillarId'
+      path: '/blog/pillar/$pillarId'
+      fullPath: '/blog/pillar/$pillarId'
+      preLoaderRoute: typeof BlogPillarPillarIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -310,6 +330,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   BlogSlugRoute: BlogSlugRoute,
   BlogIndexRoute: BlogIndexRoute,
+  BlogPillarPillarIdRoute: BlogPillarPillarIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

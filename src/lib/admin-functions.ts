@@ -7,11 +7,16 @@ import {
   saveBlogPost,
   deleteBlogPost,
   updateBlogPostStatus,
+  saveArticleLead,
+  getAllArticleLeads,
+  deleteArticleLead,
   type BlogPost,
+  type ArticleLeadRecord,
 } from "./db";
 import { generateAutonomousBlogPost } from "./blog-generator";
 import { generateCoverImage } from "./gemini";
 import { pingSearchEngines } from "./seo-ping";
+
 
 /**
  * Admin Login Server Function
@@ -176,3 +181,99 @@ export const regenerateCoverImageAction = createServerFn()
 
     return { success: true, post: updated };
   });
+
+/**
+ * Public Server Function to record an article brief download lead
+ */
+export const submitArticleLeadAction = createServerFn()
+  .validator(
+    (d: {
+      email: string;
+      name?: string;
+      role?: string;
+      articleSlug: string;
+      articleTitle: string;
+      pillar?: string;
+      source?: string;
+    }) => d,
+  )
+  .handler(async ({ data }) => {
+    if (!data.email || !data.email.includes("@")) {
+      return { success: false, error: "Valid work email is required" };
+    }
+
+    const lead = await saveArticleLead({
+      email: data.email.trim().toLowerCase(),
+      name: data.name?.trim() || "Founder",
+      role: data.role || "Founder / CEO",
+      articleSlug: data.articleSlug,
+      articleTitle: data.articleTitle,
+      pillar: data.pillar,
+      source: data.source || "brief_modal",
+    });
+
+    return {
+      success: true,
+      lead,
+      downloadUrl: `/api/blog/brief?slug=${encodeURIComponent(data.articleSlug)}`,
+    };
+  });
+
+/**
+ * Admin Server Function to list all captured article leads
+ */
+export const getAdminLeadsAction = createServerFn().handler(async () => {
+  const request = getRequest();
+  const session = getAdminSessionFromRequest(request);
+  if (!session) {
+    return { authenticated: false, leads: [] };
+  }
+
+  const leads = await getAllArticleLeads();
+  return { authenticated: true, leads };
+});
+
+/**
+ * Admin Server Function to delete an article lead
+ */
+export const deleteAdminLeadAction = createServerFn()
+  .validator((d: { id: string }) => d)
+  .handler(async ({ data }) => {
+    const request = getRequest();
+    const session = getAdminSessionFromRequest(request);
+    if (!session) {
+      throw new Error("Unauthorized admin access");
+    }
+
+    const success = await deleteArticleLead(data.id);
+    return { success };
+  });
+
+/**
+ * Admin Server Function to export all leads as a CSV string
+ */
+export const exportAdminLeadsCsvAction = createServerFn().handler(async () => {
+  const request = getRequest();
+  const session = getAdminSessionFromRequest(request);
+  if (!session) {
+    throw new Error("Unauthorized admin access");
+  }
+
+  const leads = await getAllArticleLeads();
+  const headers = ["ID", "Email", "Name", "Role", "Article Title", "Article Slug", "Pillar", "Source", "Date"];
+  const rows = leads.map((l) => [
+    l.id,
+    `"${l.email.replace(/"/g, '""')}"`,
+    `"${(l.name || "").replace(/"/g, '""')}"`,
+    `"${(l.role || "").replace(/"/g, '""')}"`,
+    `"${(l.articleTitle || "").replace(/"/g, '""')}"`,
+    `"${l.articleSlug}"`,
+    `"${l.pillar || ""}"`,
+    `"${l.source || ""}"`,
+    `"${l.createdAt}"`,
+  ]);
+
+  const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+  return { success: true, csv, count: leads.length };
+});
+

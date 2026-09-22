@@ -119,11 +119,12 @@ export const Route = createFileRoute("/blog/")({
         },
         { property: "og:type", content: "website" },
         { property: "og:url", content: "https://mehdigolzari.dev/blog" },
-        {
-          property: "og:image",
-          content:
-            "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/ac23c38d-b692-43ac-863d-d0c7e38bfc5b",
-        },
+        { property: "og:image", content: "https://mehdigolzari.dev/api/og?type=blog" },
+        { property: "og:image:secure_url", content: "https://mehdigolzari.dev/api/og?type=blog" },
+        { property: "og:image:type", content: "image/png" },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:alt", content: "Technical Insights & SaaS Architecture Blog — Mehdi Golzari" },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: "Technical Insights & SaaS Architecture Blog — Mehdi Golzari" },
         {
@@ -133,8 +134,11 @@ export const Route = createFileRoute("/blog/")({
         },
         {
           name: "twitter:image",
-          content:
-            "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/ac23c38d-b692-43ac-863d-d0c7e38bfc5b",
+          content: "https://mehdigolzari.dev/api/og?type=blog",
+        },
+        {
+          name: "twitter:image:alt",
+          content: "Technical Insights & SaaS Architecture Blog — Mehdi Golzari",
         },
       ],
       links: [
@@ -317,6 +321,50 @@ function BlogIndexPage() {
               </button>
             ))}
           </div>
+
+          {/* Direct Pillar Hub links */}
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <span className="text-muted-foreground/80">Dedicated Topic Hubs:</span>
+            <Link
+              to="/blog/pillar/$pillarId"
+              params={{ pillarId: "saas-architecture" }}
+              className="font-medium text-foreground hover:text-neon underline-offset-4 hover:underline"
+            >
+              SaaS Architecture
+            </Link>
+            <span>·</span>
+            <Link
+              to="/blog/pillar/$pillarId"
+              params={{ pillarId: "ai-engineering" }}
+              className="font-medium text-foreground hover:text-neon underline-offset-4 hover:underline"
+            >
+              AI Engineering
+            </Link>
+            <span>·</span>
+            <Link
+              to="/blog/pillar/$pillarId"
+              params={{ pillarId: "mvp-development" }}
+              className="font-medium text-foreground hover:text-neon underline-offset-4 hover:underline"
+            >
+              Zero-to-One MVP
+            </Link>
+            <span>·</span>
+            <Link
+              to="/blog/pillar/$pillarId"
+              params={{ pillarId: "fractional-cto" }}
+              className="font-medium text-foreground hover:text-neon underline-offset-4 hover:underline"
+            >
+              Fractional CTO
+            </Link>
+            <span>·</span>
+            <Link
+              to="/blog/pillar/$pillarId"
+              params={{ pillarId: "startup-economics" }}
+              className="font-medium text-foreground hover:text-neon underline-offset-4 hover:underline"
+            >
+              Startup Economics
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -331,12 +379,21 @@ function BlogIndexPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold text-foreground">Filtered by:</span>
                   {selectedPillar !== "all" && (
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-neon/15 px-2.5 py-1 font-mono text-[11px] font-bold text-neon border border-neon/30">
-                      Pillar: {PILLAR_TABS.find((t) => t.id === selectedPillar)?.label || selectedPillar}
-                      <button onClick={() => handlePillarClick("all")} className="hover:text-foreground ml-1">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
+                    <div className="inline-flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-neon/15 px-2.5 py-1 font-mono text-[11px] font-bold text-neon border border-neon/30">
+                        Pillar: {PILLAR_TABS.find((t) => t.id === selectedPillar)?.label || selectedPillar}
+                        <button onClick={() => handlePillarClick("all")} className="hover:text-foreground ml-1">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                      <Link
+                        to="/blog/pillar/$pillarId"
+                        params={{ pillarId: selectedPillar }}
+                        className="inline-flex items-center gap-1 rounded-lg bg-neon/10 px-2.5 py-1 text-[11px] font-semibold text-neon border border-neon/30 hover:bg-neon hover:text-primary-foreground transition"
+                      >
+                        View Pillar Hub →
+                      </Link>
+                    </div>
                   )}
                   {selectedTag && (
                     <span className="inline-flex items-center gap-1 rounded-lg bg-muted px-2.5 py-1 font-mono text-[11px] font-bold text-foreground border border-border">
@@ -538,6 +595,10 @@ function BlogIndexPage() {
               </p>
               <Link
                 to="/blueprint"
+                search={{
+                  pillar: selectedPillar !== "all" ? selectedPillar : undefined,
+                  tag: selectedTag || undefined,
+                }}
                 className="block text-center rounded-xl bg-neon px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-neon transition hover:brightness-110"
               >
                 Generate Blueprint ⚡

@@ -40,7 +40,11 @@ linkedin-session.json
 .linkedin-profile-cache
 linkedin-profile-cache.tar.gz
 prod-db-backup.json
+*.backup*.json
+data/*.backup*.json
+data/blog-assets/briefs/
 scratch/
+
 
 
 

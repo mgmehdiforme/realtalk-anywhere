@@ -44,6 +44,78 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 }
 
 /**
+ * Handle Dynamic 1200x630 OpenGraph Image Requests (/api/og?slug=... or /api/og?type=...)
+ */
+async function handleOpenGraphRequest(request: Request): Promise<Response | null> {
+  const url = new URL(request.url);
+  if (url.pathname !== "/api/og") return null;
+
+  const slug = url.searchParams.get("slug");
+  const typeParam = url.searchParams.get("type");
+  const formatParam = (url.searchParams.get("format") || "png").toLowerCase();
+  const format = formatParam === "webp" ? "webp" : formatParam === "svg" ? "svg" : "png";
+
+  try {
+    const { getOrGenerateOgImage } = await import("./lib/og-engine");
+
+    if (slug) {
+      const cleanSlug = slug.replace(/[^a-zA-Z0-9-_]/g, "");
+      const post = await getBlogPostBySlug(cleanSlug);
+      const title =
+        post?.title ||
+        cleanSlug
+          .split("-")
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" ");
+
+      const result = await getOrGenerateOgImage(
+        cleanSlug,
+        {
+          title,
+          categoryTag: post?.category || post?.tags?.[0] || "Architecture",
+          readTimeMinutes: post?.readTimeMinutes || 6,
+          type: "post",
+        },
+        format,
+      );
+
+      return new Response(result.buffer as any, {
+        status: 200,
+        headers: {
+          "Content-Type": result.mimeType,
+          "Content-Length": String(result.buffer.length),
+          "Cache-Control": "public, max-age=604800, stale-while-revalidate=2592000",
+        },
+      });
+    }
+
+    // Generic site OG cards: "home", "blog", "blueprint"
+    const cardType = (typeParam as "home" | "blog" | "blueprint") || "home";
+    const cacheKey = `site-${cardType}`;
+    const result = await getOrGenerateOgImage(
+      cacheKey,
+      {
+        title: "",
+        type: cardType,
+      },
+      format,
+    );
+
+    return new Response(result.buffer as any, {
+      status: 200,
+      headers: {
+        "Content-Type": result.mimeType,
+        "Content-Length": String(result.buffer.length),
+        "Cache-Control": "public, max-age=604800, stale-while-revalidate=2592000",
+      },
+    });
+  } catch (error) {
+    console.error("[Server] OpenGraph generation error:", error);
+    return new Response("Failed to generate OpenGraph image", { status: 500 });
+  }
+}
+
+/**
  * Handle static Blog Assets (/api/blog/asset?slug=...)
  */
 async function handleBlogAssetRequest(request: Request): Promise<Response | null> {
@@ -120,6 +192,95 @@ async function handleBlogAssetRequest(request: Request): Promise<Response | null
   }
 }
 
+/**
+ * Handle Executive Architecture Brief PDF Downloads (/api/blog/brief?slug=...)
+ */
+async function handleBriefPdfRequest(request: Request): Promise<Response | null> {
+  const url = new URL(request.url);
+  if (url.pathname !== "/api/blog/brief" && url.pathname !== "/api/blog/brief.pdf") {
+    return null;
+  }
+
+  const slug = url.searchParams.get("slug");
+  if (!slug) {
+    return new Response("Missing slug parameter", { status: 400 });
+  }
+
+  const cleanSlug = slug.replace(/[^a-zA-Z0-9-_]/g, "");
+  const post = await getBlogPostBySlug(cleanSlug);
+  if (!post) {
+    return new Response("Article not found", { status: 404 });
+  }
+
+  try {
+    const { getOrGenerateArticleBriefPdf } = await import("./lib/article-pdf-generator");
+    const result = await getOrGenerateArticleBriefPdf(post);
+    const pdfBuffer = await fs.readFile(result.filePath);
+
+    return new Response(new Uint8Array(pdfBuffer), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${result.fileName}"`,
+        "Content-Length": String(pdfBuffer.length),
+        "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+      },
+    });
+  } catch (error) {
+    console.error("[Server] Brief PDF generation error:", error);
+    return new Response("Failed to generate PDF brief", { status: 500 });
+  }
+}
+
+/**
+ * Handle Lead Magnet Submission (/api/blog/lead)
+ */
+async function handleArticleLeadRequest(request: Request): Promise<Response | null> {
+  const url = new URL(request.url);
+  if (url.pathname !== "/api/blog/lead") return null;
+
+  if (request.method !== "POST") {
+    return new Response("Method not allowed", { status: 405 });
+  }
+
+  try {
+    const body = await request.json();
+    const { email, name, role, slug, title, pillar, source } = body || {};
+
+    if (!email || typeof email !== "string" || !email.includes("@")) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Valid work email is required" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    const { saveArticleLead } = await import("./lib/db");
+    const lead = await saveArticleLead({
+      email: email.trim().toLowerCase(),
+      name: name && typeof name === "string" ? name.trim() : "Founder",
+      role: role && typeof role === "string" ? role.trim() : "Founder / CEO",
+      articleSlug: slug || "general",
+      articleTitle: title || "Architecture Guide",
+      pillar: pillar || undefined,
+      source: source || "brief_modal",
+    });
+
+    const downloadUrl = `/api/blog/brief?slug=${encodeURIComponent(slug || "")}`;
+
+    return new Response(
+      JSON.stringify({ success: true, lead, downloadUrl }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
+  } catch (error: any) {
+    console.error("[Server] Article lead submission error:", error);
+    return new Response(
+      JSON.stringify({ success: false, error: error.message || "Failed to process lead" }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
+  }
+}
+
+
 function escapeXml(unsafe: string): string {
   return (unsafe || "")
     .replace(/&/g, "&amp;")
@@ -143,6 +304,8 @@ User-agent: *
 Allow: /
 Allow: /blog
 Allow: /blog/*
+Allow: /blog/pillar
+Allow: /blog/pillar/*
 Allow: /blueprint
 Allow: /services
 Allow: /founder-to-launch-framework
@@ -151,6 +314,8 @@ Allow: /resume
 Allow: /contact
 Allow: /assets/
 Allow: /api/blog/asset
+Allow: /api/blog/brief
+Allow: /api/og
 Disallow: /admin
 Disallow: /admin/*
 Disallow: /auth
@@ -404,11 +569,16 @@ async function handleLinkedInProfileUploadRequest(request: Request): Promise<Res
 }
 
 function resolveCoverUrl(baseUrl: string, coverImage?: string, slug?: string): string {
-  const rawCover = coverImage || (slug ? `/api/blog/asset?slug=${slug}` : "/avatar.webp");
-  if (rawCover.startsWith("http://") || rawCover.startsWith("https://")) {
-    return rawCover;
+  if (coverImage && !coverImage.endsWith(".svg") && !coverImage.startsWith("/api/blog/asset")) {
+    if (coverImage.startsWith("http://") || coverImage.startsWith("https://")) {
+      return coverImage;
+    }
+    return `${baseUrl}${coverImage.startsWith("/") ? coverImage : `/${coverImage}`}`;
   }
-  return `${baseUrl}${rawCover.startsWith("/") ? rawCover : `/${rawCover}`}`;
+  if (slug) {
+    return `${baseUrl}/api/og?slug=${slug}`;
+  }
+  return `${baseUrl}/api/og?type=home`;
 }
 
 /**
@@ -426,6 +596,11 @@ async function handleSitemapRequest(request: Request): Promise<Response | null> 
     const staticRoutes = [
       { path: "", priority: "1.0", changefreq: "daily" },
       { path: "/blog", priority: "0.9", changefreq: "daily" },
+      { path: "/blog/pillar/saas-architecture", priority: "0.85", changefreq: "weekly" },
+      { path: "/blog/pillar/ai-engineering", priority: "0.85", changefreq: "weekly" },
+      { path: "/blog/pillar/mvp-development", priority: "0.85", changefreq: "weekly" },
+      { path: "/blog/pillar/fractional-cto", priority: "0.85", changefreq: "weekly" },
+      { path: "/blog/pillar/startup-economics", priority: "0.85", changefreq: "weekly" },
       { path: "/blueprint", priority: "0.9", changefreq: "weekly" },
       { path: "/services", priority: "0.8", changefreq: "weekly" },
       { path: "/founder-to-launch-framework", priority: "0.8", changefreq: "weekly" },
@@ -507,7 +682,7 @@ async function handleRssFeedRequest(request: Request): Promise<Response | null> 
       <guid isPermaLink="true">${postUrl}</guid>
       <description><![CDATA[${p.excerpt}]]></description>
       <content:encoded><![CDATA[<p>${p.excerpt}</p><p><a href="${postUrl}">Read complete technical guide &rarr;</a></p>]]></content:encoded>
-      <enclosure url="${coverUrl}" type="image/svg+xml" length="1024"/>
+      <enclosure url="${coverUrl}" type="image/png" length="102400"/>
       <pubDate>${pubDate}</pubDate>
       <author>mehdi@mehdigolzari.dev (Mehdi Golzari)</author>
       ${(p.tags || []).map((t) => `<category>${escapeXml(t)}</category>`).join("\n      ")}
@@ -546,9 +721,21 @@ ${items}
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
-      // 1. Check Blog Asset Endpoint
+      // 1. Check Dynamic OpenGraph Card
+      const ogResponse = await handleOpenGraphRequest(request);
+      if (ogResponse) return ogResponse;
+
+      // 1b. Check Blog Assets
       const assetResponse = await handleBlogAssetRequest(request);
       if (assetResponse) return assetResponse;
+
+      // 1c. Check Executive Architecture Brief PDF
+      const briefPdfResponse = await handleBriefPdfRequest(request);
+      if (briefPdfResponse) return briefPdfResponse;
+
+      // 1d. Check Article Lead Capture
+      const leadResponse = await handleArticleLeadRequest(request);
+      if (leadResponse) return leadResponse;
 
       // 2. Check Robots.txt
       const robotsResponse = await handleRobotsRequest(request);
@@ -603,7 +790,9 @@ export default {
           pathname === "/robots.txt" ||
           pathname === `/${INDEXNOW_KEY}.txt` ||
           pathname.endsWith(".pdf") ||
-          pathname.startsWith("/api/blog/asset");
+          pathname.startsWith("/api/og") ||
+          pathname.startsWith("/api/blog/asset") ||
+          pathname.startsWith("/api/blog/brief");
 
         if (isImmutable) {
           response.headers.set("Cache-Control", "public, max-age=31536000, immutable");

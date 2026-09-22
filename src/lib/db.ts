@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 export * from "./blog-types";
-import type { BlogPost, BlogInventoryItem, GetBlogPostsOptions } from "./blog-types";
+import type { BlogPost, BlogInventoryItem, GetBlogPostsOptions, ArticleLeadRecord } from "./blog-types";
 
 const DB_DIR =
   typeof process !== "undefined" && typeof process.cwd === "function"
@@ -64,6 +64,7 @@ export interface DatabaseSchema {
   assessments: Record<string, Blueprint>;
   blogPosts?: Record<string, BlogPost>;
   linkedin?: LinkedInConfig;
+  leads?: ArticleLeadRecord[];
 }
 
 let isInitialized = false;
@@ -84,6 +85,7 @@ async function initDb() {
       if (!dbCache.users) dbCache.users = {};
       if (!dbCache.assessments) dbCache.assessments = {};
       if (!dbCache.blogPosts) dbCache.blogPosts = {};
+      if (!dbCache.leads) dbCache.leads = [];
       if (!dbCache.linkedin) {
         dbCache.linkedin = {
           sessionState: null,
@@ -269,6 +271,64 @@ export async function getBlogPosts(options?: GetBlogPostsOptions): Promise<{
     );
   }
 
+  // Filter by category
+  if (options?.category) {
+    const targetCat = options.category.toLowerCase().trim();
+    posts = posts.filter(
+      (p) =>
+        (p.category || "").toLowerCase().trim() === targetCat ||
+        (Array.isArray(p.tags) && p.tags.some((t) => (t || "").toLowerCase() === targetCat)),
+    );
+  }
+
+  // Filter by pillar
+  if (options?.pillar) {
+    const targetPillar = options.pillar.toLowerCase().trim();
+    posts = posts.filter((p) => {
+      const cat = (p.category || "").toLowerCase().trim();
+      const tags = Array.isArray(p.tags) ? p.tags.map((t) => (t || "").toLowerCase()) : [];
+      if (cat === targetPillar || tags.includes(targetPillar)) return true;
+
+      // Match canonical pillar aliases
+      if (
+        targetPillar === "saas-architecture" &&
+        (cat === "mvp-architecture" ||
+          tags.some((t) => t.includes("monolith") || t.includes("saas") || t.includes("multi-tenant")))
+      ) {
+        return true;
+      }
+      if (
+        targetPillar === "ai-engineering" &&
+        (cat === "ai-engineering" ||
+          tags.some((t) => t.includes("ai") || t.includes("agent") || t.includes("eval")))
+      ) {
+        return true;
+      }
+      if (
+        targetPillar === "mvp-development" &&
+        (cat === "mvp-architecture" || tags.some((t) => t.includes("mvp")))
+      ) {
+        return true;
+      }
+      if (
+        targetPillar === "fractional-cto" &&
+        (cat === "due-diligence" ||
+          cat === "fractional-cto" ||
+          tags.some((t) => t.includes("cto") || t.includes("diligence") || t.includes("founder")))
+      ) {
+        return true;
+      }
+      if (
+        targetPillar === "startup-economics" &&
+        (cat === "startup-economics" ||
+          tags.some((t) => t.includes("cost") || t.includes("cloud") || t.includes("burn")))
+      ) {
+        return true;
+      }
+      return false;
+    });
+  }
+
   // Filter by search keyword
   if (options?.search) {
     const q = options.search.toLowerCase();
@@ -301,6 +361,16 @@ export async function getBlogPosts(options?: GetBlogPostsOptions): Promise<{
   return { posts, total };
 }
 
+export async function getBlogPostsForPillar(pillarId: string): Promise<{
+  posts: BlogPost[];
+  total: number;
+  totalReadMinutes: number;
+}> {
+  const { posts, total } = await getBlogPosts({ pillar: pillarId, status: "published" });
+  const totalReadMinutes = posts.reduce((acc, p) => acc + (p.readTimeMinutes || 6), 0);
+  return { posts, total, totalReadMinutes };
+}
+
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
   await initDb();
   if (!dbCache.blogPosts) dbCache.blogPosts = {};
@@ -329,6 +399,7 @@ export async function saveBlogPost(
     ...postInput,
     id,
     slug: postInput.slug.toLowerCase().trim().replace(/[^a-z0-9-_]/g, "-"),
+    faqs: postInput.faqs !== undefined ? postInput.faqs : existing?.faqs || [],
     createdAt: existing ? existing.createdAt : now,
     updatedAt: now,
     publishedAt:
@@ -733,4 +804,47 @@ export async function clearLinkedInSession(): Promise<LinkedInConfig> {
 
   return current;
 }
+
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * ARTICLE LEAD MAGNET (EXECUTIVE BRIEF PDF) PERSISTENCE
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+export async function saveArticleLead(
+  data: Omit<ArticleLeadRecord, "id" | "createdAt">,
+): Promise<ArticleLeadRecord> {
+  await initDb();
+  if (!dbCache.leads) dbCache.leads = [];
+
+  const newLead: ArticleLeadRecord = {
+    ...data,
+    id: `lead-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    createdAt: new Date().toISOString(),
+  };
+
+  dbCache.leads.unshift(newLead);
+  await saveToDisk();
+  return newLead;
+}
+
+export async function getAllArticleLeads(): Promise<ArticleLeadRecord[]> {
+  await initDb();
+  if (!dbCache.leads) dbCache.leads = [];
+  return [...dbCache.leads];
+}
+
+export async function deleteArticleLead(id: string): Promise<boolean> {
+  await initDb();
+  if (!dbCache.leads) return false;
+
+  const initialLen = dbCache.leads.length;
+  dbCache.leads = dbCache.leads.filter((l) => l.id !== id);
+  if (dbCache.leads.length !== initialLen) {
+    await saveToDisk();
+    return true;
+  }
+  return false;
+}
+
 

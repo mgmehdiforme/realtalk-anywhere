@@ -143,15 +143,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           content:
             "Work directly with senior engineer Mehdi Golzari building your product. SaaS MVP, deterministic AI agents, scaling, and fractional CTO — no agencies, no middlemen.",
         },
-        {
-          property: "og:image",
-          content:
-            "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/ac23c38d-b692-43ac-863d-d0c7e38bfc5b",
-        },
+        { property: "og:image", content: "https://mehdigolzari.dev/api/og?type=home" },
+        { property: "og:image:secure_url", content: "https://mehdigolzari.dev/api/og?type=home" },
+        { property: "og:image:type", content: "image/png" },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:alt", content: "Senior Independent Technical Partner for SaaS Founders — Mehdi Golzari" },
         {
           name: "twitter:image",
-          content:
-            "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/ac23c38d-b692-43ac-863d-d0c7e38bfc5b",
+          content: "https://mehdigolzari.dev/api/og?type=home",
+        },
+        {
+          name: "twitter:image:alt",
+          content: "Senior Independent Technical Partner for SaaS Founders — Mehdi Golzari",
         },
       ],
       links: [

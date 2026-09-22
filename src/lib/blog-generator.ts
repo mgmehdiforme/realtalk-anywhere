@@ -120,6 +120,7 @@ export async function generateAutonomousBlogPost(
       canonicalUrl: `https://mehdigolzari.dev/blog/${articleResult.slug}`,
     },
     sourceTrend: researchResult.sourceTrend,
+    faqs: articleResult.faqs || [],
     publishedAt: new Date().toISOString(),
   });
 

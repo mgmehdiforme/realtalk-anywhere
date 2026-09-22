@@ -203,10 +203,80 @@ export const logoutAction = createServerFn().handler(async () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ROUTE REGISTRATION
+// ROUTE REGISTRATION & SEARCH SCHEMA
 // ─────────────────────────────────────────────────────────────────────────────
 
+export interface BlueprintSearchSchema {
+  pillar?: string;
+  tag?: string;
+  preset?: string;
+  industry?: string;
+  sourceSlug?: string;
+  source?: string;
+}
+
+export const PILLAR_PRESETS: Record<
+  string,
+  {
+    label: string;
+    industry?: string[];
+    founderRole?: string;
+    targetAudience?: string;
+    fundingStage?: string;
+  }
+> = {
+  "saas-architecture": {
+    label: "SaaS & Systems Architecture",
+    industry: ["B2B SaaS"],
+    founderRole: "Technical Founder",
+    fundingStage: "Seed ($500k - $2M)",
+    targetAudience: "B2B (Enterprise)",
+  },
+  "ai-engineering": {
+    label: "AI Engineering & LLM Systems",
+    industry: ["AI / ML"],
+    founderRole: "Technical Founder",
+    fundingStage: "Seed ($500k - $2M)",
+    targetAudience: "B2B (Enterprise)",
+  },
+  "mvp-development": {
+    label: "Zero-to-One MVP & Product Launch",
+    industry: ["B2B SaaS"],
+    founderRole: "Non-technical Founder (Domain Expert)",
+    fundingStage: "Pre-seed (Friends & Family)",
+    targetAudience: "B2B (SMEs)",
+  },
+  "cloud-devops": {
+    label: "Cloud Architecture & High-Scale DevOps",
+    industry: ["DevTools & Infrastructure"],
+    fundingStage: "Series A ($2M - $10M)",
+    targetAudience: "B2B (Enterprise)",
+  },
+  "performance-scaling": {
+    label: "High-Throughput & Database Scaling",
+    industry: ["Fintech & Crypto"],
+    fundingStage: "Pre-seed (Friends & Family)",
+    targetAudience: "B2B (Enterprise)",
+  },
+  "startup-economics": {
+    label: "Startup Dev Economics & Cloud Costs",
+    industry: ["B2B SaaS"],
+    fundingStage: "Bootstrapped",
+    targetAudience: "B2B (SMEs)",
+  },
+};
+
 export const Route = createFileRoute("/blueprint")({
+  validateSearch: (search: Record<string, unknown>): BlueprintSearchSchema => {
+    return {
+      pillar: typeof search.pillar === "string" ? search.pillar : undefined,
+      tag: typeof search.tag === "string" ? search.tag : undefined,
+      preset: typeof search.preset === "string" ? search.preset : undefined,
+      industry: typeof search.industry === "string" ? search.industry : undefined,
+      sourceSlug: typeof search.sourceSlug === "string" ? search.sourceSlug : undefined,
+      source: typeof search.source === "string" ? search.source : undefined,
+    };
+  },
   head: () => ({
     meta: [
       { title: "Build Your Go-to-Launch Blueprint™ — SaaS Scoping | MehdiGolzari.dev" },
@@ -226,6 +296,7 @@ export const Route = createFileRoute("/blueprint")({
 
 function BlueprintFlowPage() {
   const navigate = useNavigate();
+  const searchParams = Route.useSearch();
   const [loading, setLoading] = useState(true);
   const [state, setState] = useState<{
     authenticated: boolean;
@@ -311,6 +382,7 @@ function BlueprintFlowPage() {
         showMockLogin={state?.showMockLogin ?? true}
         onGoogleLogin={handleGoogleLogin}
         onMockLogin={handleMockLogin}
+        searchParams={searchParams}
       />
     );
   }
@@ -332,6 +404,7 @@ function BlueprintFlowPage() {
       initialAnswers={state.assessment?.answers || {}}
       onComplete={refreshState}
       onLogout={handleLogout}
+      searchParams={searchParams}
     />
   );
 }
@@ -344,12 +417,30 @@ function LandingPage({
   showMockLogin,
   onGoogleLogin,
   onMockLogin,
+  searchParams,
 }: {
   showMockLogin: boolean;
   onGoogleLogin: () => void;
   onMockLogin: (email: string) => void;
+  searchParams?: BlueprintSearchSchema;
 }) {
   const [mockEmail, setMockEmail] = useState("testfounder@example.com");
+
+  // Persist deep-link prefill query params into sessionStorage across OAuth redirects
+  useEffect(() => {
+    if (typeof window !== "undefined" && searchParams) {
+      const entries = Object.entries(searchParams).filter(([_, v]) => Boolean(v));
+      if (entries.length > 0) {
+        const queryStr = new URLSearchParams(entries as [string, string][]).toString();
+        try {
+          sessionStorage.setItem("blueprint_prefill", queryStr);
+        } catch {}
+      }
+    }
+  }, [searchParams]);
+
+  const presetKey = searchParams?.pillar || searchParams?.preset || "";
+  const activePreset = PILLAR_PRESETS[presetKey];
 
   return (
     <div className="bg-background">
@@ -360,6 +451,16 @@ function LandingPage({
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-semibold text-neon-gradient backdrop-blur">
             <Sparkles className="h-3.5 w-3.5" /> 100% Free Execution Blueprint
           </div>
+
+          {activePreset && (
+            <div className="mx-auto mt-4 max-w-lg rounded-2xl border border-neon/40 bg-neon/10 px-4 py-2.5 text-xs text-foreground font-medium flex items-center justify-center gap-2 shadow-sm animate-in fade-in">
+              <Sparkles className="h-4 w-4 shrink-0 text-neon" />
+              <span>
+                Pre-configured for <strong>{activePreset.label}</strong>. Sign in below to load architecture presets.
+              </span>
+            </div>
+          )}
+
           <h1 className="mt-5 font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
             Build Your <span className="text-neon-gradient">Go-to-Launch Blueprint™</span>
           </h1>
@@ -563,14 +664,44 @@ function WizardForm({
   initialAnswers,
   onComplete,
   onLogout,
+  searchParams,
 }: {
   user: any;
   initialAnswers: Record<string, any>;
   onComplete: () => void;
   onLogout: () => void;
+  searchParams?: BlueprintSearchSchema;
 }) {
   const [step, setStep] = useState(1);
-  const [answers, setAnswers] = useState<Record<string, any>>(initialAnswers);
+
+  // Active preset detection & non-destructive pre-fill
+  const presetKey = searchParams?.pillar || searchParams?.preset || "";
+  const activePreset = PILLAR_PRESETS[presetKey];
+  const [showPresetBanner, setShowPresetBanner] = useState(Boolean(activePreset));
+
+  const [answers, setAnswers] = useState<Record<string, any>>(() => {
+    const updated = { ...initialAnswers };
+    if (activePreset) {
+      if (!updated.industryNiche && activePreset.industry) {
+        updated.industryNiche = activePreset.industry;
+      }
+      if (!updated.founderRole && activePreset.founderRole) {
+        updated.founderRole = activePreset.founderRole;
+      }
+      if (!updated.targetAudience && activePreset.targetAudience) {
+        updated.targetAudience = activePreset.targetAudience;
+      }
+      if (!updated.fundingStage && activePreset.fundingStage) {
+        updated.fundingStage = activePreset.fundingStage;
+      }
+    }
+    // Also support direct industry query param (?industry=FinTech)
+    if (searchParams?.industry && !updated.industryNiche) {
+      updated.industryNiche = [searchParams.industry];
+    }
+    return updated;
+  });
+
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -739,6 +870,25 @@ function WizardForm({
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-10 sm:px-8">
+      {/* Contextual Preset Active Alert Banner */}
+      {showPresetBanner && activePreset && (
+        <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-neon/40 bg-neon/10 p-3.5 text-xs text-foreground shadow-sm">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-neon shrink-0" />
+            <span>
+              <strong>{activePreset.label}</strong> architecture defaults applied. You can adjust any answer.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowPresetBanner(false)}
+            className="text-[10px] font-mono text-muted-foreground hover:text-foreground cursor-pointer px-2 py-0.5 rounded hover:bg-muted/40"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Top Wizard Bar */}
       <div className="flex items-center justify-between border-b border-border pb-4 mb-6">
         <div className="flex items-center gap-3">

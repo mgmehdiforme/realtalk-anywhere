@@ -5,6 +5,7 @@ import { GoogleAuth } from "google-auth-library";
 import {
   BLOG_PILLAR_CATEGORIES,
   type BlogInventorySummary,
+  type BlogPostFaqItem,
   checkContentDuplicate,
 } from "./db";
 
@@ -29,6 +30,7 @@ export interface GeneratedArticleResult {
   contentMarkdown: string;
   targetKeywords: string[];
   imagePrompt: string;
+  faqs?: BlogPostFaqItem[];
 }
 
 const BLOG_ASSETS_DIR = path.resolve(process.cwd(), "data/blog-assets");
@@ -614,6 +616,10 @@ MANDATORY WRITING & FORMATTING RULES:
    - Rule B: When discussing early MVP scoping, boundary validation, or technical debt prevention, naturally link to [Founder-to-Launch Blueprint™](/blueprint).
    - Rule C: When discussing hiring technical partners, CTO equity, or auditing agency code, link to [Fractional CTO Advisory](/offers/fractional-cto) or [Technical Due Diligence](/offers/technical-due-diligence).
    - Rule D: Cross-link to related published articles from our catalog when referencing complementary engineering topics.
+8. FOUNDER FAQ SECTION (CRITICAL FOR SEO & RICH SNIPPETS):
+   You MUST generate 3 to 5 high-impact, founder-focused FAQs in the "faqs" JSON field.
+   - Each FAQ must address concrete technical choices, cost trade-offs, architecture alternatives, or fractional CTO guidance (e.g. "When should we migrate from a modular monolith to microservices?", "How much does a production-ready AI MVP cost to build and host?").
+   - The answer must be direct, authoritative, and 2-3 sentences.
 
 Return a STRICT JSON object with this EXACT structure (valid JSON only, no markdown code block surrounding the JSON):
 {
@@ -624,7 +630,13 @@ Return a STRICT JSON object with this EXACT structure (valid JSON only, no markd
   "pillarCategory": "${research.pillarCategory || "ai-engineering"}",
   "contentMarkdown": "Full comprehensive Markdown article (1,500 - 2,500 words)...",
   "targetKeywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
-  "imagePrompt": "Detailed prompt describing a dark-mode 3D architectural illustration with glowing indigo and neon violet accents for the cover banner"
+  "imagePrompt": "Detailed prompt describing a dark-mode 3D architectural illustration with glowing indigo and neon violet accents for the cover banner",
+  "faqs": [
+    {
+      "question": "Clear founder-focused question",
+      "answer": "Direct, authoritative 2-3 sentence technical answer addressing the core trade-off or architectural decision."
+    }
+  ]
 }`;
 
   const userPrompt = `Topic Research Brief:
@@ -637,7 +649,7 @@ Return a STRICT JSON object with this EXACT structure (valid JSON only, no markd
 - Pillar Category: ${research.pillarCategory || "ai-engineering"}
 - Tags: ${research.tags.join(", ")}
 
-Draft the complete, production-grade technical article JSON now with internal links, rich alert blocks, code snippets, comparison table, and checklist for founders looking for a technical partner.`;
+Draft the complete, production-grade technical article JSON now with internal links, rich alert blocks, code snippets, comparison table, checklist, and 3-5 high-value FAQs for founders looking for a technical partner.`;
 
   const contentModel =
     process.env.GEMINI_CONTENT_MODEL ||
@@ -656,7 +668,30 @@ Draft the complete, production-grade technical article JSON now with internal li
 
   // Fallback link enrichment if model generated zero internal links
   if (inventory && (!parsed.contentMarkdown.includes("](") || !parsed.contentMarkdown.includes("/"))) {
-    parsed.contentMarkdown = enrichContentWithFallbackInternalLinks(parsed.contentMarkdown, inventory);
+    parsed.contentMarkdown = enrichContentWithFallbackInternalLinks(
+      parsed.contentMarkdown,
+      inventory,
+      parsed.pillarCategory || research.pillarCategory,
+    );
+  }
+
+  // Sanitize and validate FAQs
+  if (!Array.isArray(parsed.faqs)) {
+    parsed.faqs = [];
+  } else {
+    parsed.faqs = parsed.faqs
+      .filter(
+        (f: any) =>
+          f &&
+          typeof f.question === "string" &&
+          f.question.trim().length > 0 &&
+          typeof f.answer === "string" &&
+          f.answer.trim().length > 0,
+      )
+      .map((f: any) => ({
+        question: f.question.trim(),
+        answer: f.answer.trim(),
+      }));
   }
 
   // Calculate actual reading time based on word count (~200 words per minute)
@@ -678,14 +713,16 @@ Draft the complete, production-grade technical article JSON now with internal li
 export function enrichContentWithFallbackInternalLinks(
   contentMarkdown: string,
   inventory: BlogInventorySummary,
+  pillarCategory?: string,
 ): string {
   let enriched = contentMarkdown;
 
-  // Link Blueprint if not already linked
+  // Link Blueprint with contextual pillar if not already linked
   if (!enriched.includes("/blueprint")) {
+    const blueprintUrl = pillarCategory ? `/blueprint?pillar=${encodeURIComponent(pillarCategory)}` : "/blueprint";
     enriched = enriched.replace(
       /(Founder-to-Launch Framework™|Go-to-Launch Blueprint|MVP architecture blueprint)/i,
-      "[$1](/blueprint)",
+      `[$1](${blueprintUrl})`,
     );
   }
 
