@@ -6,6 +6,7 @@ import {
   saveLinkedInSession,
   clearLinkedInSession,
   updateLinkedInSchedule,
+  getBlogAutomationConfig,
 } from "./db";
 import {
   executeLinkedInFeedEngagement,
@@ -33,6 +34,7 @@ export const getLinkedInAdminStateAction = createServerFn().handler(async () => 
         extractedFileCount: 0,
       } as ProfileStatusResult,
       config: null,
+      blogAutomation: { enabled: true, intervalHours: 48, lastGeneratedAt: null },
       stats: { publishedToday: 0, totalPublished: 0, totalSkipped: 0 },
     };
   }
@@ -41,6 +43,7 @@ export const getLinkedInAdminStateAction = createServerFn().handler(async () => 
   const profileStatus = hasProfileArchiveOrExtracted();
   const hasStoredCookies = Boolean(config.sessionState && config.sessionState.cookies?.length > 0);
   const isConnected = hasStoredCookies || profileStatus.hasExtracted || profileStatus.hasArchive;
+  const blogAutomation = await getBlogAutomationConfig();
 
   const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
 
@@ -65,6 +68,7 @@ export const getLinkedInAdminStateAction = createServerFn().handler(async () => 
       schedule: config.schedule,
       logs: config.logs || [],
     },
+    blogAutomation,
     stats: {
       publishedToday,
       totalPublished,
@@ -184,10 +188,10 @@ export const clearLinkedInSessionAction = createServerFn({ method: "POST" }).han
 export const updateLinkedInScheduleAction = createServerFn({ method: "POST" })
   .validator(
     (d: {
-      enabled: boolean;
-      morningHourUtc: number;
-      afternoonHourUtc: number;
-      maxPerDay: number;
+      enabled?: boolean;
+      morningHourUtc?: number;
+      afternoonHourUtc?: number;
+      maxPerDay?: number;
     }) => d,
   )
   .handler(async ({ data }) => {

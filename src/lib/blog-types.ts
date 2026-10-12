@@ -99,3 +99,8 @@ export interface ArticleLeadRecord {
   source: string;
 }
 
+export interface BlogAutomationConfig {
+  enabled: boolean;
+  intervalHours: number;
+  lastGeneratedAt?: string | null;
+}

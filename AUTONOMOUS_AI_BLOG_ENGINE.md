@@ -106,14 +106,22 @@ Accessible at `https://mehdigolzari.dev/admin/blog`:
    - Timing-safe credential validation against `ADMIN_USERNAME` and `ADMIN_PASSWORD` / `ADMIN_PASSWORD_HASH`.
    - HMAC-SHA256 signed `mehdi_admin_session` cookie (14-day validity).
 2. **Real-time KPI Metrics Header:**
-   - Total Articles, Published Posts, Drafts, and Total Reading Time Volume.
-3. **One-Click Manual AI Generator ⚡:**
-   - Interactive modal triggering the 4-stage engine with live step-by-step progress tracking.
-4. **Articles Management Table:**
+   - Total Articles, Published Posts, Drafts, Total Reading Time Volume, and Captured Leads.
+3. **Autonomous Engine Governance Switch (Active / Paused):**
+   - Instant 1-click Radix Switch to **Enable / Disable** the 48-hour autonomous publishing cron.
+   - When **Enabled**: Cloud Scheduler calls execute the 4-stage pipeline automatically.
+   - When **Paused**: Incoming cron requests to `/api/blog/cron-generate` immediately return `{ success: true, status: "disabled" }` without executing LLM prompts or generating posts.
+4. **One-Click Manual AI Generator ⚡:**
+   - Interactive modal triggering the 4-stage engine with live step-by-step progress tracking (operates on-demand regardless of scheduled automation pause status).
+5. **Articles Management Table:**
    - Filter by status (`all`, `published`, `draft`, `archived`) or search by keyword.
    - Actions: Live view, Split-screen Markdown editor, Cover image regenerator, Status toggle, Delete.
-5. **Split-Screen Markdown Editor Modal:**
+6. **Split-Screen Markdown Editor Modal:**
    - Live side-by-side editing with synchronized preview, SEO keyword tags manager, excerpt editor, and status picker.
+7. **Article Leads CRM & CSV Export:**
+   - Tracks founders who downloaded gated executive PDF briefs with searchable records and 1-click CSV download.
+8. **LinkedIn Engagement Engine Control (`/admin/linkedin`):**
+   - Mirror governance switch to **Enable / Disable** automated daily LinkedIn feed commenting and quota enforcement (max 2 comments/24h).
 
 ---
 
@@ -140,13 +148,20 @@ Accessible at `https://mehdigolzari.dev/admin/blog`:
 
 ## 6. Google Cloud Platform Configuration
 
-### 1. Cloud Scheduler Cron Job (Every 48 Hours)
-- **Job Name:** `autonomous-blog-generator`
-- **Location:** `europe-west1`
-- **Schedule:** `0 0 */2 * *` (Every 2 days at midnight UTC)
-- **Target URI:** `https://mehdigolzari.dev/api/blog/cron-generate`
-- **HTTP Method:** `POST`
-- **Authentication:** `Authorization: Bearer <CRON_SECRET>`
+### 1. Cloud Scheduler Cron Jobs
+- **Blog Engine Cron:**
+  - **Job Name:** `autonomous-blog-generator`
+  - **Schedule:** `0 0 */2 * *` (Every 2 days at midnight UTC)
+  - **Target URI:** `https://mehdigolzari.dev/api/blog/cron-generate`
+  - **HTTP Method:** `POST`
+  - **Authentication:** `Authorization: Bearer <CRON_SECRET>`
+  - **Disabled Handling:** If disabled via `/admin/blog`, returns `{ success: true, status: "disabled" }` without executing pipeline or spending LLM tokens. Can be manually bypassed with `?force=true`.
+- **LinkedIn Engagement Cron:**
+  - **Job Name:** `autonomous-linkedin-engager`
+  - **Schedule:** `0 6,12 * * *` (Twice daily morning & afternoon UTC)
+  - **Target URI:** `https://mehdigolzari.dev/api/linkedin/cron-engage`
+  - **Authentication:** `Authorization: Bearer <CRON_SECRET>`
+  - **Disabled Handling:** If disabled via `/admin/linkedin`, returns `{ success: true, status: "disabled" }` without launching Chromium or Playwright. Bypassed with `?force=true` or manual triggers.
 
 ### 2. Cloud Storage FUSE Mount
 - **Bucket:** `gs://mehdigolzari-realtalk-data`

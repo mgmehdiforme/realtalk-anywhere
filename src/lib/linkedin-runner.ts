@@ -1282,6 +1282,7 @@ export async function executeLinkedInFeedEngagement(options: {
   showBrowser?: boolean;
   skipDailyLimit?: boolean;
   useImportedSession?: boolean;
+  force?: boolean;
 }): Promise<LinkedInRunResult> {
   console.log("=== STARTING AUTONOMOUS LINKEDIN SEARCH ENGAGEMENT RUN ===");
 
@@ -1310,6 +1311,23 @@ export async function executeLinkedInFeedEngagement(options: {
       error: errorMsg,
     });
     return { success: false, status: "failed", error: errorMsg, log };
+  }
+
+  // 1b. Check if Auto Engagement Schedule is Enabled
+  const isScheduleEnabled = config.schedule?.enabled !== false;
+  if (!isScheduleEnabled && !options.skipDailyLimit && !options.dryRun && !options.force) {
+    const reason =
+      "LinkedIn autonomous engagement is currently disabled in admin settings. Skipping scheduled run.";
+    console.log(`[LinkedIn Runner] ${reason}`);
+    const log = await addLinkedInEngagementLog({
+      authorName: "System",
+      postUrl: "https://www.linkedin.com/search/results/content/",
+      postSnippet: "Schedule enabled check",
+      relevanceScore: 0,
+      relevanceReason: reason,
+      status: "skipped",
+    });
+    return { success: true, status: "skipped", reason, log };
   }
 
   if (!hasStoredCookies && hasProfileOrFallback) {

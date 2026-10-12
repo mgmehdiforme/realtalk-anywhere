@@ -8,8 +8,9 @@
 
 - **Founder-to-Launch Framework™:** Interactive 7-phase methodology guiding early-stage founders from concept discovery to market scale.
 - **Go-to-Launch Blueprint™:** 6-step interactive AI scoping engine powered by Qwen 3.7 Plus that generates personalized startup roadmaps and downloadable multi-page PDF reports.
-- **Autonomous AI Blog Engine:** Autonomous 4-stage technical publishing pipeline powered by **Google Gemini Deep Research** and **Gemini 2.0 / 3.7 Flash**, executing every 48 hours via Cloud Scheduler.
-- **Admin Management Portal (`/admin/blog`):** Secured with HMAC-SHA256 session tokens, featuring real-time KPI metrics, manual generation triggers, a split-screen live markdown editor, and cover image generator.
+- **Autonomous AI Blog Engine:** Autonomous 4-stage technical publishing pipeline powered by **Google Gemini Deep Research** and **Gemini 2.0 / 3.7 Flash**, executing every 48 hours via Cloud Scheduler (with 1-click Enable/Disable automation governance).
+- **LinkedIn Engagement Engine (`/admin/linkedin`):** Autonomous Chromium/Playwright feed scanner that posts authentic Fractional CTO comments with customizable daily limits and 1-click Enable/Disable scheduling toggle.
+- **Admin Management Portal (`/admin/blog`):** Secured with HMAC-SHA256 session tokens, featuring real-time KPI metrics, 1-click automation pause/resume switches, manual generation triggers, a split-screen live markdown editor, leads CRM, and cover image generator.
 - **Modern Sticky Navigation:** Compacts on scroll with frosted glass backdrop blur and floating pill active navigation.
 - **Dynamic SEO & Syndication:** Automated `/sitemap.xml`, OpenGraph/Twitter meta cards, and Schema.org `TechArticle` / `BreadcrumbList` JSON-LD structured data.
 

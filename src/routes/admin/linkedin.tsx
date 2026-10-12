@@ -22,6 +22,7 @@ import {
   Archive,
   FolderArchive,
   HardDrive,
+  Power,
 } from "lucide-react";
 import {
   getLinkedInAdminStateAction,
@@ -29,9 +30,11 @@ import {
   triggerLinkedInFeedRunAction,
   clearLinkedInSessionAction,
   extractLinkedInProfileArchiveAction,
+  updateLinkedInScheduleAction,
 } from "@/lib/linkedin-admin-functions";
 import type { ProfileStatusResult } from "@/lib/linkedin-runner";
-import type { LinkedInEngagementLog } from "@/lib/db";
+import type { LinkedInEngagementLog, BlogAutomationConfig } from "@/lib/db";
+import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/admin/linkedin")({
   head: () => ({
@@ -61,9 +64,11 @@ function AdminLinkedInDashboard() {
       };
       logs: LinkedInEngagementLog[];
     } | null;
+    blogAutomation?: BlogAutomationConfig;
     stats: { publishedToday: number; totalPublished: number; totalSkipped: number };
   } | null>(null);
 
+  const [togglingSchedule, setTogglingSchedule] = useState(false);
   const [running, setRunning] = useState(false);
   const [dryRunning, setDryRunning] = useState(false);
   const [showBrowserWindow, setShowBrowserWindow] = useState(true);
@@ -96,6 +101,34 @@ function AdminLinkedInDashboard() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const handleToggleLinkedInSchedule = async (enabled: boolean) => {
+    setTogglingSchedule(true);
+    try {
+      const res = await updateLinkedInScheduleAction({ data: { enabled } });
+      if (res.success && res.schedule) {
+        setState((prev) =>
+          prev && prev.config
+            ? {
+                ...prev,
+                config: {
+                  ...prev.config,
+                  schedule: {
+                    ...prev.config.schedule,
+                    ...res.schedule,
+                  },
+                },
+              }
+            : prev,
+        );
+      }
+    } catch (err: any) {
+      console.error("Toggle LinkedIn schedule error:", err);
+      alert(`Failed to update auto-comment schedule: ${err?.message || "Server error"}`);
+    } finally {
+      setTogglingSchedule(false);
+    }
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -297,18 +330,34 @@ function AdminLinkedInDashboard() {
               <span className="font-display text-sm font-bold tracking-tight">
                 LinkedIn Autonomous Engine
               </span>
-              <span className="ml-2 rounded-full bg-neon/15 px-2 py-0.5 font-mono text-[10px] font-bold text-neon uppercase">
-                Feed Scanner & CTO Copilot
-              </span>
+              {state?.config?.schedule?.enabled ?? true ? (
+                <span className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 font-mono text-[10px] font-bold text-emerald-400 uppercase">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Auto-Engage Active
+                </span>
+              ) : (
+                <span className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 font-mono text-[10px] font-bold text-amber-400 uppercase">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                  Auto-Engage Paused
+                </span>
+              )}
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <Link
               to="/admin/blog"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition"
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition"
             >
               Blog Dashboard
+              {state?.blogAutomation && (
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    state.blogAutomation.enabled !== false ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
+                  }`}
+                  title={state.blogAutomation.enabled !== false ? "Blog auto-generation is active" : "Blog auto-generation is paused"}
+                />
+              )}
             </Link>
             <Link
               to="/blog"
@@ -389,18 +438,65 @@ function AdminLinkedInDashboard() {
 
         {/* Action Hero: Trigger Runner */}
         <div className="rounded-3xl border-2 border-neon/30 bg-gradient-to-r from-card via-card/95 to-neon/10 p-6 sm:p-8 shadow-card relative overflow-hidden flex flex-col justify-between">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-neon/15 px-2.5 py-0.5 text-[10px] font-bold text-neon uppercase tracking-wider border border-neon/20">
-              <Sparkles className="h-3 w-3" /> Stealth Playwright + Gemini 3.7 (Google AI Search Grounding)
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-neon/15 px-2.5 py-0.5 text-[10px] font-bold text-neon uppercase tracking-wider border border-neon/20">
+                  <Sparkles className="h-3 w-3" /> Stealth Playwright + Gemini 3.7 (Google AI Search Grounding)
+                </div>
+                {state?.config?.schedule?.enabled ?? true ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400 uppercase">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Auto-Comment: Active
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-[10px] font-bold text-amber-400 uppercase">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                    Auto-Comment: Paused
+                  </span>
+                )}
+              </div>
+              <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground">
+                Autonomous Search &amp; CTO Copilot
+              </h2>
+              <p className="text-xs text-muted-foreground max-w-2xl leading-relaxed">
+                Discovers live breaking tech debates via real-time Google Search grounding, dynamically formulates 
+                high-intent search queries, evaluates posts against your Fractional CTO persona (zero recruiter posts, &ge; 80 threshold), 
+                and crafts a concise, high-signal comment (40–75 words) with human typing jitter.
+              </p>
             </div>
-            <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground">
-              Autonomous Search &amp; CTO Copilot
-            </h2>
-            <p className="text-xs text-muted-foreground max-w-2xl leading-relaxed">
-              Discovers live breaking tech debates via real-time Google Search grounding, dynamically formulates 
-              high-intent search queries, evaluates posts against your Fractional CTO persona (zero recruiter posts, &ge; 80 threshold), 
-              and crafts a concise, high-signal comment (40–75 words) with human typing jitter.
-            </p>
+
+            {/* Enable/Disable Toggle Card */}
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/80 bg-background/80 backdrop-blur px-4 py-3 shadow-sm shrink-0">
+              <div className="flex flex-col pr-2">
+                <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <Power className={`h-3.5 w-3.5 ${state?.config?.schedule?.enabled ?? true ? "text-emerald-400" : "text-muted-foreground"}`} />
+                  Auto-Comment Schedule
+                </span>
+                <span className="text-[10px] text-muted-foreground font-mono">
+                  {state?.config?.schedule?.enabled ?? true ? "Daily Active (Max 2/day)" : "Disabled (Paused)"}
+                </span>
+              </div>
+              <Switch
+                checked={state?.config?.schedule?.enabled ?? true}
+                disabled={togglingSchedule}
+                onCheckedChange={handleToggleLinkedInSchedule}
+                className="data-[state=checked]:bg-emerald-500"
+                aria-label="Toggle Autonomous LinkedIn Commenting"
+              />
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-border/50 flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className={`h-1.5 w-1.5 rounded-full ${state?.config?.schedule?.enabled ?? true ? "bg-emerald-400" : "bg-amber-400"}`} />
+              {state?.config?.schedule?.enabled ?? true
+                ? "Autonomous feed scanner executes on Cloud Scheduler cron intervals to find and post CTO comments."
+                : "Auto-commenting is paused. Cloud Scheduler invocations will be safely skipped without opening the browser profile."}
+            </span>
+            <span className="font-mono text-[10px]">
+              Daily cap: {state?.config?.schedule?.maxPerDay || 2} comments / 24h
+            </span>
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-3 pt-4 border-t border-border/60">

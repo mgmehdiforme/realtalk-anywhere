@@ -10,8 +10,12 @@ import {
   saveArticleLead,
   getAllArticleLeads,
   deleteArticleLead,
+  getBlogAutomationConfig,
+  updateBlogAutomationConfig,
+  getLinkedInConfig,
   type BlogPost,
   type ArticleLeadRecord,
+  type BlogAutomationConfig,
 } from "./db";
 import { generateAutonomousBlogPost } from "./blog-generator";
 import { generateCoverImage } from "./gemini";
@@ -53,10 +57,14 @@ export const getAdminBlogState = createServerFn().handler(async () => {
       user: null,
       posts: [],
       metrics: { total: 0, published: 0, drafts: 0, totalReadMinutes: 0 },
+      blogAutomation: { enabled: true, intervalHours: 48, lastGeneratedAt: null },
+      linkedInSchedule: { enabled: true, morningHourUtc: 6, afternoonHourUtc: 12, maxPerDay: 2 },
     };
   }
 
   const { posts } = await getBlogPosts({ status: "all" });
+  const blogAutomation = await getBlogAutomationConfig();
+  const linkedInConfig = await getLinkedInConfig();
 
   const metrics = {
     total: posts.length,
@@ -70,8 +78,27 @@ export const getAdminBlogState = createServerFn().handler(async () => {
     user: session,
     posts,
     metrics,
+    blogAutomation,
+    linkedInSchedule: linkedInConfig.schedule,
   };
 });
+
+/**
+ * Update Blog Autonomous Generation Setting
+ */
+export const updateBlogAutomationAction = createServerFn({ method: "POST" })
+  .validator((d: { enabled: boolean; intervalHours?: number }) => d)
+  .handler(async ({ data }) => {
+    const request = getRequest();
+    const session = getAdminSessionFromRequest(request);
+
+    if (!session) {
+      throw new Error("Unauthorized admin access");
+    }
+
+    const updated = await updateBlogAutomationConfig(data);
+    return { success: true, blogAutomation: updated };
+  });
 
 /**
  * Trigger Autonomous Generation Pipeline from Admin Dashboard

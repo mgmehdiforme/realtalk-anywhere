@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 export * from "./blog-types";
-import type { BlogPost, BlogInventoryItem, GetBlogPostsOptions, ArticleLeadRecord } from "./blog-types";
+import type { BlogPost, BlogInventoryItem, GetBlogPostsOptions, ArticleLeadRecord, BlogAutomationConfig } from "./blog-types";
 
 const DB_DIR =
   typeof process !== "undefined" && typeof process.cwd === "function"
@@ -63,6 +63,7 @@ export interface DatabaseSchema {
   users: Record<string, User>;
   assessments: Record<string, Blueprint>;
   blogPosts?: Record<string, BlogPost>;
+  blogAutomation?: BlogAutomationConfig;
   linkedin?: LinkedInConfig;
   leads?: ArticleLeadRecord[];
 }
@@ -86,6 +87,13 @@ async function initDb() {
       if (!dbCache.assessments) dbCache.assessments = {};
       if (!dbCache.blogPosts) dbCache.blogPosts = {};
       if (!dbCache.leads) dbCache.leads = [];
+      if (!dbCache.blogAutomation) {
+        dbCache.blogAutomation = {
+          enabled: true,
+          intervalHours: 48,
+          lastGeneratedAt: null,
+        };
+      }
       if (!dbCache.linkedin) {
         dbCache.linkedin = {
           sessionState: null,
@@ -102,6 +110,13 @@ async function initDb() {
       }
     } catch {
       // File doesn't exist, create it
+      if (!dbCache.blogAutomation) {
+        dbCache.blogAutomation = {
+          enabled: true,
+          intervalHours: 48,
+          lastGeneratedAt: null,
+        };
+      }
       if (!dbCache.linkedin) {
         dbCache.linkedin = {
           sessionState: null,
@@ -607,6 +622,43 @@ export async function getRelatedBlogPosts(
 
   scored.sort((a, b) => b.score - a.score);
   return scored.slice(0, limit).map((item) => item.post);
+}
+
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * BLOG AUTONOMOUS ENGINE SETTINGS HELPERS
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+export async function getBlogAutomationConfig(): Promise<BlogAutomationConfig> {
+  await initDb();
+  if (!dbCache.blogAutomation) {
+    dbCache.blogAutomation = {
+      enabled: true,
+      intervalHours: 48,
+      lastGeneratedAt: null,
+    };
+  }
+  return { ...dbCache.blogAutomation };
+}
+
+export async function updateBlogAutomationConfig(
+  updates: Partial<BlogAutomationConfig>,
+): Promise<BlogAutomationConfig> {
+  await initDb();
+  if (!dbCache.blogAutomation) {
+    dbCache.blogAutomation = {
+      enabled: true,
+      intervalHours: 48,
+      lastGeneratedAt: null,
+    };
+  }
+  dbCache.blogAutomation = {
+    ...dbCache.blogAutomation,
+    ...updates,
+  };
+  await saveToDisk();
+  return { ...dbCache.blogAutomation };
 }
 
 /**

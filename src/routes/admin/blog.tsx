@@ -27,6 +27,7 @@ import {
   Users,
   Download,
   Mail,
+  Power,
 } from "lucide-react";
 import {
   getAdminBlogState,
@@ -38,8 +39,10 @@ import {
   getAdminLeadsAction,
   deleteAdminLeadAction,
   exportAdminLeadsCsvAction,
+  updateBlogAutomationAction,
 } from "@/lib/admin-functions";
-import type { BlogPost, BlogPostFaqItem, ArticleLeadRecord } from "@/lib/db";
+import type { BlogPost, BlogPostFaqItem, ArticleLeadRecord, BlogAutomationConfig } from "@/lib/db";
+import { Switch } from "@/components/ui/switch";
 import { marked } from "marked";
 import {
   renderMermaidBlocksInContainer,
@@ -115,8 +118,11 @@ function AdminBlogDashboard() {
     user: any;
     posts: BlogPost[];
     metrics: { total: number; published: number; drafts: number; totalReadMinutes: number };
+    blogAutomation?: BlogAutomationConfig;
+    linkedInSchedule?: { enabled: boolean; maxPerDay?: number };
   } | null>(null);
 
+  const [togglingAutomation, setTogglingAutomation] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [genStep, setGenStep] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
@@ -182,6 +188,28 @@ function AdminBlogDashboard() {
     document.cookie = "mehdi_admin_session=; Path=/; Max-Age=0";
     await adminLogoutAction();
     navigate({ to: "/admin/login" });
+  };
+
+  const handleToggleBlogAutomation = async (enabled: boolean) => {
+    setTogglingAutomation(true);
+    try {
+      const res = await updateBlogAutomationAction({ data: { enabled } });
+      if (res.success && res.blogAutomation) {
+        setState((prev) =>
+          prev
+            ? {
+                ...prev,
+                blogAutomation: res.blogAutomation,
+              }
+            : null,
+        );
+      }
+    } catch (err: any) {
+      console.error("Toggle blog automation error:", err);
+      alert(`Failed to update auto-generation setting: ${err?.message || "Server error"}`);
+    } finally {
+      setTogglingAutomation(false);
+    }
   };
 
   const handleTriggerAutonomousGeneration = async () => {
@@ -377,18 +405,34 @@ function AdminBlogDashboard() {
               <span className="font-display text-sm font-bold tracking-tight">
                 Admin Blog Governance
               </span>
-              <span className="ml-2 rounded-full bg-neon/15 px-2 py-0.5 font-mono text-[10px] font-bold text-neon uppercase">
-                48h Autonomous Cron
-              </span>
+              {state?.blogAutomation?.enabled ?? true ? (
+                <span className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-400 uppercase">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  48h Cron Active
+                </span>
+              ) : (
+                <span className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-400 uppercase">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                  Cron Paused
+                </span>
+              )}
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <Link
               to="/admin/linkedin"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition"
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition"
             >
               <Sparkles className="h-3.5 w-3.5 text-neon" /> LinkedIn Engine
+              {state?.linkedInSchedule && (
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    state.linkedInSchedule.enabled !== false ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
+                  }`}
+                  title={state.linkedInSchedule.enabled !== false ? "LinkedIn auto-commenting is active" : "LinkedIn auto-commenting is paused"}
+                />
+              )}
             </Link>
             <Link
               to="/blog"
@@ -467,10 +511,23 @@ function AdminBlogDashboard() {
         {/* Action Hero Bar: Autonomous Trigger */}
         <div className="rounded-3xl border-2 border-neon/30 bg-gradient-to-r from-card via-card/95 to-neon/10 p-6 sm:p-8 shadow-card relative overflow-hidden">
           <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-neon/10 blur-3xl" />
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative">
-            <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-neon/15 px-2.5 py-0.5 text-[10px] font-bold text-neon uppercase tracking-wider border border-neon/20">
-                <Sparkles className="h-3 w-3" /> Gemini 3.7 Flash + Vertex AI
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-neon/15 px-2.5 py-0.5 text-[10px] font-bold text-neon uppercase tracking-wider border border-neon/20">
+                  <Sparkles className="h-3 w-3" /> Gemini 3.7 Flash + Vertex AI
+                </div>
+                {state?.blogAutomation?.enabled ?? true ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400 uppercase">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Auto-Generation: Active
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-[10px] font-bold text-amber-400 uppercase">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                    Auto-Generation: Paused
+                  </span>
+                )}
               </div>
               <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground">
                 Autonomous AI Generation Engine
@@ -481,23 +538,60 @@ function AdminBlogDashboard() {
               </p>
             </div>
 
-            <button
-              onClick={handleTriggerAutonomousGeneration}
-              disabled={generating}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-neon px-6 py-3.5 text-xs font-bold text-primary-foreground shadow-neon transition hover:brightness-110 disabled:opacity-50 shrink-0 transform hover:scale-[1.01]"
-            >
-              {generating ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Generating Autonomous Article...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  Trigger AI Generation Now ⚡
-                </>
-              )}
-            </button>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 shrink-0">
+              {/* Enable/Disable Toggle Card */}
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/80 bg-background/80 backdrop-blur px-4 py-2.5 shadow-sm">
+                <div className="flex flex-col pr-1">
+                  <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                    <Power className={`h-3.5 w-3.5 ${state?.blogAutomation?.enabled ?? true ? "text-emerald-400" : "text-muted-foreground"}`} />
+                    48h Auto-Publish
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-mono">
+                    {state?.blogAutomation?.enabled ?? true ? "Enabled (Every 48h)" : "Disabled (Paused)"}
+                  </span>
+                </div>
+                <Switch
+                  checked={state?.blogAutomation?.enabled ?? true}
+                  disabled={togglingAutomation}
+                  onCheckedChange={handleToggleBlogAutomation}
+                  className="data-[state=checked]:bg-emerald-500"
+                  aria-label="Toggle Autonomous Blog Generation"
+                />
+              </div>
+
+              <button
+                onClick={handleTriggerAutonomousGeneration}
+                disabled={generating}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-neon px-6 py-3.5 text-xs font-bold text-primary-foreground shadow-neon transition hover:brightness-110 disabled:opacity-50 shrink-0 transform hover:scale-[1.01]"
+              >
+                {generating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generating Autonomous Article...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    Trigger AI Generation Now ⚡
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Automation Status Subtitle */}
+          <div className="mt-4 pt-3 border-t border-border/50 flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className={`h-1.5 w-1.5 rounded-full ${state?.blogAutomation?.enabled ?? true ? "bg-emerald-400" : "bg-amber-400"}`} />
+              {state?.blogAutomation?.enabled ?? true
+                ? "Autonomous cron job executes automatically every 48 hours (0 0 */2 * *)."
+                : "Scheduled generation is paused. Cloud Scheduler requests will be safely skipped without executing AI generation."}
+            </span>
+            {state?.blogAutomation?.lastGeneratedAt && (
+              <span className="font-mono text-[10px]">
+                Last generated: {new Date(state.blogAutomation.lastGeneratedAt).toLocaleString()}
+              </span>
+            )}
           </div>
 
           {/* Real-Time Generation Progress Card */}

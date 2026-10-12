@@ -6,7 +6,14 @@ import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { verifyCronSecret, getAdminSessionFromRequest } from "./lib/admin-auth";
 import { generateAutonomousBlogPost } from "./lib/blog-generator";
-import { getAllPublishedSlugs, getBlogPostBySlug, getBlogPosts } from "./lib/db";
+import {
+  getAllPublishedSlugs,
+  getBlogPostBySlug,
+  getBlogPosts,
+  getBlogAutomationConfig,
+  updateBlogAutomationConfig,
+  getLinkedInConfig,
+} from "./lib/db";
 import { pingSearchEngines, INDEXNOW_KEY } from "./lib/seo-ping";
 
 type ServerEntry = {
@@ -400,8 +407,27 @@ async function handleCronGenerateRequest(request: Request): Promise<Response | n
     );
   }
 
+  // Check if autonomous generation is enabled
+  const blogAutomation = await getBlogAutomationConfig();
+  const force = url.searchParams.get("force") === "true";
+
+  if (!blogAutomation.enabled && !force) {
+    console.log("[Autonomous Blog Cron] Skipped: Autonomous blog generation is disabled in settings.");
+    return new Response(
+      JSON.stringify({
+        success: true,
+        status: "disabled",
+        message: "Autonomous blog generation is currently disabled in admin settings.",
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
   try {
     const result = await generateAutonomousBlogPost();
+
+    // Update last generated timestamp
+    await updateBlogAutomationConfig({ lastGeneratedAt: new Date().toISOString() });
 
     // Trigger instant search engine indexing pings in the background
     pingSearchEngines(result.post.slug).catch((err) =>
@@ -451,14 +477,31 @@ async function handleLinkedInCronRequest(request: Request): Promise<Response | n
     );
   }
 
+  // Check if autonomous LinkedIn engagement is enabled
+  const liConfig = await getLinkedInConfig();
+  const force = url.searchParams.get("force") === "true";
+  const isDryRun = url.searchParams.get("dryRun") === "true";
+
+  if (!liConfig.schedule?.enabled && !force && !isDryRun) {
+    console.log("[LinkedIn Autonomous Cron] Skipped: Auto-engagement is disabled in settings.");
+    return new Response(
+      JSON.stringify({
+        success: true,
+        status: "disabled",
+        reason: "Autonomous LinkedIn engagement is currently disabled in admin settings.",
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
   try {
-    const isDryRun = url.searchParams.get("dryRun") === "true";
     const skipDailyLimit = url.searchParams.get("skipDailyLimit") === "true";
 
     const { executeLinkedInFeedEngagement } = await import("./lib/linkedin-runner");
     const result = await executeLinkedInFeedEngagement({
       dryRun: isDryRun,
       skipDailyLimit: skipDailyLimit,
+      force: force,
     });
 
     return new Response(
